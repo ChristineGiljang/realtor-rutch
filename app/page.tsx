@@ -9,7 +9,6 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <Stats />
       <FeaturedListings />
       <AboutTeaser />
       <Testimonials />
