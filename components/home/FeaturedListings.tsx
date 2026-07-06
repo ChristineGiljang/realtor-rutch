@@ -14,7 +14,7 @@ export default async function FeaturedListings() {
   if (listings.length === 0) return null;
 
   return (
-    <section className="bg-[#1A1A1A] text-[#F5F0E8] py-24">
+    <section className="bg-[#F5F0E8] text-[#1A1A1A] py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-end justify-between mb-12">
@@ -22,13 +22,13 @@ export default async function FeaturedListings() {
             <p className="text-xs tracking-[0.3em] uppercase text-[#C9A96E] mb-3">
               Hand Selected
             </p>
-            <h2 className="text-4xl md:text-5xl font-bold">
+            <h2 className="text-4xl md:text-5xl font-bold text-[#1A1A1A]">
               Featured Properties
             </h2>
           </div>
           <Link
             href="/listings"
-            className="hidden md:block text-sm tracking-wider uppercase text-[#F5F0E8]/60 hover:text-[#C9A96E] transition border-b border-[#F5F0E8]/20 pb-1"
+            className="hidden md:block text-sm tracking-wider uppercase text-[#8B7355] hover:text-[#1A1A1A] transition border-b border-[#1A1A1A]/20 pb-1"
           >
             View All
           </Link>
@@ -46,8 +46,8 @@ export default async function FeaturedListings() {
                     alt={listing.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition" />
-                  <div className="absolute top-4 left-4 bg-[#F5F0E8] text-[#1A1A1A] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
+                  <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#F5F0E8] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
                     {listing.status}
                   </div>
                 </div>
@@ -55,10 +55,12 @@ export default async function FeaturedListings() {
                 {/* Info */}
                 <div>
                   <p className="text-xl font-bold mb-1 text-[#C9A96E]">
-                    ${listing.price.toLocaleString()}
+                    ₱{listing.price.toLocaleString()}
                   </p>
-                  <p className="text-[#F5F0E8]/90 mb-2">{listing.title}</p>
-                  <p className="text-[#F5F0E8]/50 text-sm">
+                  <p className="text-[#1A1A1A] mb-2 font-medium">
+                    {listing.title}
+                  </p>
+                  <p className="text-[#8B7355] text-sm">
                     {listing.beds} bd · {listing.baths} ba ·{" "}
                     {listing.sqft.toLocaleString()} sqm · {listing.city}
                   </p>
@@ -72,7 +74,7 @@ export default async function FeaturedListings() {
         <div className="mt-10 text-center md:hidden">
           <Link
             href="/listings"
-            className="text-sm tracking-wider uppercase text-[#F5F0E8]/60 hover:text-[#C9A96E] transition border-b border-[#F5F0E8]/20 pb-1"
+            className="text-sm tracking-wider uppercase text-[#8B7355] hover:text-[#1A1A1A] transition border-b border-[#1A1A1A]/20 pb-1"
           >
             View All Listings
           </Link>
