@@ -93,7 +93,8 @@ export default function AboutPage() {
                 </p>
                 <p className="font-semibold text-[#1A1A1A]">#29866</p>
               </div>
-              <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
+              <div>
+                <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
                   DSHUD
                 </p>
                 <p className="font-semibold text-[#1A1A1A]">#R7-A-01/26-8595</p>
