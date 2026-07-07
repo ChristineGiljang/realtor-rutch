@@ -42,7 +42,7 @@ export default function AboutPage() {
           {/* Image */}
           <div className="relative h-[600px] overflow-hidden bg-[#E2D9C8]">
             <img
-              src="/images/agent.jpeg"
+              src="/images/agent2.JPEG"
               alt="Agent Name"
               className="w-full h-full object-cover"
             />

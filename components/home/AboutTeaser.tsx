@@ -8,7 +8,7 @@ export default function AboutTeaser() {
           {/* Image */}
           <div className="relative h-[500px] overflow-hidden">
             <img
-              src="/images/agent.jpeg"
+              src="/images/agent.JPEG"
               alt="Agent Name"
               className="w-full h-full object-cover"
             />
