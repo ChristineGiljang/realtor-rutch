@@ -57,41 +57,60 @@ export default function AboutPage() {
               Agent Name
             </h2>
             <p className="text-[#8B7355] leading-relaxed mb-4">
-              With over 15 years of experience in luxury real estate, I have
-              built a reputation for delivering exceptional results for buyers
-              and sellers across the most prestigious neighborhoods.
+              Hi, I'm a young and passionate real estate agent based in Cebu,
+              dedicated to helping clients find the right property with
+              confidence and ease. Whether you're buying your first home,
+              searching for an investment, or selling your property, I strive to
+              make every step of the process smooth, transparent, and
+              stress-free.
             </p>
             <p className="text-[#8B7355] leading-relaxed mb-4">
-              My journey began in [Your City], where I quickly developed a deep
-              understanding of the local market. Since then, I have closed over
-              500 transactions totaling more than $2 billion in sales volume.
+              With a strong understanding of the Cebu real estate market, I
+              specialize in connecting clients with quality residential,
+              commercial, and investment properties that match their goals and
+              lifestyle. I believe that real estate is more than just buying and
+              selling—it's about building relationships, earning trust, and
+              helping people make informed decisions.
             </p>
             <p className="text-[#8B7355] leading-relaxed mb-8">
-              My approach is simple: treat every client like family, provide
-              honest counsel, and never stop until we achieve the best possible
-              outcome. Whether you are buying your first luxury home or selling
-              a prized estate, I am here to guide you every step of the way.
+              I take pride in providing honest advice, prompt communication, and
+              personalized service tailored to each client's unique needs. My
+              commitment is to deliver a professional experience while ensuring
+              that every client feels supported from the initial inquiry to the
+              final transaction.
+            </p>
+            <p className="text-[#8B7355] leading-relaxed mb-8">
+              If you're looking for a reliable real estate partner in Cebu, I'd
+              be honored to help you find the perfect property or maximize the
+              value of your investment.
             </p>
 
             {/* License & Credentials */}
             <div className="border-t border-[#E2D9C8] pt-6 flex flex-wrap gap-6">
               <div>
                 <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
-                  License
+                  Accreditation No.
                 </p>
-                <p className="font-semibold text-[#1A1A1A]"># 00000000</p>
+                <p className="font-semibold text-[#1A1A1A]">#29866</p>
+              </div>
+              <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
+                  DSHUD
+                </p>
+                <p className="font-semibold text-[#1A1A1A]">#R7-A-01/26-8595</p>
               </div>
               <div>
                 <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
                   Brokerage
                 </p>
-                <p className="font-semibold text-[#1A1A1A]">[Brokerage Name]</p>
+                <p className="font-semibold text-[#1A1A1A]">
+                  Dreamers House Next Level Realty and Training Services
+                </p>
               </div>
               <div>
                 <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
                   Member Since
                 </p>
-                <p className="font-semibold text-[#1A1A1A]">2009</p>
+                <p className="font-semibold text-[#1A1A1A]">2025</p>
               </div>
             </div>
           </div>
