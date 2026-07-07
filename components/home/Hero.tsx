@@ -11,14 +11,14 @@ export default function Hero() {
 
       <div className="relative z-10 text-center text-white px-4 max-w-5xl mx-auto">
         <p className="text-sm tracking-[0.3em] uppercase text-[#C9A96E] mb-4">
-          Luxury Real Estate
+          Real Estate
         </p>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
           Find Your Dream Home
         </h1>
         <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-          Specializing in luxury properties across Cebu City. Let us help you
-          find the perfect home.
+          Specializing in properties across Cebu City. Let us help you find the
+          perfect home.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

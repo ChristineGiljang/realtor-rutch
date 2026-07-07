@@ -31,7 +31,7 @@ export default function AboutPage() {
             About Me
           </p>
           <h1 className="text-5xl md:text-6xl font-bold max-w-2xl">
-            Your Trusted Luxury Real Estate Expert
+            Your Trusted Real Estate Expert
           </h1>
         </div>
       </div>

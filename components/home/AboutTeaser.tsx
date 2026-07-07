@@ -23,14 +23,20 @@ export default function AboutTeaser() {
               Your Trusted Real Estate Expert
             </h2>
             <p className="text-[#F5F0E8]/70 leading-relaxed mb-4">
-              With over 15 years of experience in luxury real estate, I have
-              helped hundreds of clients find their dream homes across the most
-              prestigious neighborhoods.
+              Hi, I'm a young and passionate real estate agent based in Cebu,
+              dedicated to helping clients find the right property with
+              confidence and ease. Whether you're buying your first home,
+              searching for an investment, or selling your property, I strive to
+              make every step of the process smooth, transparent, and
+              stress-free.
             </p>
             <p className="text-[#F5F0E8]/70 leading-relaxed mb-8">
-              My deep market knowledge, extensive network, and commitment to
-              client satisfaction sets me apart. Whether buying or selling, I am
-              dedicated to achieving the best results for you.
+              With a strong understanding of the Cebu real estate market, I
+              specialize in connecting clients with quality residential,
+              commercial, and investment properties that match their goals and
+              lifestyle. I believe that real estate is more than just buying and
+              selling—it's about building relationships, earning trust, and
+              helping people make informed decisions.
             </p>
             <Link
               href="/about"
