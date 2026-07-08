@@ -50,15 +50,15 @@ export default function Footer() {
                 href="tel:+63 9817413929"
                 className="hover:text-[#C9A96E] transition"
               >
-                +63 981 741 3929
+                +639817413929
               </a>
               <a
                 href="mailto:agent@email.com"
                 className="hover:text-[#C9A96E] transition"
               >
-                rutchilynllagoso@gmail.com
+                rldreamspaces@gmail.com
               </a>
-              <p>License # 00000000</p>
+              <p>Accreditation No. 29866</p>
             </div>
           </div>
         </div>
