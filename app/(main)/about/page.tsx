@@ -8,17 +8,17 @@ export default function AboutPage() {
     {
       title: "Expertise",
       description:
-        "15+ years of deep market knowledge across luxury neighborhoods gives my clients a decisive edge.",
+        "Deep market knowledge across Cebu's best neighborhoods gives my clients a decisive edge.",
     },
     {
       title: "Results",
       description:
-        "I don't just list homes — I sell them. My properties consistently close above asking price.",
+        "I don't just list homes — I sell them. My properties consistently close at the best possible price.",
     },
     {
       title: "Service",
       description:
-        "Available 7 days a week. From first showing to closing day, I'm with you every step of the way.",
+        "Available 7 days a week. From first inquiry to final transaction, I'm with you every step of the way.",
     },
   ];
 
@@ -43,7 +43,7 @@ export default function AboutPage() {
           <div className="relative h-[600px] overflow-hidden bg-[#E2D9C8]">
             <img
               src="/images/agent2.jpeg"
-              alt="Agent Name"
+              alt="Rutchilyn Llagoso"
               className="w-full h-full object-cover"
             />
           </div>
@@ -54,7 +54,7 @@ export default function AboutPage() {
               My Story
             </p>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#1A1A1A]">
-              Agent Name
+              Rutchilyn Llagoso
             </h2>
             <p className="text-[#8B7355] leading-relaxed mb-4">
               Hi, I'm a young and passionate real estate agent based in Cebu,
@@ -69,7 +69,7 @@ export default function AboutPage() {
               specialize in connecting clients with quality residential,
               commercial, and investment properties that match their goals and
               lifestyle. I believe that real estate is more than just buying and
-              selling—it's about building relationships, earning trust, and
+              selling — it's about building relationships, earning trust, and
               helping people make informed decisions.
             </p>
             <p className="text-[#8B7355] leading-relaxed mb-8">
@@ -79,39 +79,38 @@ export default function AboutPage() {
               that every client feels supported from the initial inquiry to the
               final transaction.
             </p>
-            <p className="text-[#8B7355] leading-relaxed mb-8">
-              If you're looking for a reliable real estate partner in Cebu, I'd
-              be honored to help you find the perfect property or maximize the
-              value of your investment.
-            </p>
 
-            {/* License & Credentials */}
-            <div className="border-t border-[#E2D9C8] pt-6 flex flex-wrap gap-6">
-              <div>
-                <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
-                  Accreditation No.
-                </p>
-                <p className="font-semibold text-[#1A1A1A]">#29866</p>
-              </div>
-              <div>
-                <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
-                  DSHUD
-                </p>
-                <p className="font-semibold text-[#1A1A1A]">#R7-A-01/26-8595</p>
-              </div>
-              <div>
-                <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
-                  Brokerage
-                </p>
-                <p className="font-semibold text-[#1A1A1A]">
-                  Dreamers House Next Level Realty and Training Services
-                </p>
-              </div>
-              <div>
-                <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
-                  Member Since
-                </p>
-                <p className="font-semibold text-[#1A1A1A]">2025</p>
+            {/* Credentials */}
+            <div className="border-t border-[#E2D9C8] pt-6">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                <div>
+                  <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
+                    Accreditation No.
+                  </p>
+                  <p className="font-semibold text-[#1A1A1A]">#29866</p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
+                    DSHUD
+                  </p>
+                  <p className="font-semibold text-[#1A1A1A]">
+                    #R7-A-01/26-8595
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
+                    Brokerage
+                  </p>
+                  <p className="font-semibold text-[#1A1A1A]">
+                    Dreamers House Next Level Realty and Training Services
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
+                    Member Since
+                  </p>
+                  <p className="font-semibold text-[#1A1A1A]">2025</p>
+                </div>
               </div>
             </div>
           </div>
