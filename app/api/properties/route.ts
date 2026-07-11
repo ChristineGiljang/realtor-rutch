@@ -55,15 +55,7 @@ export async function POST(request: NextRequest) {
       .replace(/[^a-z0-9-]/g, "");
 
     // Validate required fields
-    if (
-      !title ||
-      !description ||
-      !price ||
-      !address ||
-      !city ||
-      !state ||
-      !zip
-    ) {
+    if (!title || !description || !price || !address || !city || !zip) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
