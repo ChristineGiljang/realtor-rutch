@@ -40,7 +40,7 @@ export default function ContactPage() {
                     href="tel:+63 9817413929"
                     className="text-[#1A1A1A] font-semibold hover:text-[#C9A96E] transition"
                   >
-                    +63 981 741 3929
+                    +639817413929
                   </a>
                 </div>
               </div>
@@ -57,7 +57,7 @@ export default function ContactPage() {
                     href="mailto:rutchilynllagoso@gmail.com"
                     className="text-[#1A1A1A] font-semibold hover:text-[#C9A96E] transition"
                   >
-                    rutchilynllagoso@gmail.com
+                    rldreamspaces@gmail.com
                   </a>
                 </div>
               </div>
@@ -71,9 +71,10 @@ export default function ContactPage() {
                     Office
                   </p>
                   <p className="text-[#1A1A1A] font-semibold">
-                    YDH Realty Services Inc
+                    Next Level Realty and Training Services
                     <br />
-                    Room#4, 2F, Lugay Bldg, M. L. Quezon Ave, Mandaue, Cebu
+                    Unit 2 I-J Baseline Residences, Juana Osmeñ Street Capitol
+                    Site, Cebu City 6000,
                   </p>
                 </div>
               </div>
@@ -87,9 +88,9 @@ export default function ContactPage() {
                     Hours
                   </p>
                   <p className="text-[#1A1A1A] font-semibold">
-                    Mon – Fri: 9am – 6pm
+                    Available for inquiries 24/7
                     <br />
-                    Sat – Sun: By appointment
+                    Property viewings: By appointment
                   </p>
                 </div>
               </div>
