@@ -3,7 +3,8 @@ import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://yourdomain.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://realtor-rutch.com";
 
   // Static pages
   const staticPages = [
