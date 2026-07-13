@@ -1,10 +1,55 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import PropertyGallery from "@/components/listings/PropertyGallery";
 import ContactForm from "@/components/listings/ContactForm";
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  const property = await db.property.findUnique({
+    where: { slug },
+    include: {
+      images: { orderBy: { order: "asc" }, take: 1 },
+    },
+  });
+
+  if (!property) {
+    return { title: "Listing Not Found" };
+  }
+
+  const priceLabel = `₱${property.price.toLocaleString()}${
+    property.listingCategory === "rent" ? "/mo" : ""
+  }`;
+
+  const title = `${property.title} | ${priceLabel} — ${property.city}`;
+  const description = `${property.beds} bed, ${property.baths} bath ${property.type} in ${property.city}, ${property.state}. ${property.description.slice(0, 140)}`;
+
+  const ogImage = property.images[0]?.url;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/listings/${property.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
 }
 
 export default async function PropertyDetailPage({ params }: Props) {
