@@ -1,16 +1,17 @@
-<svg width="320" height="80" viewBox="0 0 320 80" xmlns="http://www.w3.org/2000/svg">
+<svg width="380" height="100" viewBox="0 0 380 100" xmlns="http://www.w3.org/2000/svg">
   <!-- House mark -->
-  <g transform="translate(0, 14)">
-    <path d="M26 4 L48 22 L48 50 L34 50 L34 34 L18 34 L18 50 L4 50 L4 22 Z"
-          fill="none" stroke="#C9A96E" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-    <rect x="21" y="34" width="10" height="16" fill="#C9A96E"/>
+  <g transform="translate(0, 8)">
+    <path d="M32 5 L60 27.5 L60 62.5 L42.5 62.5 L42.5 42.5 L22.5 42.5 L22.5 62.5 L5 62.5 L5 27.5 Z"
+          fill="none" stroke="#C9A96E" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+    <rect x="26" y="42.5" width="13" height="20" fill="#C9A96E"/>
   </g>
-
+ 
   <!-- Wordmark -->
-  <text x="66" y="38" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#1A1A1A" letter-spacing="0.5">
+  <text x="80" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="#1A1A1A" letter-spacing="0.5">
     Realtor Rutch
   </text>
-  <text x="66" y="58" font-family="Arial, Helvetica, sans-serif" font-size="11" letter-spacing="4" fill="#8B7355">
+  <text x="81" y="76" font-family="Arial, Helvetica, sans-serif" font-size="12" letter-spacing="4" fill="#8B7355">
     CEBU REAL ESTATE
   </text>
 </svg>
+ 
