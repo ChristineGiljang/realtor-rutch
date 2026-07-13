@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Menu, X, Phone } from "lucide-react";
 
@@ -11,11 +12,15 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-[#F5F0E8]/95 backdrop-blur-sm border-b border-[#E2D9C8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link
-            href="/"
-            className="text-[#1A1A1A] text-2xl font-bold tracking-widest uppercase"
-          >
-            RUTCHILYN LLAGOSO
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/images/logo.svg"
+              alt="Realtor Rutch - Cebu Real Estate"
+              width={220}
+              height={55}
+              priority
+              className="h-12 w-auto"
+            />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
