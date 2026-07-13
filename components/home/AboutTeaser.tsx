@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AboutTeaser() {
   return (
@@ -7,10 +8,12 @@ export default function AboutTeaser() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           {/* Image */}
           <div className="relative h-[500px] overflow-hidden">
-            <img
-              src="/images/agent.JPEG"
-              alt="Agent Name"
-              className="w-full h-full object-cover"
+            <Image
+              src="https://res.cloudinary.com/drczxmxfb/image/upload/f_auto,q_auto,w_1000/v1783941551/agent_o1qnqf.jpg"
+              alt="Rutchilyn Llagoso, Cebu real estate agent"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
             />
           </div>
 
