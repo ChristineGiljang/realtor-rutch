@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import ListingsFilters from "@/components/listings/ListingsFilters";
+
+export const metadata: Metadata = {
+  title: "Property Listings",
+  description:
+    "Browse houses, lots, and luxury properties for sale or rent in Cebu City with Realtor Rutch. Filter by price, bedrooms, and property type.",
+};
 
 interface Props {
   searchParams: Promise<{
