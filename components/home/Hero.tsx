@@ -14,11 +14,11 @@ export default function Hero() {
           Real Estate
         </p>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-          Find Your Dream Home
+          Find Your House and Lot in Cebu
         </h1>
         <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-          Specializing in properties across Cebu City. Let us help you find the
-          perfect home.
+          Browse houses and lots for sale and rent across Cebu City and nearby
+          areas. Let us help you find the perfect property.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
