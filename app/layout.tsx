@@ -9,9 +9,13 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Agent Name | Luxury Real Estate",
+  metadataBase: new URL("https://realtor-rutch.com"),
+  title: {
+    default: "Realtor Rutch | Cebu City Real Estate",
+    template: "%s | Realtor Rutch",
+  },
   description:
-    "Luxury real estate specialist serving [Your City] and surrounding areas.",
+    "Realtor Rutch — real estate specialist serving Cebu City and surrounding areas. Browse houses, lots, and luxury properties for sale or rent.",
 };
 
 export default function RootLayout({
