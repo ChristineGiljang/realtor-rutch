@@ -65,8 +65,49 @@ export default async function PropertyDetailPage({ params }: Props) {
 
   if (!property) notFound();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: property.title,
+    description: property.description,
+    url: `https://realtor-rutch.com/listings/${property.slug}`,
+    image: property.images.map((img) => img.url),
+    datePosted: property.createdAt,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: property.address,
+      addressLocality: property.city,
+      addressRegion: property.state || undefined,
+      postalCode: property.zip,
+      addressCountry: "PH",
+    },
+    numberOfBedrooms: property.beds,
+    numberOfBathroomsTotal: property.baths,
+    floorSize: property.sqft
+      ? {
+          "@type": "QuantitativeValue",
+          value: property.sqft,
+          unitCode: "MTK",
+        }
+      : undefined,
+    offers: {
+      "@type": "Offer",
+      price: property.price,
+      priceCurrency: "PHP",
+      availability: "https://schema.org/InStock",
+      businessFunction:
+        property.listingCategory === "rent"
+          ? "https://schema.org/LeaseOut"
+          : "https://schema.org/Sell",
+    },
+  };
+
   return (
     <div className="pt-20 min-h-screen bg-[#F5F0E8] text-[#1A1A1A]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Gallery */}
       <PropertyGallery images={property.images} title={property.title} />
 
