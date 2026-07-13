@@ -73,23 +73,27 @@ export default async function PropertyDetailPage({ params }: Props) {
     url: `https://realtor-rutch.com/listings/${property.slug}`,
     image: property.images.map((img) => img.url),
     datePosted: property.createdAt,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: property.address,
-      addressLocality: property.city,
-      addressRegion: property.state || undefined,
-      postalCode: property.zip,
-      addressCountry: "PH",
+    about: {
+      "@type": "SingleFamilyResidence",
+      name: property.title,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: property.address,
+        addressLocality: property.city,
+        addressRegion: property.state || undefined,
+        postalCode: property.zip,
+        addressCountry: "PH",
+      },
+      numberOfBedrooms: property.beds,
+      numberOfBathroomsTotal: property.baths,
+      floorSize: property.sqft
+        ? {
+            "@type": "QuantitativeValue",
+            value: property.sqft,
+            unitCode: "MTK",
+          }
+        : undefined,
     },
-    numberOfBedrooms: property.beds,
-    numberOfBathroomsTotal: property.baths,
-    floorSize: property.sqft
-      ? {
-          "@type": "QuantitativeValue",
-          value: property.sqft,
-          unitCode: "MTK",
-        }
-      : undefined,
     offers: {
       "@type": "Offer",
       price: property.price,
@@ -97,8 +101,8 @@ export default async function PropertyDetailPage({ params }: Props) {
       availability: "https://schema.org/InStock",
       businessFunction:
         property.listingCategory === "rent"
-          ? "https://schema.org/LeaseOut"
-          : "https://schema.org/Sell",
+          ? "http://purl.org/goodrelations/v1#LeaseOut"
+          : "http://purl.org/goodrelations/v1#Sell",
     },
   };
 
