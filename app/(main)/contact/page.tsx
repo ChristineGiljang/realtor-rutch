@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import ContactPageForm from "@/components/contact/ContactPageForm";
+
+export const metadata: Metadata = {
+  title: "Contact",
+  description:
+    "Get in touch with Rutchilyn Llagoso for real estate inquiries in Cebu City. Available for buying, selling, and property viewing appointments.",
+};
 
 export default function ContactPage() {
   return (
