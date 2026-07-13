@@ -12,14 +12,14 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-[#F5F0E8]/95 backdrop-blur-sm border-b border-[#E2D9C8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center flex-shrink-0">
             <Image
               src="/images/logo.svg"
               alt="Realtor Rutch - Cebu Real Estate"
-              width={220}
-              height={55}
+              width={380}
+              height={100}
               priority
-              className="h-16 w-auto"
+              className="h-14 w-auto"
             />
           </Link>
 
