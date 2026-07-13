@@ -16,7 +16,7 @@ export default function Navbar() {
             <Image
               src="/images/logo.svg"
               alt="Realtor Rutch - Cebu Real Estate"
-              width={380}
+              width={540}
               height={100}
               priority
               className="h-14 w-auto"
