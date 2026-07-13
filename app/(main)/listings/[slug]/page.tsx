@@ -27,7 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }`;
 
   const title = `${property.title} | ${priceLabel} — ${property.city}`;
-  const description = `${property.beds} bed, ${property.baths} bath ${property.type} in ${property.city}, ${property.state}. ${property.description.slice(0, 140)}`;
+  const location = [property.city, property.state].filter(Boolean).join(", ");
+  const description = `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. ${property.description.slice(0, 140)}`;
 
   const ogImage = property.images[0]?.url;
 
@@ -99,7 +100,9 @@ export default async function PropertyDetailPage({ params }: Props) {
                 {property.title}
               </h1>
               <p className="text-[#8B7355] mb-4">
-                {property.address}, {property.city}, {property.state}{" "}
+                {[property.address, property.city, property.state]
+                  .filter(Boolean)
+                  .join(", ")}{" "}
                 {property.zip}
               </p>
               <p className="text-4xl font-bold text-[#C9A96E]">
