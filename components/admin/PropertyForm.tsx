@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import imageCompression from "browser-image-compression";
 
 export default function PropertyForm() {
   const router = useRouter();
@@ -9,12 +10,33 @@ export default function PropertyForm() {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [compressing, setCompressing] = useState(false);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setImages(files);
-    const urls = files.map((f) => URL.createObjectURL(f));
-    setPreviews(urls);
+    setCompressing(true);
+
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFiles = await Promise.all(
+        files.map((file) => imageCompression(file, options)),
+      );
+      setImages(compressedFiles);
+      const urls = compressedFiles.map((f) => URL.createObjectURL(f));
+      setPreviews(urls);
+    } catch (err) {
+      console.error("Compression error:", err);
+      setImages(files);
+      const urls = files.map((f) => URL.createObjectURL(f));
+      setPreviews(urls);
+    } finally {
+      setCompressing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -91,7 +113,6 @@ export default function PropertyForm() {
               className={inputClass}
             />
           </div>
-
           <div className="md:col-span-2">
             <label className={labelClass}>Payment Terms</label>
             <textarea
@@ -233,7 +254,7 @@ export default function PropertyForm() {
             />
           </div>
           <div>
-            <label className={labelClass}>Lot Size (sqft)</label>
+            <label className={labelClass}>Lot Size (sqm)</label>
             <input
               name="lotSize"
               type="number"
@@ -304,6 +325,11 @@ export default function PropertyForm() {
             onChange={handleImageChange}
             className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-white file:text-[#1A1A1A] file:text-sm file:cursor-pointer hover:file:bg-[#F5F0E8]"
           />
+          {compressing && (
+            <p className="text-[#8B7355] text-sm mt-2">
+              Compressing images, please wait...
+            </p>
+          )}
         </div>
 
         {previews.length > 0 && (
@@ -325,7 +351,7 @@ export default function PropertyForm() {
       <div className="flex items-center gap-4 pt-4">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || compressing}
           className="bg-[#1A1A1A] text-[#F5F0E8] text-sm tracking-widest uppercase px-8 py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Saving..." : "Create Listing"}
