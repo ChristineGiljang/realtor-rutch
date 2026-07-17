@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import imageCompression from "browser-image-compression";
 
 interface Image {
   id: string;
@@ -51,11 +52,31 @@ export default function EditPropertyForm({ property }: Props) {
   const [existingImages, setExistingImages] = useState<Image[]>(
     property.images,
   );
+  const [compressing, setCompressing] = useState(false);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setNewImages(files);
-    setNewPreviews(files.map((f) => URL.createObjectURL(f)));
+    setCompressing(true);
+
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFiles = await Promise.all(
+        files.map((file) => imageCompression(file, options)),
+      );
+      setNewImages(compressedFiles);
+      setNewPreviews(compressedFiles.map((f) => URL.createObjectURL(f)));
+    } catch (err) {
+      console.error("Compression error:", err);
+      setNewImages(files);
+      setNewPreviews(files.map((f) => URL.createObjectURL(f)));
+    } finally {
+      setCompressing(false);
+    }
   };
 
   const handleDeleteImage = async (imageId: string) => {
@@ -106,7 +127,7 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* Basic Info */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8]">
+        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Basic Info
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -138,7 +159,6 @@ export default function EditPropertyForm({ property }: Props) {
               className={inputClass}
             />
           </div>
-
           <div className="md:col-span-2">
             <label className={labelClass}>Payment Terms</label>
             <textarea
@@ -202,7 +222,7 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* Location */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8]">
+        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Location
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -258,7 +278,7 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* Details */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8]">
+        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Property Details
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -284,7 +304,7 @@ export default function EditPropertyForm({ property }: Props) {
             />
           </div>
           <div>
-            <label className={labelClass}>Sqft *</label>
+            <label className={labelClass}>Sqm *</label>
             <input
               name="sqft"
               type="number"
@@ -294,7 +314,7 @@ export default function EditPropertyForm({ property }: Props) {
             />
           </div>
           <div>
-            <label className={labelClass}>Lot Size</label>
+            <label className={labelClass}>Lot Size (sqm)</label>
             <input
               name="lotSize"
               type="number"
@@ -326,7 +346,7 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* Flags */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8]">
+        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Flags
         </h2>
         <div className="flex gap-8">
@@ -355,7 +375,7 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* Existing Images */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8]">
+        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Current Images
         </h2>
         {existingImages.length === 0 ? (
@@ -387,7 +407,7 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* New Images */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8]">
+        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Add New Images
         </h2>
         <input
@@ -397,6 +417,11 @@ export default function EditPropertyForm({ property }: Props) {
           onChange={handleImageChange}
           className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-white file:text-[#1A1A1A] file:text-sm file:cursor-pointer hover:file:bg-[#F5F0E8]"
         />
+        {compressing && (
+          <p className="text-[#8B7355] text-sm mt-2">
+            Compressing images, please wait...
+          </p>
+        )}
         {newPreviews.length > 0 && (
           <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-6">
             {newPreviews.map((src, i) => (
@@ -416,7 +441,7 @@ export default function EditPropertyForm({ property }: Props) {
       <div className="flex items-center gap-4 pt-4">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || compressing}
           className="bg-[#1A1A1A] text-[#F5F0E8] text-sm tracking-widest uppercase px-8 py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Changes"}
