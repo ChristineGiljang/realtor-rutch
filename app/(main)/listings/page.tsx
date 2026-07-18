@@ -3,6 +3,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import ListingsFilters from "@/components/listings/ListingsFilters";
 
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Property Listings",
   description:
