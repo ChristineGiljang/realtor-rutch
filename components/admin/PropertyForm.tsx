@@ -12,6 +12,7 @@ export default function PropertyForm() {
   const [error, setError] = useState("");
   const [compressing, setCompressing] = useState(false);
   const [parsed, setParsed] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
@@ -122,8 +123,8 @@ export default function PropertyForm() {
     setCompressing(true);
 
     const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 1920,
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 1280,
       useWebWorker: true,
     };
 
@@ -131,29 +132,35 @@ export default function PropertyForm() {
       const compressedFiles = await Promise.all(
         files.map((file) => imageCompression(file, options)),
       );
-      setImages(compressedFiles);
+      setImages((prev) => [...prev, ...compressedFiles]);
       const urls = compressedFiles.map((f) => URL.createObjectURL(f));
-      setPreviews(urls);
+      setPreviews((prev) => [...prev, ...urls]);
     } catch (err) {
       console.error("Compression error:", err);
-      setImages(files);
+      setImages((prev) => [...prev, ...files]);
       const urls = files.map((f) => URL.createObjectURL(f));
-      setPreviews(urls);
+      setPreviews((prev) => [...prev, ...urls]);
     } finally {
       setCompressing(false);
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setUploadProgress(0);
 
     const form = e.currentTarget;
     const formData = new FormData(form);
-    images.forEach((img) => formData.append("images", img));
 
     try {
+      // Step 1: Create property without images
       const res = await fetch("/api/properties", {
         method: "POST",
         body: formData,
@@ -162,12 +169,28 @@ export default function PropertyForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
+      const propertyId = data.id;
+
+      // Step 2: Upload images one by one
+      for (let i = 0; i < images.length; i++) {
+        setUploadProgress(i + 1);
+        const imgFormData = new FormData();
+        imgFormData.append("image", images[i]);
+        imgFormData.append("order", String(i));
+
+        await fetch(`/api/properties/${propertyId}/images`, {
+          method: "POST",
+          body: imgFormData,
+        });
+      }
+
       router.push("/admin/listings");
       router.refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -204,7 +227,6 @@ export default function PropertyForm() {
             then save.
           </p>
         )}
-
         <details className="mt-4">
           <summary className="text-xs tracking-widest uppercase text-[#C9A96E] cursor-pointer">
             View Template Format
@@ -513,15 +535,38 @@ Reservation: 50000
             </p>
           )}
         </div>
+
         {previews.length > 0 && (
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-6">
+          <div className="mt-4 mb-2">
+            <p className="text-[#8B7355] text-sm">
+              {previews.length} photo{previews.length > 1 ? "s" : ""} selected —
+              hover to remove
+            </p>
+          </div>
+        )}
+
+        {previews.length > 0 && (
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-2">
             {previews.map((src, i) => (
-              <div key={i} className="relative aspect-square overflow-hidden">
+              <div
+                key={i}
+                className="relative group aspect-square overflow-hidden"
+              >
                 <img
                   src={src}
                   alt={`Preview ${i + 1}`}
                   className="w-full h-full object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full font-bold"
+                >
+                  ×
+                </button>
+                <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                  {i + 1}
+                </div>
               </div>
             ))}
           </div>
@@ -539,7 +584,9 @@ Reservation: 50000
         </button>
         {loading && (
           <p className="text-[#8B7355] text-sm">
-            Uploading images, please wait...
+            {uploadProgress > 0
+              ? `Uploading image ${uploadProgress} of ${images.length}...`
+              : "Saving listing..."}
           </p>
         )}
       </div>
