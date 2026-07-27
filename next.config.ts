@@ -12,6 +12,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "realtor-rutch-iota.vercel.app",
+          },
+        ],
+        destination: "https://realtor-rutch.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
