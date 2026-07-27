@@ -12,7 +12,6 @@ export default function PropertyForm() {
   const [error, setError] = useState("");
   const [compressing, setCompressing] = useState(false);
   const [parsed, setParsed] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
@@ -154,13 +153,12 @@ export default function PropertyForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setUploadProgress(0);
 
     const form = e.currentTarget;
     const formData = new FormData(form);
+    images.forEach((img) => formData.append("images", img));
 
     try {
-      // Step 1: Create property without images
       const res = await fetch("/api/properties", {
         method: "POST",
         body: formData,
@@ -169,28 +167,12 @@ export default function PropertyForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
-      const propertyId = data.id;
-
-      // Step 2: Upload images one by one
-      for (let i = 0; i < images.length; i++) {
-        setUploadProgress(i + 1);
-        const imgFormData = new FormData();
-        imgFormData.append("image", images[i]);
-        imgFormData.append("order", String(i));
-
-        await fetch(`/api/properties/${propertyId}/images`, {
-          method: "POST",
-          body: imgFormData,
-        });
-      }
-
       router.push("/admin/listings");
       router.refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -584,9 +566,7 @@ Reservation: 50000
         </button>
         {loading && (
           <p className="text-[#8B7355] text-sm">
-            {uploadProgress > 0
-              ? `Uploading image ${uploadProgress} of ${images.length}...`
-              : "Saving listing..."}
+            Uploading images, please wait...
           </p>
         )}
       </div>
