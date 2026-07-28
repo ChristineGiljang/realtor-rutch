@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ContactPageForm from "@/components/contact/ContactPageForm";
+import { sendGAEvent } from "@next/third-parties/google";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -43,8 +44,14 @@ export default function ContactPage() {
                   <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
                     Phone
                   </p>
+
                   <a
-                    href="tel:+63 9817413929"
+                    href="tel:+639817413929"
+                    onClick={() =>
+                      sendGAEvent("event", "phone_click", {
+                        location: "contact_page",
+                      })
+                    }
                     className="text-[#1A1A1A] font-semibold hover:text-[#C9A96E] transition"
                   >
                     +639817413929
@@ -60,8 +67,14 @@ export default function ContactPage() {
                   <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
                     Email
                   </p>
+
                   <a
-                    href="mailto:rutchilynllagoso@gmail.com"
+                    href="mailto:rldreamspaces@gmail.com"
+                    onClick={() =>
+                      sendGAEvent("event", "email_click", {
+                        location: "contact_page",
+                      })
+                    }
                     className="text-[#1A1A1A] font-semibold hover:text-[#C9A96E] transition"
                   >
                     rldreamspaces@gmail.com

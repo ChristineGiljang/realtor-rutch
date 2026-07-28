@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { sendGAEvent } from "@next/third-parties/google";
 
 interface Props {
   propertyId: string;
@@ -37,6 +38,14 @@ export default function ContactForm({ propertyId, propertyTitle }: Props) {
       });
 
       if (!res.ok) throw new Error("Failed to send inquiry");
+
+      sendGAEvent("event", "form_submit", {
+        form_type: "listing_inquiry",
+        property_id: propertyId,
+        property_title: propertyTitle,
+        intent: body.intent,
+      });
+
       setSubmitted(true);
     } catch (err: any) {
       setError(err.message);

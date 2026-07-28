@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { sendGAEvent } from "@next/third-parties/google";
 
 export default function ContactPageForm() {
   const [loading, setLoading] = useState(false);
@@ -38,6 +39,13 @@ export default function ContactPageForm() {
       });
 
       if (!res.ok) throw new Error("Failed to send message");
+
+      sendGAEvent("event", "form_submit", {
+        form_type: "general_contact",
+        intent: body.intent,
+        timeline: body.timeline,
+      });
+
       setSubmitted(true);
     } catch (err: any) {
       setError(err.message);
