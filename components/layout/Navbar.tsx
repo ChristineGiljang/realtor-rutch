@@ -65,7 +65,7 @@ export default function Navbar() {
 
             <a
               href="tel:+639817413929"
-              className="flex items-center gap-2 bg-[#1A1A1A] text-[#F5F0E8] px-4 py-2 text-sm tracking-wider uppercase font-semibold hover:bg-[#C9A96E] transition"
+              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 text-sm tracking-wider uppercase font-semibold hover:bg-green-700 transition"
             >
               <Phone size={14} />
               <span>+639817413929</span>
