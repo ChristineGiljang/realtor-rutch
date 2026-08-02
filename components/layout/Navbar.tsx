@@ -12,15 +12,29 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-[#F5F0E8]/95 backdrop-blur-sm border-b border-[#E2D9C8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center flex-shrink-0">
+          <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/images/logo.svg"
-              alt="Realtor Rutch - Cebu Real Estate"
-              width={540}
-              height={100}
+              src="/images/favicon.png"
+              alt="Realtor Rutch"
+              width={40}
+              height={40}
               priority
-              className="h-14 w-auto"
+              className="h-10 w-10 object-contain"
             />
+            <div>
+              <p
+                className="text-[#1A1A1A] font-bold text-xl leading-tight"
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+              >
+                Realtor Rutch
+              </p>
+              <p
+                className="text-[#8B7355] text-xs tracking-[0.3em] uppercase"
+                style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
+              >
+                Cebu Real Estate
+              </p>
+            </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

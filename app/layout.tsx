@@ -17,8 +17,15 @@ export const metadata: Metadata = {
   },
   description:
     "Realtor Rutch — real estate specialist serving Cebu City and surrounding areas. Browse houses, lots, and luxury properties for sale or rent.",
+  icons: {
+    icon: [
+      { url: "/images/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/images/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/images/favicon.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/images/favicon.png",
+  },
 };
-
 export default function RootLayout({
   children,
 }: {
@@ -26,7 +33,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${geist.className} bg-black text-white antialiased`}>
+      <body
+        className={`${geist.className} bg-[#F5F0E8] text-[#1A1A1A] antialiased`}
+      >
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />
