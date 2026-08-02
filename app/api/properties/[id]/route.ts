@@ -98,6 +98,18 @@ export async function PATCH(
         slug,
       },
     });
+    // Update existing image order
+    const imageOrder = formData.getAll("imageOrder") as string[];
+    if (imageOrder.length > 0) {
+      await Promise.all(
+        imageOrder.map((id, index) =>
+          db.propertyImage.update({
+            where: { id },
+            data: { order: index },
+          }),
+        ),
+      );
+    }
 
     // Handle new image uploads
     const images = formData.getAll("images") as File[];

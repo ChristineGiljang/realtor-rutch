@@ -53,14 +53,16 @@ export default function EditPropertyForm({ property }: Props) {
     property.images,
   );
   const [compressing, setCompressing] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragType, setDragType] = useState<"existing" | "new" | null>(null);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setCompressing(true);
 
     const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 1920,
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 1280,
       useWebWorker: true,
     };
 
@@ -68,12 +70,18 @@ export default function EditPropertyForm({ property }: Props) {
       const compressedFiles = await Promise.all(
         files.map((file) => imageCompression(file, options)),
       );
-      setNewImages(compressedFiles);
-      setNewPreviews(compressedFiles.map((f) => URL.createObjectURL(f)));
+      setNewImages((prev) => [...prev, ...compressedFiles]);
+      setNewPreviews((prev) => [
+        ...prev,
+        ...compressedFiles.map((f) => URL.createObjectURL(f)),
+      ]);
     } catch (err) {
       console.error("Compression error:", err);
-      setNewImages(files);
-      setNewPreviews(files.map((f) => URL.createObjectURL(f)));
+      setNewImages((prev) => [...prev, ...files]);
+      setNewPreviews((prev) => [
+        ...prev,
+        ...files.map((f) => URL.createObjectURL(f)),
+      ]);
     } finally {
       setCompressing(false);
     }
@@ -85,6 +93,36 @@ export default function EditPropertyForm({ property }: Props) {
     setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
   };
 
+  const removeNewImage = (index: number) => {
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
+    setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleExistingDrop = (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    const updated = [...existingImages];
+    updated.splice(dropIndex, 0, updated.splice(dragIndex, 1)[0]);
+    setExistingImages(updated);
+    setDragIndex(null);
+    setDragType(null);
+  };
+
+  const handleNewDrop = (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    const updatedImages = [...newImages];
+    const updatedPreviews = [...newPreviews];
+    updatedImages.splice(dropIndex, 0, updatedImages.splice(dragIndex, 1)[0]);
+    updatedPreviews.splice(
+      dropIndex,
+      0,
+      updatedPreviews.splice(dragIndex, 1)[0],
+    );
+    setNewImages(updatedImages);
+    setNewPreviews(updatedPreviews);
+    setDragIndex(null);
+    setDragType(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -92,6 +130,12 @@ export default function EditPropertyForm({ property }: Props) {
 
     const form = e.currentTarget;
     const formData = new FormData(form);
+
+    // Send reordered existing image IDs
+    existingImages.forEach((img, i) => {
+      formData.append("imageOrder", img.id);
+    });
+
     newImages.forEach((img) => formData.append("images", img));
 
     try {
@@ -375,17 +419,35 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* Existing Images */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+        <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Current Images
         </h2>
+        <p className="text-[#8B7355] text-sm mb-4">
+          Drag to reorder — first image is the cover photo
+        </p>
         {existingImages.length === 0 ? (
           <p className="text-[#8B7355] text-sm">No images uploaded yet.</p>
         ) : (
           <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
-            {existingImages.map((img) => (
+            {existingImages.map((img, i) => (
               <div
                 key={img.id}
-                className="relative group aspect-square overflow-hidden"
+                draggable
+                onDragStart={() => {
+                  setDragIndex(i);
+                  setDragType("existing");
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleExistingDrop(i)}
+                onDragEnd={() => {
+                  setDragIndex(null);
+                  setDragType(null);
+                }}
+                className={`relative group aspect-square overflow-hidden cursor-grab active:cursor-grabbing border-2 transition ${
+                  dragType === "existing" && dragIndex === i
+                    ? "border-[#C9A96E] opacity-50"
+                    : "border-transparent"
+                }`}
               >
                 <img
                   src={img.url}
@@ -395,10 +457,15 @@ export default function EditPropertyForm({ property }: Props) {
                 <button
                   type="button"
                   onClick={() => handleDeleteImage(img.id)}
-                  className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                  className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full"
                 >
                   ×
                 </button>
+                <div
+                  className={`absolute bottom-2 left-2 text-white text-xs px-2 py-1 rounded ${i === 0 ? "bg-[#C9A96E]" : "bg-black/50"}`}
+                >
+                  {i === 0 ? "Cover" : i + 1}
+                </div>
               </div>
             ))}
           </div>
@@ -407,7 +474,7 @@ export default function EditPropertyForm({ property }: Props) {
 
       {/* New Images */}
       <section>
-        <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+        <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
           Add New Images
         </h2>
         <input
@@ -423,17 +490,50 @@ export default function EditPropertyForm({ property }: Props) {
           </p>
         )}
         {newPreviews.length > 0 && (
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-6">
-            {newPreviews.map((src, i) => (
-              <div key={i} className="relative aspect-square overflow-hidden">
-                <img
-                  src={src}
-                  alt={`New ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
+          <>
+            <p className="text-[#8B7355] text-sm mt-4 mb-2">
+              Drag to reorder new images — hover to remove
+            </p>
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-2">
+              {newPreviews.map((src, i) => (
+                <div
+                  key={i}
+                  draggable
+                  onDragStart={() => {
+                    setDragIndex(i);
+                    setDragType("new");
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleNewDrop(i)}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setDragType(null);
+                  }}
+                  className={`relative group aspect-square overflow-hidden cursor-grab active:cursor-grabbing border-2 transition ${
+                    dragType === "new" && dragIndex === i
+                      ? "border-[#C9A96E] opacity-50"
+                      : "border-transparent"
+                  }`}
+                >
+                  <img
+                    src={src}
+                    alt={`New ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(i)}
+                    className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full"
+                  >
+                    ×
+                  </button>
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    {i + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </section>
 
