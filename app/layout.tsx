@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import Script from "next/script";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -34,6 +35,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="nIdREsSgZJJsPQ7AmdquzA"
+          strategy="afterInteractive"
+        />
+      </head>
       <body
         className={`${geist.className} bg-[#F5F0E8] text-[#1A1A1A] antialiased`}
       >
