@@ -107,7 +107,7 @@ export default async function PropertyDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="pt-20 min-h-screen bg-[#F5F0E8] text-[#1A1A1A]">
+    <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -122,7 +122,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {/* Title & Price */}
             <div>
               <div className="flex flex-wrap items-center gap-3 mb-3">
-                <span className="text-xs tracking-widest uppercase bg-[#1A1A1A] text-[#F5F0E8] px-3 py-1 font-semibold">
+                <span className="text-xs tracking-widest uppercase bg-[#1A1A1A] text-[#faf9f6] px-3 py-1 font-semibold">
                   {property.type}
                 </span>
                 <span className="text-xs tracking-widest uppercase bg-[#C9A96E] text-white px-3 py-1 font-semibold">
@@ -172,7 +172,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                 },
                 { label: "Year Built", value: property.yearBuilt ?? "--" },
               ].map((stat) => (
-                <div key={stat.label} className="bg-[#F5F0E8] px-6 py-5">
+                <div key={stat.label} className="bg-[#faf9f6] px-6 py-5">
                   <p className="text-2xl font-bold mb-1 text-[#1A1A1A]">
                     {stat.value}
                   </p>

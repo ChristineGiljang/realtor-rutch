@@ -482,7 +482,7 @@ export default function EditPropertyForm({ property }: Props) {
           accept="image/*"
           multiple
           onChange={handleImageChange}
-          className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-white file:text-[#1A1A1A] file:text-sm file:cursor-pointer hover:file:bg-[#F5F0E8]"
+          className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-white file:text-[#1A1A1A] file:text-sm file:cursor-pointer hover:file:bg-[#faf9f6]"
         />
         {compressing && (
           <p className="text-[#8B7355] text-sm mt-2">
@@ -542,7 +542,7 @@ export default function EditPropertyForm({ property }: Props) {
         <button
           type="submit"
           disabled={loading || compressing}
-          className="bg-[#1A1A1A] text-[#F5F0E8] text-sm tracking-widest uppercase px-8 py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50"
+          className="bg-[#1A1A1A] text-[#faf9f6] text-sm tracking-widest uppercase px-8 py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Changes"}
         </button>

@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="pt-20 min-h-screen bg-[#F5F0E8] text-[#1A1A1A]">
+    <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
       {/* Header */}
-      <div className="bg-[#1A1A1A] text-[#F5F0E8] py-24">
+      <div className="bg-[#1A1A1A] text-[#faf9f6] py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs tracking-[0.3em] uppercase text-[#C9A96E] mb-4">
             Get In Touch

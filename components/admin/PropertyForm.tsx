@@ -201,7 +201,7 @@ export default function PropertyForm() {
           type="file"
           accept=".txt"
           onChange={handleFileUpload}
-          className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-[#1A1A1A] file:text-[#F5F0E8] file:text-sm file:cursor-pointer hover:file:bg-[#C9A96E] file:transition"
+          className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-[#1A1A1A] file:text-[#faf9f6] file:text-sm file:cursor-pointer hover:file:bg-[#C9A96E] file:transition"
         />
         {parsed && (
           <p className="text-green-600 text-sm mt-3">
@@ -213,7 +213,7 @@ export default function PropertyForm() {
           <summary className="text-xs tracking-widest uppercase text-[#C9A96E] cursor-pointer">
             View Template Format
           </summary>
-          <pre className="bg-[#F5F0E8] p-4 text-xs text-[#8B7355] leading-relaxed overflow-x-auto mt-2 whitespace-pre-wrap">{`TITLE: Property Title Here
+          <pre className="bg-[#faf9f6] p-4 text-xs text-[#8B7355] leading-relaxed overflow-x-auto mt-2 whitespace-pre-wrap">{`TITLE: Property Title Here
 PRICE: 5000000
 TYPE: house
 CATEGORY: sale
@@ -509,7 +509,7 @@ Reservation: 50000
             accept="image/*"
             multiple
             onChange={handleImageChange}
-            className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-white file:text-[#1A1A1A] file:text-sm file:cursor-pointer hover:file:bg-[#F5F0E8]"
+            className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-white file:text-[#1A1A1A] file:text-sm file:cursor-pointer hover:file:bg-[#faf9f6]"
           />
           {compressing && (
             <p className="text-[#8B7355] text-sm mt-2">
@@ -560,7 +560,7 @@ Reservation: 50000
         <button
           type="submit"
           disabled={loading || compressing}
-          className="bg-[#1A1A1A] text-[#F5F0E8] text-sm tracking-widest uppercase px-8 py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-[#1A1A1A] text-[#faf9f6] text-sm tracking-widest uppercase px-8 py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Saving..." : "Create Listing"}
         </button>

@@ -173,7 +173,7 @@ export default function ContactPageForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#1A1A1A] text-[#F5F0E8] text-sm tracking-widest uppercase py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50"
+          className="w-full bg-[#1A1A1A] text-[#faf9f6] text-sm tracking-widest uppercase py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50"
         >
           {loading ? "Sending..." : "Send Message"}
         </button>

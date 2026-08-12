@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
+import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from "next/script";
@@ -45,7 +45,7 @@ export default function RootLayout({
       <body
         className={`${geist.className} bg-[#F5F0E8] text-[#1A1A1A] antialiased`}
       >
-        <Navbar />
+        <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
       </body>

@@ -19,7 +19,7 @@ export default async function EditPropertyPage({ params }: Props) {
   if (!property) notFound();
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8] text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="mb-12">
           <p className="text-xs tracking-[0.3em] uppercase text-[#8B7355] mb-3">

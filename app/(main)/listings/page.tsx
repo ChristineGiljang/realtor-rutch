@@ -50,7 +50,7 @@ export default async function ListingsPage({ searchParams }: Props) {
   const activeCategory = category || "all";
 
   return (
-    <div className="pt-20 min-h-screen bg-[#F5F0E8] text-[#1A1A1A]">
+    <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header */}
         <div className="mb-12">
@@ -114,7 +114,7 @@ export default async function ListingsPage({ searchParams }: Props) {
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
-                    <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#F5F0E8] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
+                    <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#faf9f6] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
                       {listing.type}
                     </div>
                     <div className="absolute top-4 right-4 bg-[#C9A96E] text-white text-xs tracking-wider uppercase px-3 py-1 font-semibold">

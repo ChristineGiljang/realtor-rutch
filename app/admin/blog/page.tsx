@@ -2,15 +2,12 @@ export const revalidate = 0;
 
 import { db } from "@/lib/db";
 import Link from "next/link";
-import DeleteButton from "@/components/admin/DeleteButton";
+import DeleteBlogButton from "@/components/admin/DeleteBlogButton";
 import SignOutButton from "@/components/admin/SignOutButton";
 
-export default async function AdminListingsPage() {
-  const properties = await db.property.findMany({
+export default async function AdminBlogPage() {
+  const posts = await db.blogPost.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
-      images: { take: 1, orderBy: { order: "asc" } },
-    },
   });
 
   return (
@@ -22,17 +19,17 @@ export default async function AdminListingsPage() {
             <p className="text-xs tracking-[0.3em] uppercase text-[#8B7355] mb-2">
               Admin
             </p>
-            <h1 className="text-4xl font-bold">Listings</h1>
+            <h1 className="text-4xl font-bold">Blog Posts</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/admin/blog">
+            <Link href="/admin/listings">
               <button className="border border-[#1A1A1A] text-[#1A1A1A] text-sm tracking-widest uppercase px-6 py-3 hover:bg-[#1A1A1A]/5 transition">
-                Blog
+                Listings
               </button>
             </Link>
-            <Link href="/admin/listings/new">
+            <Link href="/admin/blog/new">
               <button className="bg-[#1A1A1A] text-[#faf9f6] text-sm tracking-widest uppercase px-6 py-3 hover:bg-[#C9A96E] transition">
-                + New Listing
+                + New Post
               </button>
             </Link>
             <SignOutButton />
@@ -40,12 +37,12 @@ export default async function AdminListingsPage() {
         </div>
 
         {/* Table */}
-        {properties.length === 0 ? (
+        {posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 border border-[#E2D9C8]">
-            <p className="text-[#8B7355] mb-4">No properties yet.</p>
-            <Link href="/admin/listings/new">
+            <p className="text-[#8B7355] mb-4">No posts yet.</p>
+            <Link href="/admin/blog/new">
               <button className="bg-[#1A1A1A] text-[#faf9f6] text-sm tracking-widest uppercase px-6 py-3 hover:bg-[#C9A96E] transition">
-                Add First Listing
+                Write First Post
               </button>
             </Link>
           </div>
@@ -54,18 +51,16 @@ export default async function AdminListingsPage() {
             {/* Table Header */}
             <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#1A1A1A] text-[#faf9f6] text-xs tracking-widest uppercase">
               <div className="col-span-1">Image</div>
-              <div className="col-span-4">Property</div>
-              <div className="col-span-2">Price</div>
-              <div className="col-span-1">Beds</div>
-              <div className="col-span-1">Type</div>
-              <div className="col-span-1">Status</div>
+              <div className="col-span-5">Title</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-2">Published</div>
               <div className="col-span-2">Actions</div>
             </div>
 
             {/* Table Rows */}
-            {properties.map((property, index) => (
+            {posts.map((post, index) => (
               <div
-                key={property.id}
+                key={post.id}
                 className={`grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-[#E2D9C8] hover:bg-[#EDE8DF] transition ${
                   index % 2 === 0 ? "bg-[#faf9f6]" : "bg-[#FAF7F2]"
                 }`}
@@ -73,10 +68,10 @@ export default async function AdminListingsPage() {
                 {/* Image */}
                 <div className="col-span-1">
                   <div className="w-12 h-12 overflow-hidden">
-                    {property.images[0] ? (
+                    {post.coverImage ? (
                       <img
-                        src={property.images[0].url}
-                        alt={property.title}
+                        src={post.coverImage}
+                        alt={post.title}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -87,66 +82,51 @@ export default async function AdminListingsPage() {
                   </div>
                 </div>
 
-                {/* Title & Location */}
-                <div className="col-span-4">
-                  <p className="font-semibold text-sm truncate">
-                    {property.title}
-                  </p>
-                  <p className="text-[#8B7355] text-xs mt-1">
-                    {property.city}, {property.state}
-                  </p>
-                </div>
-
-                {/* Price */}
-                <div className="col-span-2">
-                  <p className="text-sm font-semibold text-[#C9A96E]">
-                    ₱{property.price.toLocaleString()}
-                  </p>
-                </div>
-
-                {/* Beds */}
-                <div className="col-span-1">
-                  <p className="text-sm">{property.beds} bd</p>
-                </div>
-
-                {/* Type */}
-                <div className="col-span-1">
-                  <span className="text-xs tracking-wider uppercase bg-[#E2D9C8] text-[#1A1A1A] px-2 py-1">
-                    {property.type}
-                  </span>
+                {/* Title */}
+                <div className="col-span-5">
+                  <p className="font-semibold text-sm truncate">{post.title}</p>
                 </div>
 
                 {/* Status */}
-                <div className="col-span-1">
+                <div className="col-span-2">
                   <span
                     className={`text-xs tracking-wider uppercase px-2 py-1 ${
-                      property.status === "active"
+                      post.published
                         ? "bg-green-100 text-green-700"
-                        : property.status === "pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
                     }`}
                   >
-                    {property.status}
+                    {post.published ? "Published" : "Draft"}
                   </span>
+                </div>
+
+                {/* Published date */}
+                <div className="col-span-2">
+                  <p className="text-sm text-[#8B7355]">
+                    {post.publishedAt
+                      ? new Date(post.publishedAt).toLocaleDateString("en-PH")
+                      : "--"}
+                  </p>
                 </div>
 
                 {/* Actions */}
                 <div className="col-span-2 flex items-center gap-3">
+                  {post.published && (
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      target="_blank"
+                      className="text-xs text-[#8B7355] hover:text-[#1A1A1A] transition underline"
+                    >
+                      View
+                    </Link>
+                  )}
                   <Link
-                    href={`/listings/${property.slug}`}
-                    target="_blank"
-                    className="text-xs text-[#8B7355] hover:text-[#1A1A1A] transition underline"
-                  >
-                    View
-                  </Link>
-                  <Link
-                    href={`/admin/listings/${property.id}/edit`}
+                    href={`/admin/blog/${post.id}/edit`}
                     className="text-xs text-[#8B7355] hover:text-[#1A1A1A] transition underline"
                   >
                     Edit
                   </Link>
-                  <DeleteButton propertyId={property.id} />
+                  <DeleteBlogButton postId={post.id} />
                 </div>
               </div>
             ))}
@@ -155,8 +135,7 @@ export default async function AdminListingsPage() {
 
         {/* Summary */}
         <p className="text-[#8B7355] text-sm mt-6">
-          {properties.length}{" "}
-          {properties.length === 1 ? "property" : "properties"} total
+          {posts.length} {posts.length === 1 ? "post" : "posts"} total
         </p>
       </div>
     </div>

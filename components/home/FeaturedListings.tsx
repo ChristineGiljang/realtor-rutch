@@ -14,7 +14,7 @@ export default async function FeaturedListings() {
   if (listings.length === 0) return null;
 
   return (
-    <section className="bg-[#F5F0E8] text-[#1A1A1A] py-24">
+    <section className="bg-[#faf9f6] text-[#1A1A1A] py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-end justify-between mb-12">
@@ -47,7 +47,7 @@ export default async function FeaturedListings() {
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
-                  <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#F5F0E8] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
+                  <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#faf9f6] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
                     {listing.status}
                   </div>
                 </div>

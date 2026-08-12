@@ -31,9 +31,9 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="pt-20 min-h-screen bg-[#F5F0E8] text-[#1A1A1A]">
+    <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
       {/* Hero Banner */}
-      <div className="bg-[#1A1A1A] text-[#F5F0E8] py-24">
+      <div className="bg-[#1A1A1A] text-[#faf9f6] py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs tracking-[0.3em] uppercase text-[#C9A96E] mb-4">
             About Me
@@ -132,7 +132,7 @@ export default function AboutPage() {
             <p className="text-xs tracking-[0.3em] uppercase text-[#C9A96E] mb-4">
               What I Stand For
             </p>
-            <h2 className="text-4xl font-bold text-[#F5F0E8]">
+            <h2 className="text-4xl font-bold text-[#faf9f6]">
               My Core Values
             </h2>
           </div>
@@ -141,12 +141,12 @@ export default function AboutPage() {
             {values.map((value) => (
               <div
                 key={value.title}
-                className="border border-[#F5F0E8]/10 p-8 hover:border-[#C9A96E] transition"
+                className="border border-[#faf9f6]/10 p-8 hover:border-[#C9A96E] transition"
               >
-                <h3 className="text-lg font-bold mb-3 text-[#F5F0E8]">
+                <h3 className="text-lg font-bold mb-3 text-[#faf9f6]">
                   {value.title}
                 </h3>
-                <p className="text-[#F5F0E8]/60 text-sm leading-relaxed">
+                <p className="text-[#faf9f6]/60 text-sm leading-relaxed">
                   {value.description}
                 </p>
               </div>
@@ -156,7 +156,7 @@ export default function AboutPage() {
       </div>
 
       {/* CTA */}
-      <div className="bg-[#F5F0E8] border-t border-[#E2D9C8] py-24">
+      <div className="bg-[#faf9f6] border-t border-[#E2D9C8] py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xs tracking-[0.3em] uppercase text-[#C9A96E] mb-4">
             Ready to Work Together?
@@ -171,7 +171,7 @@ export default function AboutPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/contact"
-              className="bg-[#1A1A1A] text-[#F5F0E8] px-8 py-4 text-sm tracking-wider uppercase font-semibold hover:bg-[#C9A96E] transition"
+              className="bg-[#1A1A1A] text-[#faf9f6] px-8 py-4 text-sm tracking-wider uppercase font-semibold hover:bg-[#C9A96E] transition"
             >
               Contact Me
             </a>
