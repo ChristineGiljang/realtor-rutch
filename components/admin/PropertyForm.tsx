@@ -357,8 +357,9 @@ Reservation: 50000
                 <option value="rfo-subdivision">RFO Subdivision</option>
               </optgroup>
               <optgroup label="Condo">
-                <option value="preselling-condo">Preselling Condo</option>
-                <option value="rfo-condo">RFO Condo</option>
+                <option value="preselling">Preselling Condo</option>
+                <option value="rfo">RFO Condo</option>
+                <option value="rent-to-own">Rent to Own Condo</option>
               </optgroup>
               <optgroup label="Commercial">
                 <option value="warehouse">Warehouse</option>

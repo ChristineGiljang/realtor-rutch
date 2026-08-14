@@ -45,25 +45,35 @@ const forRentItems: DropdownItem[] = [
 
 function DesktopDropdown({
   label,
+  href,
   items,
 }: {
   label: string;
+  href: string;
   items: DropdownItem[];
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <div
-      className="relative"
+      className="relative flex items-center"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <button
+      <Link
+        href={href}
         className="flex items-center gap-1 text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
-        aria-haspopup="true"
-        aria-expanded={open}
       >
         {label}
+      </Link>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={`Toggle ${label} submenu`}
+        className="text-[#8B7355] hover:text-[#1A1A1A] transition p-1 -ml-1"
+      >
         <ChevronDown
           size={14}
           className={`transition-transform ${open ? "rotate-180" : ""}`}
@@ -91,10 +101,12 @@ function DesktopDropdown({
 
 function MobileDropdown({
   label,
+  href,
   items,
   onNavigate,
 }: {
   label: string;
+  href: string;
   items: DropdownItem[];
   onNavigate: () => void;
 }) {
@@ -102,17 +114,27 @@ function MobileDropdown({
 
   return (
     <div>
-      <button
-        className="flex items-center justify-between w-full text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-      >
-        {label}
-        <ChevronDown
-          size={16}
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
+      <div className="flex items-center justify-between w-full">
+        <Link
+          href={href}
+          className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
+          onClick={onNavigate}
+        >
+          {label}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-label={`Toggle ${label} submenu`}
+          className="text-[#8B7355] hover:text-[#1A1A1A] p-1"
+        >
+          <ChevronDown
+            size={16}
+            className={`transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+      </div>
 
       {open && (
         <div className="mt-4 ml-4 flex flex-col gap-4">
@@ -165,9 +187,21 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            <DesktopDropdown label="House and Lot" items={houseLotItems} />
-            <DesktopDropdown label="Condo" items={condoItems} />
-            <DesktopDropdown label="For Rent" items={forRentItems} />
+            <DesktopDropdown
+              label="House and Lot"
+              href="/listings?type=house"
+              items={houseLotItems}
+            />
+            <DesktopDropdown
+              label="Condo"
+              href="/listings?type=condo"
+              items={condoItems}
+            />
+            <DesktopDropdown
+              label="For Rent"
+              href="/listings?category=rent"
+              items={forRentItems}
+            />
             <Link
               href="/listings?type=commercial"
               className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
@@ -202,16 +236,19 @@ export default function Navbar() {
           <div className="flex flex-col px-4 py-6 gap-6">
             <MobileDropdown
               label="House and Lot"
+              href="/listings?type=house"
               items={houseLotItems}
               onNavigate={() => setIsOpen(false)}
             />
             <MobileDropdown
               label="Condo"
+              href="/listings?type=condo"
               items={condoItems}
               onNavigate={() => setIsOpen(false)}
             />
             <MobileDropdown
               label="For Rent"
+              href="/listings?category=rent"
               items={forRentItems}
               onNavigate={() => setIsOpen(false)}
             />

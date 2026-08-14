@@ -388,6 +388,7 @@ export default async function PropertyDetailPage({ params }: Props) {
               currentSlug={property.slug}
               type={property.type}
               city={property.city}
+              listingCategory={property.listingCategory}
             />
           </div>
 
@@ -411,21 +412,36 @@ async function RecommendedProperties({
   currentSlug,
   type,
   city,
+  listingCategory,
 }: {
   currentSlug: string;
   type: string;
   city: string;
+  listingCategory: string;
 }) {
-  const recommended = await db.property.findMany({
+  // Pull a wider pool of same-category candidates (same city OR same type),
+  // then rank city matches above type-only matches before trimming to 3 —
+  // Prisma can't express "same city first" as an orderBy on its own.
+  const candidates = await db.property.findMany({
     where: {
       slug: { not: currentSlug },
       status: "active",
-      OR: [{ type }, { city }],
+      listingCategory, // never mix rentals into a for-sale page or vice versa
+      OR: [{ city }, { type }],
     },
-    take: 3,
+    take: 12,
     orderBy: { createdAt: "desc" },
     include: { images: { orderBy: { order: "asc" }, take: 1 } },
   });
+
+  const recommended = candidates
+    .map((p) => ({
+      property: p,
+      score: (p.city === city ? 2 : 0) + (p.type === type ? 1 : 0),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((r) => r.property);
 
   if (recommended.length === 0) return null;
 

@@ -58,7 +58,7 @@ export default function PropertyMap({
   }, [lat, lng, title, address]);
 
   return (
-    <>
+    <div className="relative isolate">
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -67,6 +67,6 @@ export default function PropertyMap({
         ref={mapRef}
         className="w-full h-[380px] rounded-sm border border-[#E2D9C8]"
       />
-    </>
+    </div>
   );
 }
