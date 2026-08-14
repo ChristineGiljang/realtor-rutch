@@ -1,311 +1,464 @@
-import type { Metadata } from "next";
-import Link from "next/link";
 import { db } from "@/lib/db";
-import ListingsFilters from "@/components/listings/ListingsFilters";
-
-export const revalidate = 0;
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import PropertyGallery from "@/components/listings/PropertyGallery";
+import ContactForm from "@/components/listings/ContactForm";
+import PropertyMapWrapper from "@/components/listings/PropertyMapWrapper";
+import Link from "next/link";
 
 interface Props {
-  searchParams: Promise<{
-    type?: string;
-    subtype?: string;
-    priceMax?: string;
-    bedsMin?: string;
-    sort?: string;
-    category?: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }
 
-// ── SEO label map ─────────────────────────────────────────
-function getPageMeta(type?: string, subtype?: string, category?: string) {
-  // Subtype-specific pages
-  if (subtype === "preselling" && type === "house")
-    return {
-      h1: "Preselling House and Lot in Cebu",
-      title: "Preselling House and Lot in Cebu | Realtor Rutch",
-      description:
-        "Browse preselling house and lot properties in Cebu City and nearby areas. Early-bird pricing, flexible payment terms. Inquire with Realtor Rutch.",
-    };
-  if (subtype === "rfo" && type === "house")
-    return {
-      h1: "RFO House and Lot in Cebu",
-      title: "RFO House and Lot in Cebu — Ready for Occupancy | Realtor Rutch",
-      description:
-        "Ready-for-occupancy house and lot listings in Cebu City. Move in now — no waiting, verified properties. Browse with Realtor Rutch.",
-    };
-  if (subtype === "rent-to-own" && type === "house")
-    return {
-      h1: "Rent to Own House and Lot in Cebu",
-      title: "Rent to Own House and Lot in Cebu | Realtor Rutch",
-      description:
-        "Find rent-to-own house and lot deals in Cebu City. Affordable path to homeownership. Inquire with Realtor Rutch today.",
-    };
-  if (subtype === "rfo-subdivision")
-    return {
-      h1: "RFO Subdivision in Cebu",
-      title: "RFO Subdivision in Cebu — Ready for Occupancy | Realtor Rutch",
-      description:
-        "Ready-for-occupancy subdivision lots and homes in Cebu. Gated communities, complete amenities. Browse with Realtor Rutch.",
-    };
-  if (subtype === "preselling" && type === "condo")
-    return {
-      h1: "Preselling Condo in Cebu",
-      title: "Preselling Condo in Cebu | Realtor Rutch",
-      description:
-        "Preselling condominium units in Cebu City. Lock in the best prices before turnover. Inquire with Realtor Rutch.",
-    };
-  if (subtype === "rfo" && type === "condo")
-    return {
-      h1: "RFO Condo in Cebu",
-      title: "RFO Condo in Cebu — Ready for Occupancy | Realtor Rutch",
-      description:
-        "Ready-for-occupancy condo units in Cebu City. Move in now — verified listings. Browse with Realtor Rutch.",
-    };
-  if (subtype === "rent-to-own" && type === "condo")
-    return {
-      h1: "Rent to Own Condo in Cebu",
-      title: "Rent to Own Condo in Cebu | Realtor Rutch",
-      description:
-        "Rent-to-own condominium units in Cebu City. Affordable monthly payments toward ownership. Inquire with Realtor Rutch.",
-    };
-  if (subtype === "warehouse")
-    return {
-      h1: "Warehouse for Rent in Cebu",
-      title: "Warehouse for Rent in Cebu | Realtor Rutch",
-      description:
-        "Warehouse and storage spaces for rent in Cebu City and Metro Cebu. Various sizes available. Inquire with Realtor Rutch.",
-    };
-
-  // Type-only pages
-  if (type === "house" && category === "rent")
-    return {
-      h1: "House for Rent in Cebu",
-      title: "House for Rent in Cebu | Realtor Rutch",
-      description:
-        "Houses for rent in Cebu City and nearby areas. Various sizes, gated subdivisions available. Browse with Realtor Rutch.",
-    };
-  if (type === "condo" && category === "rent")
-    return {
-      h1: "Condo for Rent in Cebu",
-      title: "Condo for Rent in Cebu | Realtor Rutch",
-      description:
-        "Condominium units for rent in Cebu City. Studio to 3-bedroom units near business districts. Browse with Realtor Rutch.",
-    };
-  if (type === "commercial" && category === "rent")
-    return {
-      h1: "Commercial Space for Rent in Cebu",
-      title: "Commercial Space for Rent in Cebu | Realtor Rutch",
-      description:
-        "Office, retail, and commercial spaces for rent in Cebu City. Prime locations, flexible terms. Inquire with Realtor Rutch.",
-    };
-  if (type === "land")
-    return {
-      h1: "Lot for Sale in Cebu",
-      title: "Lot for Sale in Cebu | Realtor Rutch",
-      description:
-        "Residential and commercial lots for sale in Cebu City and nearby areas. Browse with Realtor Rutch.",
-    };
-  if (type === "house")
-    return {
-      h1: "House and Lot for Sale in Cebu",
-      title: "House and Lot for Sale in Cebu | Realtor Rutch",
-      description:
-        "Find your ideal house and lot for sale in Cebu City. Verified listings, gated subdivisions, and luxury homes. Browse with Realtor Rutch.",
-    };
-  if (type === "condo")
-    return {
-      h1: "Condo for Sale in Cebu",
-      title: "Condo for Sale in Cebu | Realtor Rutch",
-      description:
-        "Condominium units for sale in Cebu City. Studio to penthouse units in prime locations. Browse with Realtor Rutch.",
-    };
-  if (type === "commercial")
-    return {
-      h1: "Commercial Properties in Cebu",
-      title: "Commercial Properties in Cebu | Realtor Rutch",
-      description:
-        "Commercial real estate for sale and rent in Cebu City. Office, warehouse, and retail spaces. Browse with Realtor Rutch.",
-    };
-  if (category === "rent")
-    return {
-      h1: "Properties for Rent in Cebu",
-      title: "Properties for Rent in Cebu | Realtor Rutch",
-      description:
-        "Houses, condos, and commercial spaces for rent in Cebu City. Updated listings. Browse with Realtor Rutch.",
-    };
-  if (category === "sale")
-    return {
-      h1: "Properties for Sale in Cebu",
-      title: "Properties for Sale in Cebu | Realtor Rutch",
-      description:
-        "Houses, condos, lots, and commercial properties for sale in Cebu City. Browse with Realtor Rutch.",
-    };
-
-  // Default
-  return {
-    h1: "All Listings in Cebu",
-    title: "Property Listings in Cebu | Realtor Rutch",
-    description:
-      "Browse houses, condos, lots, and commercial properties for sale or rent in Cebu City with Realtor Rutch.",
-  };
-}
-
-export async function generateMetadata({
-  searchParams,
-}: Props): Promise<Metadata> {
-  const { type, subtype, category } = await searchParams;
-  const meta = getPageMeta(type, subtype, category);
-  return {
-    title: meta.title,
-    description: meta.description,
-    alternates: {
-      canonical: `/listings${
-        type || subtype || category
-          ? `?${new URLSearchParams({ ...(type && { type }), ...(subtype && { subtype }), ...(category && { category }) }).toString()}`
-          : ""
-      }`,
-    },
-  };
-}
-
-export default async function ListingsPage({ searchParams }: Props) {
-  const { type, subtype, priceMax, bedsMin, sort, category } =
-    await searchParams;
-
-  const where: any = { status: "active" };
-  if (type) where.type = type;
-  if (subtype) where.subtype = subtype;
-  if (category) where.listingCategory = category;
-  if (priceMax) where.price = { lte: parseInt(priceMax) };
-  if (bedsMin) where.beds = { gte: parseInt(bedsMin) };
-
-  let orderBy: any = { createdAt: "desc" };
-  if (sort === "price-asc") orderBy = { price: "asc" };
-  if (sort === "price-desc") orderBy = { price: "desc" };
-  if (sort === "newest") orderBy = { createdAt: "desc" };
-
-  const listings = await db.property.findMany({
-    where,
-    orderBy,
-    include: {
-      images: { orderBy: { order: "asc" }, take: 1 },
-    },
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const property = await db.property.findUnique({
+    where: { slug },
+    include: { images: { orderBy: { order: "asc" }, take: 1 } },
   });
+  if (!property) return { title: "Listing Not Found" };
+  const priceLabel = `₱${property.price.toLocaleString()}${property.listingCategory === "rent" ? "/mo" : ""}`;
+  const title = `${property.title} | ${priceLabel} — ${property.city}`;
+  const location = [property.city, property.state].filter(Boolean).join(", ");
+  const description = `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. ${property.description.slice(0, 140)}`;
+  const ogImage = property.images[0]?.url;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/listings/${property.slug}` },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
+}
 
-  const meta = getPageMeta(type, subtype, category);
-  const activeCategory = category || "all";
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className="flex justify-between items-start py-3 border-b border-[#E2D9C8] last:border-0">
+      <span className="text-sm text-[#8B7355]">{label}</span>
+      <span className="text-sm text-[#1A1A1A] font-medium capitalize text-right max-w-[60%]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+export default async function PropertyDetailPage({ params }: Props) {
+  const { slug } = await params;
+  const property = await db.property.findUnique({
+    where: { slug },
+    include: { images: { orderBy: { order: "asc" } } },
+  });
+  if (!property) notFound();
+
+  // Parse amenities string (newline-separated) into array
+  const amenityList = property.amenities
+    ? property.amenities
+        .split("\n")
+        .map((a) => a.trim())
+        .filter(Boolean)
+    : [];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: property.title,
+    description: property.description,
+    url: `https://realtor-rutch.com/listings/${property.slug}`,
+    image: property.images.map((img) => img.url),
+    datePosted: property.createdAt,
+    about: {
+      "@type": "SingleFamilyResidence",
+      name: property.title,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: property.address,
+        addressLocality: property.city,
+        addressRegion: property.state || undefined,
+        postalCode: property.zip,
+        addressCountry: "PH",
+      },
+      numberOfBedrooms: property.beds,
+      numberOfBathroomsTotal: property.baths,
+      floorSize: property.sqft
+        ? {
+            "@type": "QuantitativeValue",
+            value: property.sqft,
+            unitCode: "MTK",
+          }
+        : undefined,
+    },
+    offers: {
+      "@type": "Offer",
+      price: property.price,
+      priceCurrency: "PHP",
+      availability: "https://schema.org/InStock",
+      businessFunction:
+        property.listingCategory === "rent"
+          ? "http://purl.org/goodrelations/v1#LeaseOut"
+          : "http://purl.org/goodrelations/v1#Sell",
+    },
+  };
 
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Header */}
-        <div className="mb-12">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#8B7355] mb-3">
-            Available Now
-          </p>
-          <h1 className="text-5xl font-bold text-[#1A1A1A]">{meta.h1}</h1>
-        </div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-        {/* Category Tabs */}
-        <div className="flex gap-0 mb-8 border-b border-[#E2D9C8]">
-          {[
-            {
-              label: "All",
-              value: "all",
-              href: type ? `/listings?type=${type}` : "/listings",
-            },
-            {
-              label: "For Sale",
-              value: "sale",
-              href: type
-                ? `/listings?type=${type}&category=sale`
-                : "/listings?category=sale",
-            },
-            {
-              label: "For Rent",
-              value: "rent",
-              href: type
-                ? `/listings?type=${type}&category=rent`
-                : "/listings?category=rent",
-            },
-          ].map((tab) => (
-            <Link
-              key={tab.value}
-              href={tab.href}
-              className={`px-6 py-3 text-sm tracking-wider uppercase font-semibold border-b-2 transition -mb-px ${
-                activeCategory === tab.value
-                  ? "border-[#C9A96E] text-[#1A1A1A]"
-                  : "border-transparent text-[#8B7355] hover:text-[#1A1A1A]"
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
+      {/* Gallery */}
+      <PropertyGallery
+        images={property.images}
+        title={property.title}
+        featured={property.featured}
+      />
 
-        {/* Filters */}
-        <ListingsFilters />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {/* ── LEFT COLUMN ─────────────────────────────── */}
+          <div className="lg:col-span-2 space-y-10">
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs tracking-widest uppercase bg-[#1A1A1A] text-[#faf9f6] px-3 py-1 font-semibold">
+                {property.type}
+              </span>
+              <span className="text-xs tracking-widest uppercase bg-[#C9A96E] text-white px-3 py-1 font-semibold">
+                {property.listingCategory === "rent" ? "For Rent" : "For Sale"}
+              </span>
+              {property.subtype && (
+                <span className="text-xs tracking-widest uppercase border border-[#C9A96E] text-[#C9A96E] px-3 py-1">
+                  {property.subtype.replace(/-/g, " ")}
+                </span>
+              )}
+              {property.featured && (
+                <span className="text-xs tracking-widest uppercase border border-[#8B7355] text-[#8B7355] px-3 py-1">
+                  Featured
+                </span>
+              )}
+              {property.luxury && (
+                <span className="text-xs tracking-widest uppercase border border-[#8B7355] text-[#8B7355] px-3 py-1">
+                  Luxury
+                </span>
+              )}
+            </div>
 
-        {/* Results Count */}
-        <p className="text-[#8B7355] text-sm mb-8">
-          Showing {listings.length}{" "}
-          {listings.length === 1 ? "property" : "properties"}
-        </p>
+            {/* Title, Address, Price */}
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-[#1A1A1A] leading-tight">
+                {property.title}
+              </h1>
+              <p className="text-[#8B7355] mb-4 text-sm">
+                {[property.address, property.city, property.state]
+                  .filter(Boolean)
+                  .join(", ")}{" "}
+                {property.zip}
+              </p>
+              <p className="text-3xl font-bold text-[#C9A96E]">
+                ₱{property.price.toLocaleString()}
+                {property.listingCategory === "rent" && (
+                  <span className="text-base font-normal text-[#8B7355]">
+                    /mo
+                  </span>
+                )}
+              </p>
+            </div>
 
-        {/* Grid */}
-        {listings.length === 0 ? (
-          <div className="flex items-center justify-center py-24">
-            <p className="text-[#8B7355] text-lg">
-              No listings match your filters.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {listings.map((listing) => (
-              <Link key={listing.id} href={`/listings/${listing.slug}`}>
-                <div className="group cursor-pointer">
-                  <div className="relative overflow-hidden h-64 mb-4">
-                    <img
-                      src={listing.images[0]?.url || "/images/placeholder.jpg"}
-                      alt={listing.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
-                    <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#faf9f6] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
-                      {listing.type}
-                    </div>
-                    <div className="absolute top-4 right-4 bg-[#C9A96E] text-white text-xs tracking-wider uppercase px-3 py-1 font-semibold">
-                      {listing.listingCategory === "rent"
-                        ? "For Rent"
-                        : "For Sale"}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold mb-1 text-[#1A1A1A]">
-                      ₱{listing.price.toLocaleString()}
-                      {listing.listingCategory === "rent" && (
-                        <span className="text-sm font-normal text-[#8B7355]">
-                          /mo
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-[#1A1A1A] mb-2 font-medium">
-                      {listing.title}
-                    </p>
-                    <p className="text-[#8B7355] text-sm mb-1">
-                      {listing.beds} bd · {listing.baths} ba ·{" "}
-                      {listing.sqft === 0
-                        ? "--"
-                        : listing.sqft.toLocaleString()}{" "}
-                      sqm
-                    </p>
-                    <p className="text-[#8B7355] text-sm">{listing.city}</p>
-                  </div>
+            {/* Quick Stats Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#E2D9C8]">
+              {[
+                { label: "Bedrooms", value: property.beds },
+                { label: "Bathrooms", value: property.baths },
+                {
+                  label: "Floor Area (sqm)",
+                  value: property.sqft ? property.sqft.toLocaleString() : "--",
+                },
+                { label: "Car Parks", value: property.garage ?? "--" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="bg-[#faf9f6] px-5 py-5 text-center"
+                >
+                  <p className="text-2xl font-bold text-[#1A1A1A]">{s.value}</p>
+                  <p className="text-xs tracking-widest uppercase text-[#8B7355] mt-1">
+                    {s.label}
+                  </p>
                 </div>
-              </Link>
-            ))}
+              ))}
+            </div>
+
+            {/* Property Overview */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+                Property Overview
+              </h2>
+              <div className="divide-y divide-[#E2D9C8]">
+                <DetailRow
+                  label="Category"
+                  value={
+                    property.type.charAt(0).toUpperCase() +
+                    property.type.slice(1)
+                  }
+                />
+                <DetailRow
+                  label="Listing Type"
+                  value={
+                    property.listingCategory === "rent"
+                      ? "For Rent"
+                      : "For Sale"
+                  }
+                />
+                <DetailRow label="Built In" value={property.yearBuilt} />
+                <DetailRow
+                  label="Car Parks"
+                  value={property.garage ? `${property.garage}` : null}
+                />
+                <DetailRow
+                  label="Type of Ownership"
+                  value={property.ownershipType ?? "Freehold"}
+                />
+                <DetailRow
+                  label="Total Area"
+                  value={
+                    property.sqft
+                      ? `${property.sqft.toLocaleString()} sqm`
+                      : null
+                  }
+                />
+                <DetailRow
+                  label="Land Size"
+                  value={
+                    property.lotSize
+                      ? `${property.lotSize.toLocaleString()} sqm`
+                      : null
+                  }
+                />
+                <DetailRow
+                  label="Property Floor"
+                  value={property.propertyFloor}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+                Description
+              </h2>
+              <div className="text-[#8B7355] leading-relaxed space-y-2 text-sm">
+                {property.description.split("\n").map((line, i) =>
+                  line.trim() ? (
+                    <p
+                      key={i}
+                      className={
+                        line.endsWith(":")
+                          ? "font-semibold text-[#1A1A1A] mt-4"
+                          : ""
+                      }
+                    >
+                      {line.trim()}
+                    </p>
+                  ) : (
+                    <div key={i} className="h-2" />
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* Amenities / Details chips */}
+            {amenityList.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+                  Details
+                </h2>
+                <div className="flex flex-wrap gap-3">
+                  {amenityList.map((item) => (
+                    <span
+                      key={item}
+                      className="px-4 py-2 border border-[#E2D9C8] bg-white text-sm text-[#1A1A1A] rounded-sm"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Features */}
+            {property.features && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+                  Features
+                </h2>
+                <div className="text-[#8B7355] leading-relaxed space-y-1 text-sm">
+                  {property.features.split("\n").map((line, i) =>
+                    line.trim() ? (
+                      <p
+                        key={i}
+                        className={
+                          line.endsWith(":")
+                            ? "font-semibold text-[#1A1A1A] mt-3"
+                            : ""
+                        }
+                      >
+                        {line.trim()}
+                      </p>
+                    ) : null,
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Payment Terms */}
+            {property.paymentTerms && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+                  Payment Terms
+                </h2>
+                <div className="text-[#8B7355] leading-relaxed space-y-1 text-sm">
+                  {property.paymentTerms.split("\n").map((line, i) =>
+                    line.trim() ? (
+                      <p
+                        key={i}
+                        className={
+                          line.endsWith(":")
+                            ? "font-semibold text-[#1A1A1A] mt-3"
+                            : ""
+                        }
+                      >
+                        {line.trim()}
+                      </p>
+                    ) : null,
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Map */}
+            {property.lat && property.lng && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+                  Map
+                </h2>
+                <PropertyMapWrapper
+                  lat={property.lat}
+                  lng={property.lng}
+                  title={property.title}
+                  address={[property.address, property.city]
+                    .filter(Boolean)
+                    .join(", ")}
+                />
+                <a
+                  href={`https://maps.google.com/?q=${property.lat},${property.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-3 text-xs text-[#8B7355] hover:text-[#C9A96E] underline transition"
+                >
+                  Open in Google Maps ↗
+                </a>
+              </div>
+            )}
+
+            {/* Recommended Properties */}
+            {/* Mobile-only contact form — shows after map, before recommended */}
+            <div className="lg:hidden">
+              <ContactForm
+                propertyId={property.id}
+                propertyTitle={property.title}
+              />
+            </div>
+
+            <RecommendedProperties
+              currentSlug={property.slug}
+              type={property.type}
+              city={property.city}
+            />
           </div>
-        )}
+
+          {/* ── RIGHT COLUMN — sticky contact form, hidden on mobile ────── */}
+          <div className="lg:col-span-1 hidden lg:block">
+            <div className="sticky top-[132px]">
+              <ContactForm
+                propertyId={property.id}
+                propertyTitle={property.title}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Recommended Properties (server component, reuses db) ──
+async function RecommendedProperties({
+  currentSlug,
+  type,
+  city,
+}: {
+  currentSlug: string;
+  type: string;
+  city: string;
+}) {
+  const recommended = await db.property.findMany({
+    where: {
+      slug: { not: currentSlug },
+      status: "active",
+      OR: [{ type }, { city }],
+    },
+    take: 3,
+    orderBy: { createdAt: "desc" },
+    include: { images: { orderBy: { order: "asc" }, take: 1 } },
+  });
+
+  if (recommended.length === 0) return null;
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
+        Recommended Properties
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {recommended.map((p) => (
+          <Link key={p.id} href={`/listings/${p.slug}`} className="group">
+            <div className="relative overflow-hidden h-44 mb-3">
+              <img
+                src={p.images[0]?.url || "/images/placeholder.jpg"}
+                alt={p.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+              />
+              <div className="absolute top-3 left-3 bg-[#C9A96E] text-white text-xs px-2 py-1 uppercase tracking-wider font-semibold">
+                {p.listingCategory === "rent" ? "For Rent" : "For Sale"}
+              </div>
+            </div>
+            <p className="font-bold text-[#C9A96E] text-base">
+              ₱{p.price.toLocaleString()}
+              {p.listingCategory === "rent" && (
+                <span className="text-xs font-normal text-[#8B7355]">/mo</span>
+              )}
+            </p>
+            <p className="text-sm font-medium text-[#1A1A1A] leading-snug line-clamp-2">
+              {p.title}
+            </p>
+            <p className="text-xs text-[#8B7355] mt-1">{p.city}</p>
+          </Link>
+        ))}
       </div>
     </div>
   );

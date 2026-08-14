@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { getListingsMeta } from "@/lib/listings-meta";
 import ListingsFilters from "@/components/listings/ListingsFilters";
 
 export const revalidate = 0;
 
-export const metadata: Metadata = {
-  title: "Property Listings",
-  description:
-    "Browse houses, lots, and luxury properties for sale or rent in Cebu City with Realtor Rutch. Filter by price, bedrooms, and property type.",
-};
-
 interface Props {
   searchParams: Promise<{
     type?: string;
+    subtype?: string;
     priceMax?: string;
     bedsMin?: string;
     sort?: string;
@@ -21,12 +17,39 @@ interface Props {
   }>;
 }
 
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
+  const { type, subtype, category } = await searchParams;
+  const meta = getListingsMeta(type, subtype, category);
+
+  const params = new URLSearchParams();
+  if (type) params.set("type", type);
+  if (subtype) params.set("subtype", subtype);
+  if (category) params.set("category", category);
+  const qs = params.toString();
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    alternates: {
+      canonical: `/listings${qs ? `?${qs}` : ""}`,
+    },
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+    },
+  };
+}
+
 export default async function ListingsPage({ searchParams }: Props) {
-  const { type, priceMax, bedsMin, sort, category } = await searchParams;
+  const { type, subtype, priceMax, bedsMin, sort, category } =
+    await searchParams;
 
   const where: any = { status: "active" };
 
   if (type) where.type = type;
+  if (subtype) where.subtype = subtype;
   if (priceMax) where.price = { lte: parseInt(priceMax) };
   if (bedsMin) where.beds = { gte: parseInt(bedsMin) };
   if (category) where.listingCategory = category;
@@ -47,6 +70,7 @@ export default async function ListingsPage({ searchParams }: Props) {
     },
   });
 
+  const meta = getListingsMeta(type, subtype, category);
   const activeCategory = category || "all";
 
   return (
@@ -57,23 +81,48 @@ export default async function ListingsPage({ searchParams }: Props) {
           <p className="text-xs tracking-[0.3em] uppercase text-[#8B7355] mb-3">
             Available Now
           </p>
-          <h1 className="text-5xl font-bold text-[#1A1A1A]">All Listings</h1>
+          <h1 className="text-5xl font-bold text-[#1A1A1A]">{meta.h1}</h1>
         </div>
 
-        {/* Category Tabs */}
+        {/* Category Tabs — preserve the active type/subtype when switching sale/rent */}
         <div className="flex gap-0 mb-8 border-b border-[#E2D9C8]">
           {[
-            { label: "All", value: "all" },
-            { label: "For Sale", value: "sale" },
-            { label: "For Rent", value: "rent" },
+            {
+              label: "All",
+              value: "all",
+              href: (() => {
+                const p = new URLSearchParams();
+                if (type) p.set("type", type);
+                if (subtype) p.set("subtype", subtype);
+                const qs = p.toString();
+                return `/listings${qs ? `?${qs}` : ""}`;
+              })(),
+            },
+            {
+              label: "For Sale",
+              value: "sale",
+              href: (() => {
+                const p = new URLSearchParams();
+                if (type) p.set("type", type);
+                if (subtype) p.set("subtype", subtype);
+                p.set("category", "sale");
+                return `/listings?${p.toString()}`;
+              })(),
+            },
+            {
+              label: "For Rent",
+              value: "rent",
+              href: (() => {
+                const p = new URLSearchParams();
+                if (type) p.set("type", type);
+                p.set("category", "rent");
+                return `/listings?${p.toString()}`;
+              })(),
+            },
           ].map((tab) => (
             <Link
               key={tab.value}
-              href={
-                tab.value === "all"
-                  ? "/listings"
-                  : `/listings?category=${tab.value}`
-              }
+              href={tab.href}
               className={`px-6 py-3 text-sm tracking-wider uppercase font-semibold border-b-2 transition -mb-px ${
                 activeCategory === tab.value
                   ? "border-[#C9A96E] text-[#1A1A1A]"
