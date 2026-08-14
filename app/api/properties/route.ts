@@ -24,7 +24,13 @@ export async function POST(request: NextRequest) {
     const baths = parseFloat(formData.get("baths") as string);
     const sqft = parseInt(formData.get("sqft") as string);
     const type = formData.get("type") as string;
+    const subtype = (formData.get("subtype") as string) || null;
     const status = formData.get("status") as string;
+    const ownershipType = (formData.get("ownershipType") as string) || null;
+    const propertyFloor = formData.get("propertyFloor")
+      ? parseInt(formData.get("propertyFloor") as string)
+      : null;
+    const amenities = (formData.get("amenities") as string) || null;
 
     // Optional fields
     const lotSize = formData.get("lotSize")
@@ -109,7 +115,11 @@ export async function POST(request: NextRequest) {
         baths,
         sqft,
         type,
+        subtype,
         status,
+        ownershipType,
+        propertyFloor,
+        amenities,
         lotSize,
         garage,
         yearBuilt,

@@ -24,6 +24,7 @@ model Property {
   garage          Int?
   yearBuilt       Int?
   type            String
+  subtype         String?
   status          String
   featured        Boolean         @default(false)
   luxury          Boolean         @default(false)
@@ -35,6 +36,9 @@ model Property {
   listingCategory String          @default("sale")
   features        String?
   paymentTerms    String?
+  ownershipType   String?
+  propertyFloor   Int?
+  amenities       String?
   leads           Lead[]
   images          PropertyImage[]
 }

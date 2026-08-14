@@ -55,7 +55,7 @@ export default function TopBar() {
             <FacebookIcon size={14} />
           </a>
           <a
-            href="https://instagram.com/"
+            href="https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2Frutch_rldreamspaces%3Ffbclid%3DIwcGRvZgVleHRuA2FlbQIxMABicmlkETF1clNxYWllMlYyUHpiUWJhc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHlaTehWSFtSjaJ8oc1TQ3eiJ_WVYYDfY9yPAioiYcj96OXe52P3Iabceep2m_aem_3dTDO9QNlonG4GWffg3nPw&h=AUDwQuZnURLIy-N4fMa9oG3Kz-27QiRPnUA2AkcDXhIZecs1P7Kcmuk1keCIzLWjmZHTErENTYoNoy8UqrBwe0mP7QwM0_WpgIBk8yFKmHxQcn4GL_2qwWFuKQMCquiuSr1U"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram"

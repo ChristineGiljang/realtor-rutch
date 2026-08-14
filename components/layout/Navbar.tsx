@@ -31,21 +31,15 @@ const condoItems: DropdownItem[] = [
 ];
 
 const forRentItems: DropdownItem[] = [
-  {
-    label: "House for Rent",
-    href: "/listings?type=house&listingCategory=rent",
-  },
-  {
-    label: "Condo for Rent",
-    href: "/listings?type=condo&listingCategory=rent",
-  },
+  { label: "House for Rent", href: "/listings?type=house&category=rent" },
+  { label: "Condo for Rent", href: "/listings?type=condo&category=rent" },
   {
     label: "Warehouse for Rent",
-    href: "/listings?type=commercial&listingCategory=rent&subtype=warehouse",
+    href: "/listings?type=commercial&category=rent&subtype=warehouse",
   },
   {
     label: "Commercial Space for Rent",
-    href: "/listings?type=commercial&listingCategory=rent",
+    href: "/listings?type=commercial&category=rent",
   },
 ];
 

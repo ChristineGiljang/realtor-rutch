@@ -16,6 +16,10 @@ export default function PropertyForm() {
   const titleRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const typeRef = useRef<HTMLSelectElement>(null);
+  const subtypeRef = useRef<HTMLSelectElement>(null);
+  const ownershipTypeRef = useRef<HTMLSelectElement>(null);
+  const propertyFloorRef = useRef<HTMLInputElement>(null);
+  const amenitiesRef = useRef<HTMLTextAreaElement>(null);
   const categoryRef = useRef<HTMLSelectElement>(null);
   const statusRef = useRef<HTMLSelectElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
@@ -51,8 +55,11 @@ export default function PropertyForm() {
           "TITLE",
           "PRICE",
           "TYPE",
+          "SUBTYPE",
           "CATEGORY",
           "STATUS",
+          "OWNERSHIP",
+          "FLOOR",
           "ADDRESS",
           "CITY",
           "ZIP",
@@ -67,7 +74,9 @@ export default function PropertyForm() {
         if (currentKey) data[currentKey] = multilineValue.trim();
         currentKey = key;
         multilineValue = line.substring(colonIndex + 1).trim();
-      } else if (["DESCRIPTION", "FEATURES", "PAYMENT"].includes(key)) {
+      } else if (
+        ["DESCRIPTION", "FEATURES", "PAYMENT", "AMENITIES"].includes(key)
+      ) {
         if (currentKey) data[currentKey] = multilineValue.trim();
         currentKey = key;
         multilineValue = "";
@@ -102,6 +111,12 @@ export default function PropertyForm() {
       featuresRef.current.value = data.FEATURES;
     if (paymentRef.current && data.PAYMENT)
       paymentRef.current.value = data.PAYMENT;
+    if (ownershipTypeRef.current && data.OWNERSHIP)
+      ownershipTypeRef.current.value = data.OWNERSHIP.toLowerCase();
+    if (propertyFloorRef.current && data.FLOOR)
+      propertyFloorRef.current.value = data.FLOOR;
+    if (amenitiesRef.current && data.AMENITIES)
+      amenitiesRef.current.value = data.AMENITIES;
 
     setParsed(true);
   };
@@ -216,8 +231,11 @@ export default function PropertyForm() {
           <pre className="bg-[#faf9f6] p-4 text-xs text-[#8B7355] leading-relaxed overflow-x-auto mt-2 whitespace-pre-wrap">{`TITLE: Property Title Here
 PRICE: 5000000
 TYPE: house
+SUBTYPE: rfo
 CATEGORY: sale
 STATUS: active
+OWNERSHIP: freehold
+FLOOR: 2
 ADDRESS: 123 Street, Subdivision
 CITY: Cebu City
 ZIP: 6000
@@ -234,6 +252,11 @@ FEATURES:
 2 Bathrooms
 Living Room
 Kitchen
+AMENITIES:
+Garage
+Terrace
+Storage room
+Integral kitchen
 PAYMENT:
 Reservation: 50000
 20% Downpayment
@@ -288,6 +311,20 @@ Reservation: 50000
               className={inputClass}
             />
           </div>
+          <div className="md:col-span-2">
+            <label className={labelClass}>Amenities / Details</label>
+            <p className="text-xs text-[#8B7355] mb-2">
+              One per line — e.g. Garage, Terrace, Storage room, Integral
+              kitchen
+            </p>
+            <textarea
+              ref={amenitiesRef}
+              name="amenities"
+              rows={5}
+              placeholder={`Garage\nTerrace\nStorage room\nIntegral kitchen\nShower rooms`}
+              className={inputClass}
+            />
+          </div>
           <div>
             <label className={labelClass}>Price *</label>
             <input
@@ -308,6 +345,50 @@ Reservation: 50000
               <option value="land">Land</option>
               <option value="commercial">Commercial</option>
             </select>
+          </div>
+          <div>
+            <label className={labelClass}>Subtype</label>
+            <select ref={subtypeRef} name="subtype" className={inputClass}>
+              <option value="">None</option>
+              <optgroup label="House &amp; Lot">
+                <option value="preselling">Preselling</option>
+                <option value="rfo">RFO</option>
+                <option value="rent-to-own">Rent to Own</option>
+                <option value="rfo-subdivision">RFO Subdivision</option>
+              </optgroup>
+              <optgroup label="Condo">
+                <option value="preselling-condo">Preselling Condo</option>
+                <option value="rfo-condo">RFO Condo</option>
+              </optgroup>
+              <optgroup label="Commercial">
+                <option value="warehouse">Warehouse</option>
+                <option value="office">Office</option>
+                <option value="retail">Retail</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Ownership Type</label>
+            <select
+              ref={ownershipTypeRef}
+              name="ownershipType"
+              className={inputClass}
+            >
+              <option value="">Select ownership</option>
+              <option value="freehold">Freehold</option>
+              <option value="leasehold">Leasehold</option>
+              <option value="condominium">Condominium</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Property Floor</label>
+            <input
+              ref={propertyFloorRef}
+              name="propertyFloor"
+              type="number"
+              placeholder="e.g. 2"
+              className={inputClass}
+            />
           </div>
           <div>
             <label className={labelClass}>Listing Category *</label>
