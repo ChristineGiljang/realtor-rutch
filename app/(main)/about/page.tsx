@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "About Rutchilyn Llagoso",
@@ -49,10 +50,13 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Image */}
           <div className="relative h-[600px] overflow-hidden bg-[#E2D9C8]">
-            <img
+            <Image
               src="/images/agent2.jpeg"
               alt="Rutchilyn Llagoso"
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+              priority
             />
           </div>
 

@@ -7,6 +7,7 @@ import PropertyMapWrapper from "@/components/listings/PropertyMapWrapper";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
 import { CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getCityByFreeText } from "@/lib/cities";
+import { optimizedUrl } from "@/lib/cloudinary-url";
 import Link from "next/link";
 
 interface Props {
@@ -487,8 +488,13 @@ async function RecommendedProperties({
           <Link key={p.id} href={`/property/${p.slug}`} className="group">
             <div className="relative overflow-hidden h-44 mb-3">
               <img
-                src={p.images[0]?.url || "/images/placeholder.jpg"}
+                src={
+                  p.images[0]?.url
+                    ? optimizedUrl(p.images[0].url, { width: 500 })
+                    : "/images/placeholder.jpg"
+                }
                 alt={p.title}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
               />
               <div className="absolute top-3 left-3 bg-[#C9A96E] text-white text-xs px-2 py-1 uppercase tracking-wider font-semibold">

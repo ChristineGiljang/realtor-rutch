@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { optimizedUrl } from "@/lib/cloudinary-url";
 
 interface ListingImage {
   id: string;
@@ -54,15 +55,16 @@ export default function FeaturedListingCard({ listing }: { listing: Listing }) {
                 }%)`,
               }}
             >
-              {listing.images.map((img) => (
+              {listing.images.map((img, i) => (
                 <div
                   key={img.id}
                   className="h-full flex-shrink-0 overflow-hidden"
                   style={{ width: `${100 / listing.images.length}%` }}
                 >
                   <img
-                    src={img.url}
+                    src={optimizedUrl(img.url, { width: 500 })}
                     alt={img.alt || listing.title}
+                    loading={i === 0 ? "eager" : "lazy"}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />
                 </div>

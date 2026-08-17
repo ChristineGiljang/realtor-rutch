@@ -5,7 +5,7 @@ export default function Hero() {
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       <Image
-        src="https://res.cloudinary.com/drczxmxfb/image/upload/v1783940857/hero_uixvls.jpg"
+        src="https://res.cloudinary.com/drczxmxfb/image/upload/f_auto,q_auto,w_1920/v1783940857/hero_uixvls.jpg"
         alt="House and lot in Cebu"
         fill
         priority

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Images } from "lucide-react";
+import { optimizedUrl } from "@/lib/cloudinary-url";
 
 interface Image {
   id: string;
@@ -40,14 +41,15 @@ export default function PropertyGallery({ images, title, featured }: Props) {
             className="flex h-full transition-transform duration-300 ease-out"
             style={{ transform: `translateX(-${activeIndex * 100}%)` }}
           >
-            {images.map((img) => (
+            {images.map((img, i) => (
               <div
                 key={img.id}
                 className="w-full h-full flex-shrink-0 flex items-center justify-center"
               >
                 <img
-                  src={img.url}
+                  src={optimizedUrl(img.url, { width: 1280 })}
                   alt={img.alt || title}
+                  loading={i === 0 ? "eager" : "lazy"}
                   className="max-h-full max-w-full object-contain"
                 />
               </div>
@@ -108,8 +110,9 @@ export default function PropertyGallery({ images, title, featured }: Props) {
                 }`}
               >
                 <img
-                  src={img.url}
+                  src={optimizedUrl(img.url, { width: 150 })}
                   alt={img.alt || title}
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </button>
