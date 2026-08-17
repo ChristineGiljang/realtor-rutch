@@ -20,13 +20,15 @@ export default function ListingsResults({
 }: Props) {
   return (
     <>
-      {/* Results Count */}
-      <p className="text-[#8B7355] text-sm mb-8">
+      {/* Results Count — this also serves as the page's H2 signpost for the
+          results section, since it's already dynamic per filter/page and
+          more descriptive than a generic "Results" label would be. */}
+      <h2 className="text-[#8B7355] text-sm font-normal mb-8">
         Showing {listings.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
         {"–"}
         {(currentPage - 1) * PAGE_SIZE + listings.length} of {totalCount}{" "}
         {totalCount === 1 ? "property" : "properties"}
-      </p>
+      </h2>
 
       {/* Grid */}
       {listings.length === 0 ? (
