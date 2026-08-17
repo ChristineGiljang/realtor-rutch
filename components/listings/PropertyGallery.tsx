@@ -35,12 +35,24 @@ export default function PropertyGallery({ images, title, featured }: Props) {
     <div className="w-full bg-[#faf9f6]">
       <div className="max-w-7xl mx-auto">
         {/* Main image — fixed height, contain so nothing gets cropped weirdly */}
-        <div className="relative w-full h-[420px] md:h-[540px] flex items-center justify-center overflow-hidden">
-          <img
-            src={images[activeIndex].url}
-            alt={images[activeIndex].alt || title}
-            className="max-h-full max-w-full object-contain"
-          />
+        <div className="relative w-full h-[420px] md:h-[540px] overflow-hidden">
+          <div
+            className="flex h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+          >
+            {images.map((img) => (
+              <div
+                key={img.id}
+                className="w-full h-full flex-shrink-0 flex items-center justify-center"
+              >
+                <img
+                  src={img.url}
+                  alt={img.alt || title}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            ))}
+          </div>
 
           {/* Bottom gradient */}
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />

@@ -1,5 +1,7 @@
 import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
+import { CITIES } from "@/lib/cities";
+import { FILTERS } from "@/lib/filter-slugs";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = (
@@ -40,13 +42,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic listing pages (matches app/(main)/listings/[slug]/page.tsx)
+  // City pages — /[city], e.g. /mandaue-city
+  const cityPages = CITIES.map((city) => ({
+    url: `${baseUrl}/${city.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.85,
+  }));
+
+  // City + filter combo pages — /[city]/[filterSlug], e.g.
+  // /mandaue-city/house-and-lot-for-sale. This is the main SEO surface
+  // for "<property type> in <city>" searches.
+  const cityFilterPages = CITIES.flatMap((city) =>
+    FILTERS.map((filter) => ({
+      url: `${baseUrl}/${city.slug}/${filter.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.75,
+    })),
+  );
+
+  // Dynamic property detail pages (matches app/(main)/property/[slug]/page.tsx)
   const properties = await db.property.findMany({
     select: { slug: true, updatedAt: true },
   });
 
   const listingPages = properties.map((property) => ({
-    url: `${baseUrl}/listings/${property.slug}`,
+    url: `${baseUrl}/property/${property.slug}`,
     lastModified: property.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,
@@ -65,5 +87,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...listingPages, ...blogPages];
+  return [
+    ...staticPages,
+    ...cityPages,
+    ...cityFilterPages,
+    ...listingPages,
+    ...blogPages,
+  ];
 }

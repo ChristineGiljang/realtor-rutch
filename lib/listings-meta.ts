@@ -145,3 +145,47 @@ export function getListingsMeta(
       "Browse houses, condos, lots, and commercial properties for sale or rent in Cebu City with Realtor Rutch.",
   };
 }
+
+// ── SEO label map for /[city] ──────────────────────────────────
+// One entry per CityDef in lib/cities.ts. Add a case here whenever a
+// new city is added there, or it falls back to the generic template.
+export function getCityListingsMeta(cityName: string): ListingsMeta {
+  switch (cityName) {
+    case "Cebu City":
+      return {
+        h1: "Properties for Sale and Rent in Cebu City",
+        title: "Cebu City Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        description:
+          "Browse houses, condos, lots, and commercial properties for sale or rent in Cebu City. Verified listings, updated daily. Inquire with Realtor Rutch.",
+      };
+    case "Mandaue City":
+      return {
+        h1: "Properties for Sale and Rent in Mandaue City",
+        title:
+          "Mandaue City Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        description:
+          "Browse houses, condos, lots, and commercial properties for sale or rent in Mandaue City. Verified listings, updated daily. Inquire with Realtor Rutch.",
+      };
+    case "Lapu-Lapu City":
+      return {
+        h1: "Properties for Sale and Rent in Lapu-Lapu City",
+        title:
+          "Lapu-Lapu City Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        description:
+          "Browse houses, condos, lots, and commercial properties for sale or rent in Lapu-Lapu City, including Mactan. Verified listings. Inquire with Realtor Rutch.",
+      };
+    case "Cordova":
+      return {
+        h1: "Properties for Sale and Rent in Cordova",
+        title: "Cordova Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        description:
+          "Browse houses, condos, lots, and commercial properties for sale or rent in Cordova, Cebu. Verified listings, updated daily. Inquire with Realtor Rutch.",
+      };
+    default:
+      return {
+        h1: `Properties for Sale and Rent in ${cityName}`,
+        title: `${cityName} Real Estate — Houses, Condos & Lots | Realtor Rutch`,
+        description: `Browse houses, condos, lots, and commercial properties for sale or rent in ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+      };
+  }
+}

@@ -7,40 +7,10 @@ import { Menu, X, ChevronDown } from "lucide-react";
 
 type DropdownItem = { label: string; href: string };
 
-const houseLotItems: DropdownItem[] = [
-  {
-    label: "Preselling House and Lot",
-    href: "/listings?type=house&subtype=preselling",
-  },
-  { label: "RFO - House and Lot", href: "/listings?type=house&subtype=rfo" },
-  { label: "Rent to Own", href: "/listings?type=house&subtype=rent-to-own" },
-  {
-    label: "RFO Subdivision",
-    href: "/listings?type=house&subtype=rfo-subdivision",
-  },
-  { label: "Lot only", href: "/listings?type=land" },
-];
-
-const condoItems: DropdownItem[] = [
-  {
-    label: "Preselling Condo",
-    href: "/listings?type=condo&subtype=preselling",
-  },
-  { label: "RFO Condo", href: "/listings?type=condo&subtype=rfo" },
-  { label: "Rent to Own", href: "/listings?type=condo&subtype=rent-to-own" },
-];
-
-const forRentItems: DropdownItem[] = [
-  { label: "House for Rent", href: "/listings?type=house&category=rent" },
-  { label: "Condo for Rent", href: "/listings?type=condo&category=rent" },
-  {
-    label: "Warehouse for Rent",
-    href: "/listings?type=commercial&category=rent&subtype=warehouse",
-  },
-  {
-    label: "Commercial Space for Rent",
-    href: "/listings?type=commercial&category=rent",
-  },
+const propertiesItems: DropdownItem[] = [
+  { label: "For Sale", href: "/listings?category=sale" },
+  { label: "For Rent", href: "/listings?category=rent" },
+  { label: "Project Selling", href: "/listings?subtype=preselling" },
 ];
 
 function DesktopDropdown({
@@ -188,25 +158,15 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center gap-8">
             <DesktopDropdown
-              label="House and Lot"
-              href="/listings?type=house"
-              items={houseLotItems}
-            />
-            <DesktopDropdown
-              label="Condo"
-              href="/listings?type=condo"
-              items={condoItems}
-            />
-            <DesktopDropdown
-              label="For Rent"
-              href="/listings?category=rent"
-              items={forRentItems}
+              label="Properties"
+              href="/listings"
+              items={propertiesItems}
             />
             <Link
-              href="/listings?type=commercial"
+              href="/blog"
               className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
             >
-              Commercial
+              Blogs
             </Link>
             <Link
               href="/about"
@@ -235,29 +195,17 @@ export default function Navbar() {
         <div className="md:hidden bg-[#F5F0E8] border-t border-[#E2D9C8]">
           <div className="flex flex-col px-4 py-6 gap-6">
             <MobileDropdown
-              label="House and Lot"
-              href="/listings?type=house"
-              items={houseLotItems}
-              onNavigate={() => setIsOpen(false)}
-            />
-            <MobileDropdown
-              label="Condo"
-              href="/listings?type=condo"
-              items={condoItems}
-              onNavigate={() => setIsOpen(false)}
-            />
-            <MobileDropdown
-              label="For Rent"
-              href="/listings?category=rent"
-              items={forRentItems}
+              label="Properties"
+              href="/listings"
+              items={propertiesItems}
               onNavigate={() => setIsOpen(false)}
             />
             <Link
-              href="/listings?type=commercial"
+              href="/blog"
               className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
               onClick={() => setIsOpen(false)}
             >
-              Commercial
+              Blogs
             </Link>
             <Link
               href="/about"

@@ -134,7 +134,7 @@ export default async function AdminListingsPage() {
                 {/* Actions */}
                 <div className="col-span-2 flex items-center gap-3">
                   <Link
-                    href={`/listings/${property.slug}`}
+                    href={`/property/${property.slug}`}
                     target="_blank"
                     className="text-xs text-[#8B7355] hover:text-[#1A1A1A] transition underline"
                   >

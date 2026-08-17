@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import FeaturedListingCard from "@/components/home/FeaturedListingCard";
 
 export default async function FeaturedListings() {
   const listings = await db.property.findMany({
@@ -7,7 +8,7 @@ export default async function FeaturedListings() {
     orderBy: { createdAt: "desc" },
     take: 3,
     include: {
-      images: { orderBy: { order: "asc" }, take: 1 },
+      images: { orderBy: { order: "asc" }, take: 5 },
     },
   });
 
@@ -37,36 +38,7 @@ export default async function FeaturedListings() {
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {listings.map((listing) => (
-            <Link key={listing.id} href={`/listings/${listing.slug}`}>
-              <div className="group cursor-pointer">
-                {/* Image */}
-                <div className="relative overflow-hidden h-72 mb-4">
-                  <img
-                    src={listing.images[0]?.url || "/images/placeholder.jpg"}
-                    alt={listing.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
-                  <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#faf9f6] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
-                    {listing.status}
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div>
-                  <p className="text-xl font-bold mb-1 text-[#C9A96E]">
-                    ₱{listing.price.toLocaleString()}
-                  </p>
-                  <p className="text-[#1A1A1A] mb-2 font-medium">
-                    {listing.title}
-                  </p>
-                  <p className="text-[#8B7355] text-sm">
-                    {listing.beds} bd · {listing.baths} ba ·{" "}
-                    {listing.sqft.toLocaleString()} sqm · {listing.city}
-                  </p>
-                </div>
-              </div>
-            </Link>
+            <FeaturedListingCard key={listing.id} listing={listing} />
           ))}
         </div>
 

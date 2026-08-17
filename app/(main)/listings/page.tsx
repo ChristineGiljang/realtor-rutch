@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getListingsMeta } from "@/lib/listings-meta";
-import ListingsFilters from "@/components/listings/ListingsFilters";
+import PropertySearchBar from "@/components/listings/PropertySearchBar";
 
 export const revalidate = 0;
 
@@ -14,6 +14,7 @@ interface Props {
     bedsMin?: string;
     sort?: string;
     category?: string;
+    q?: string;
   }>;
 }
 
@@ -43,7 +44,7 @@ export async function generateMetadata({
 }
 
 export default async function ListingsPage({ searchParams }: Props) {
-  const { type, subtype, priceMax, bedsMin, sort, category } =
+  const { type, subtype, priceMax, bedsMin, sort, category, q } =
     await searchParams;
 
   const where: any = { status: "active" };
@@ -53,6 +54,14 @@ export default async function ListingsPage({ searchParams }: Props) {
   if (priceMax) where.price = { lte: parseInt(priceMax) };
   if (bedsMin) where.beds = { gte: parseInt(bedsMin) };
   if (category) where.listingCategory = category;
+  if (q) {
+    where.OR = [
+      { address: { contains: q, mode: "insensitive" } },
+      { city: { contains: q, mode: "insensitive" } },
+      { state: { contains: q, mode: "insensitive" } },
+      { title: { contains: q, mode: "insensitive" } },
+    ];
+  }
 
   let orderBy: any = { createdAt: "desc" };
   if (sort === "price-asc") orderBy = { price: "asc" };
@@ -71,7 +80,6 @@ export default async function ListingsPage({ searchParams }: Props) {
   });
 
   const meta = getListingsMeta(type, subtype, category);
-  const activeCategory = category || "all";
 
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
@@ -84,58 +92,8 @@ export default async function ListingsPage({ searchParams }: Props) {
           <h1 className="text-5xl font-bold text-[#1A1A1A]">{meta.h1}</h1>
         </div>
 
-        {/* Category Tabs — preserve the active type/subtype when switching sale/rent */}
-        <div className="flex gap-0 mb-8 border-b border-[#E2D9C8]">
-          {[
-            {
-              label: "All",
-              value: "all",
-              href: (() => {
-                const p = new URLSearchParams();
-                if (type) p.set("type", type);
-                if (subtype) p.set("subtype", subtype);
-                const qs = p.toString();
-                return `/listings${qs ? `?${qs}` : ""}`;
-              })(),
-            },
-            {
-              label: "For Sale",
-              value: "sale",
-              href: (() => {
-                const p = new URLSearchParams();
-                if (type) p.set("type", type);
-                if (subtype) p.set("subtype", subtype);
-                p.set("category", "sale");
-                return `/listings?${p.toString()}`;
-              })(),
-            },
-            {
-              label: "For Rent",
-              value: "rent",
-              href: (() => {
-                const p = new URLSearchParams();
-                if (type) p.set("type", type);
-                p.set("category", "rent");
-                return `/listings?${p.toString()}`;
-              })(),
-            },
-          ].map((tab) => (
-            <Link
-              key={tab.value}
-              href={tab.href}
-              className={`px-6 py-3 text-sm tracking-wider uppercase font-semibold border-b-2 transition -mb-px ${
-                activeCategory === tab.value
-                  ? "border-[#C9A96E] text-[#1A1A1A]"
-                  : "border-transparent text-[#8B7355] hover:text-[#1A1A1A]"
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Filters */}
-        <ListingsFilters />
+        {/* Breadcrumb + Search / Filters */}
+        <PropertySearchBar />
 
         {/* Results Count */}
         <p className="text-[#8B7355] text-sm mb-8">
