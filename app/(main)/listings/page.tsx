@@ -22,17 +22,21 @@ interface Props {
 export async function generateMetadata({
   searchParams,
 }: Props): Promise<Metadata> {
-  const { type, subtype, category } = await searchParams;
+  const { type, subtype, category, page } = await searchParams;
   const meta = getListingsMeta(type, subtype, category);
 
   const params = new URLSearchParams();
   if (type) params.set("type", type);
   if (subtype) params.set("subtype", subtype);
   if (category) params.set("category", category);
+
+  const pageNum = page ? parseInt(page, 10) : 1;
+  if (pageNum > 1) params.set("page", String(pageNum));
+
   const qs = params.toString();
 
   return {
-    title: meta.title,
+    title: pageNum > 1 ? `${meta.title} | Page ${pageNum}` : meta.title,
     description: meta.description,
     alternates: {
       canonical: `/listings${qs ? `?${qs}` : ""}`,
