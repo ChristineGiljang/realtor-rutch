@@ -159,7 +159,7 @@ export function getCityListingsMeta(
   if (filterLabel) {
     return {
       h1: `${filterLabel} in ${cityName}`,
-      title: `${filterLabel} in ${cityName} | Realtor Rutch`,
+      title: `${filterLabel} in ${cityName}`,
       description: `Browse ${filterLabel.toLowerCase()} listings in ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
     };
   }

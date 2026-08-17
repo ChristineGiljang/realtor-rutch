@@ -14,6 +14,24 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+// Root layout's title.template ("%s | Realtor Rutch") adds ~17 chars to
+// whatever we return here, and Google's practical cutoff is ~60 chars
+// total — so keep this page's own portion under ~43. If a future long
+// city name or price ever pushes past that, this clamps it instead of
+// silently shipping an overlong title, and warns in dev so it gets caught
+// before a crawl does.
+const TITLE_BUDGET = 43;
+
+function safeTitle(title: string): string {
+  if (title.length <= TITLE_BUDGET) return title;
+  if (process.env.NODE_ENV !== "production") {
+    console.warn(
+      `[SEO] Title exceeds ${TITLE_BUDGET} chars and was truncated: "${title}"`,
+    );
+  }
+  return title.slice(0, TITLE_BUDGET - 1).trimEnd() + "…";
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const property = await db.property.findUnique({
@@ -22,7 +40,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
   if (!property) return { title: "Listing Not Found" };
   const priceLabel = `₱${property.price.toLocaleString()}${property.listingCategory === "rent" ? "/mo" : ""}`;
-  const title = `${property.title} | ${priceLabel} — ${property.city}`;
+  const typeLabel =
+    { house: "House", condo: "Condo", land: "Lot", commercial: "Commercial" }[
+      property.type
+    ] || property.type;
+  // Short, formula-based SEO title — NOT the full marketing headline.
+  // "2BR Condo in Cebu City | ₱25,000,000" stays well under the ~60 char
+  // limit even before any site-wide title template suffix is appended.
+  const title = safeTitle(
+    `${property.beds}BR ${typeLabel} in ${property.city} | ${priceLabel}`,
+  );
   const location = [property.city, property.state].filter(Boolean).join(", ");
   const description = `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. ${property.description.slice(0, 140)}`;
   const ogImage = property.images[0]?.url;
