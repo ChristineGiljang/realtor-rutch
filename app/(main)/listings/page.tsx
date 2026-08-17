@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { db } from "@/lib/db";
 import { getListingsMeta } from "@/lib/listings-meta";
+import { queryListings } from "@/lib/listings-query";
 import PropertySearchBar from "@/components/listings/PropertySearchBar";
+import ListingsResults from "@/components/listings/ListingsResults";
 
 export const revalidate = 0;
 
@@ -15,6 +15,7 @@ interface Props {
     sort?: string;
     category?: string;
     q?: string;
+    page?: string;
   }>;
 }
 
@@ -44,7 +45,7 @@ export async function generateMetadata({
 }
 
 export default async function ListingsPage({ searchParams }: Props) {
-  const { type, subtype, priceMax, bedsMin, sort, category, q } =
+  const { type, subtype, priceMax, bedsMin, sort, category, q, page } =
     await searchParams;
 
   const where: any = { status: "active" };
@@ -68,18 +69,27 @@ export default async function ListingsPage({ searchParams }: Props) {
   if (sort === "price-desc") orderBy = { price: "desc" };
   if (sort === "newest") orderBy = { createdAt: "desc" };
 
-  const listings = await db.property.findMany({
+  const { listings, totalCount, totalPages, currentPage } = await queryListings(
     where,
+    page,
     orderBy,
-    include: {
-      images: {
-        orderBy: { order: "asc" },
-        take: 1,
-      },
-    },
-  });
+  );
 
   const meta = getListingsMeta(type, subtype, category);
+
+  const hrefForPage = (targetPage: number) => {
+    const p = new URLSearchParams();
+    if (type) p.set("type", type);
+    if (subtype) p.set("subtype", subtype);
+    if (category) p.set("category", category);
+    if (priceMax) p.set("priceMax", priceMax);
+    if (bedsMin) p.set("bedsMin", bedsMin);
+    if (sort) p.set("sort", sort);
+    if (q) p.set("q", q);
+    if (targetPage > 1) p.set("page", String(targetPage));
+    const qs = p.toString();
+    return `/listings${qs ? `?${qs}` : ""}`;
+  };
 
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
@@ -95,69 +105,13 @@ export default async function ListingsPage({ searchParams }: Props) {
         {/* Breadcrumb + Search / Filters */}
         <PropertySearchBar />
 
-        {/* Results Count */}
-        <p className="text-[#8B7355] text-sm mb-8">
-          Showing {listings.length}{" "}
-          {listings.length === 1 ? "property" : "properties"}
-        </p>
-
-        {/* Grid */}
-        {listings.length === 0 ? (
-          <div className="flex items-center justify-center py-24">
-            <p className="text-[#8B7355] text-lg">
-              No listings match your filters.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {listings.map((listing) => (
-              <Link key={listing.id} href={`/listings/${listing.slug}`}>
-                <div className="group cursor-pointer">
-                  {/* Image */}
-                  <div className="relative overflow-hidden h-64 mb-4">
-                    <img
-                      src={listing.images[0]?.url || "/images/placeholder.jpg"}
-                      alt={listing.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
-                    <div className="absolute top-4 left-4 bg-[#1A1A1A] text-[#faf9f6] text-xs tracking-wider uppercase px-3 py-1 font-semibold">
-                      {listing.type}
-                    </div>
-                    <div className="absolute top-4 right-4 bg-[#C9A96E] text-white text-xs tracking-wider uppercase px-3 py-1 font-semibold">
-                      {listing.listingCategory === "rent"
-                        ? "For Rent"
-                        : "For Sale"}
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div>
-                    <p className="text-2xl font-bold mb-1 text-[#1A1A1A]">
-                      ₱{listing.price.toLocaleString()}
-                      {listing.listingCategory === "rent" && (
-                        <span className="text-sm font-normal text-[#8B7355]">
-                          /mo
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-[#1A1A1A] mb-2 font-medium">
-                      {listing.title}
-                    </p>
-                    <p className="text-[#8B7355] text-sm mb-1">
-                      {listing.beds} bd · {listing.baths} ba ·{" "}
-                      {listing.sqft === 0
-                        ? "--"
-                        : listing.sqft.toLocaleString()}{" "}
-                      sqm
-                    </p>
-                    <p className="text-[#8B7355] text-sm">{listing.city}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        <ListingsResults
+          listings={listings}
+          totalCount={totalCount}
+          totalPages={totalPages}
+          currentPage={currentPage}
+          hrefForPage={hrefForPage}
+        />
       </div>
     </div>
   );

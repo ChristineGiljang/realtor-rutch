@@ -146,10 +146,24 @@ export function getListingsMeta(
   };
 }
 
-// ── SEO label map for /[city] ──────────────────────────────────
+// ── SEO label map for /[city] and /[city]/[filterSlug] ──────────
 // One entry per CityDef in lib/cities.ts. Add a case here whenever a
 // new city is added there, or it falls back to the generic template.
-export function getCityListingsMeta(cityName: string): ListingsMeta {
+// filterLabel (from lib/filter-slugs.ts) is optional — pass it on the
+// combined /[city]/[filterSlug] route to get filter-specific copy
+// instead of the generic "Properties for Sale and Rent" text.
+export function getCityListingsMeta(
+  cityName: string,
+  filterLabel?: string,
+): ListingsMeta {
+  if (filterLabel) {
+    return {
+      h1: `${filterLabel} in ${cityName}`,
+      title: `${filterLabel} in ${cityName} | Realtor Rutch`,
+      description: `Browse ${filterLabel.toLowerCase()} listings in ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+    };
+  }
+
   switch (cityName) {
     case "Cebu City":
       return {
