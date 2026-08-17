@@ -112,6 +112,11 @@ export default async function PropertyDetailPage({ params }: Props) {
     land: "Lot Only",
     commercial: "Commercial",
   };
+  // Short per-property tag ("2BR Condo in Cebu City") interpolated into every
+  // section H2 below so each one is unique across listings instead of every
+  // property page sharing the exact same "Property Overview" / "Features" /
+  // "Payment Terms" / etc. heading text.
+  const propertyLabel = `${property.beds}BR ${TYPE_LABELS[property.type] || property.type} in ${property.city}`;
   const matchedCity = getCityByFreeText(property.city);
   const breadcrumbs = [
     { label: "Home", href: "/" },
@@ -266,7 +271,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {/* Property Overview */}
             <div>
               <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                Property Overview
+                {propertyLabel} — Overview
               </h2>
               <div className="divide-y divide-[#E2D9C8]">
                 <DetailRow
@@ -319,7 +324,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {/* Description */}
             <div>
               <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                Description
+                {propertyLabel} — Description
               </h2>
               <div className="text-[#8B7355] leading-relaxed space-y-2 text-sm">
                 {property.description.split("\n").map((line, i) =>
@@ -345,7 +350,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {amenityList.length > 0 && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  Details
+                  {propertyLabel} — Details
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   {amenityList.map((item) => (
@@ -364,7 +369,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {property.features && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  Features
+                  {propertyLabel} — Features
                 </h2>
                 <div className="text-[#8B7355] leading-relaxed space-y-1 text-sm">
                   {property.features.split("\n").map((line, i) =>
@@ -389,7 +394,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {property.paymentTerms && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  Payment Terms
+                  {propertyLabel} — Payment Terms
                 </h2>
                 <div className="text-[#8B7355] leading-relaxed space-y-1 text-sm">
                   {property.paymentTerms.split("\n").map((line, i) =>
@@ -414,7 +419,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {property.lat && property.lng && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  Map
+                  {propertyLabel} — Location
                 </h2>
                 <PropertyMapWrapper
                   lat={property.lat}
@@ -508,7 +513,7 @@ async function RecommendedProperties({
   return (
     <div>
       <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-        Recommended Properties
+        More {listingCategory === "rent" ? "Rentals" : "Listings"} in {city}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {recommended.map((p) => (
