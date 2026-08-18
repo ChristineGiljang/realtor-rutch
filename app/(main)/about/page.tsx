@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "About Rutchilyn Llagoso",
   description:
     "Meet Rutchilyn Llagoso, a Cebu-based real estate agent specializing in residential, commercial, and investment properties. Honest advice, prompt communication, and personalized service.",
+  alternates: {
+    canonical: "/about",
+  },
 };
 
 export default function AboutPage() {

@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "House and Lot in Cebu | Realtor Rutch",
   description:
     "Find your ideal house and lot in Cebu with Realtor Rutch. Browse verified listings across Cebu City and nearby areas, from starter homes to luxury properties, for sale or rent.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function Home() {

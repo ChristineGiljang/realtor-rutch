@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Blog",
   description:
     "Real estate tips, market updates, and buying guides for Cebu City from Realtor Rutch — financing, titles, neighborhoods, and more.",
+  alternates: {
+    canonical: "/blog",
+  },
 };
 
 export default async function BlogPage() {
