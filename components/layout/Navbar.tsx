@@ -133,7 +133,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/images/favicon.png"
+              src="favicon_vvtfxk.png"
               alt="Realtor Rutch"
               width={40}
               height={40}
