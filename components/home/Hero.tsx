@@ -18,16 +18,6 @@ const cloudinaryLoader = ({
 export default function Hero() {
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
-      <Image
-        loader={cloudinaryLoader}
-        src="hero_uixvls.jpg"
-        alt="House and lot in Cebu"
-        fill
-        priority
-        fetchPriority="high"
-        sizes="100vw"
-        className="object-cover"
-      />
       <div className="absolute inset-0 bg-black/70" />
 
       <div className="relative z-10 text-center text-white px-4 max-w-5xl mx-auto">

@@ -5,12 +5,8 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-    ],
+    loader: "custom",
+    loaderFile: "./lib/cloudinary-loader.ts",
   },
   async redirects() {
     return [
