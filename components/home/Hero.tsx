@@ -1,23 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const cloudinaryLoader = ({
-  src,
-  width,
-  quality,
-}: {
-  src: string;
-  width: number;
-  quality?: number;
-}) => {
-  return `https://res.cloudinary.com/drczxmxfb/image/upload/f_auto,q_${
-    quality || "auto"
-  },w_${width}/v1783940857/${src}`;
-};
-
 export default function Hero() {
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+      <Image
+        src="hero_uixvls.jpg"
+        alt="House and lot in Cebu"
+        fill
+        priority
+        fetchPriority="high"
+        sizes="100vw"
+        className="object-cover"
+      />
       <div className="absolute inset-0 bg-black/70" />
 
       <div className="relative z-10 text-center text-white px-4 max-w-5xl mx-auto">
