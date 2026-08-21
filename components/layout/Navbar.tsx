@@ -32,7 +32,7 @@ function DesktopDropdown({
     >
       <Link
         href={href}
-        className="flex items-center gap-1 text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
+        className="flex items-center gap-1 text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
       >
         {label}
       </Link>
@@ -42,7 +42,7 @@ function DesktopDropdown({
         aria-haspopup="true"
         aria-expanded={open}
         aria-label={`Toggle ${label} submenu`}
-        className="text-[#8B7355] hover:text-[#1A1A1A] transition p-1 -ml-1"
+        className="text-[#6B5842] hover:text-[#1A1A1A] transition p-1 -ml-1"
       >
         <ChevronDown
           size={14}
@@ -57,7 +57,7 @@ function DesktopDropdown({
               <Link
                 key={item.href}
                 href={item.href}
-                className="block px-4 py-2 text-sm text-[#8B7355] hover:text-[#1A1A1A] hover:bg-[#F5F0E8] transition whitespace-nowrap"
+                className="block px-4 py-2 text-sm text-[#6B5842] hover:text-[#1A1A1A] hover:bg-[#F5F0E8] transition whitespace-nowrap"
               >
                 {item.label}
               </Link>
@@ -87,7 +87,7 @@ function MobileDropdown({
       <div className="flex items-center justify-between w-full">
         <Link
           href={href}
-          className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
+          className="text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
           onClick={onNavigate}
         >
           {label}
@@ -97,7 +97,7 @@ function MobileDropdown({
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-label={`Toggle ${label} submenu`}
-          className="text-[#8B7355] hover:text-[#1A1A1A] p-1"
+          className="text-[#6B5842] hover:text-[#1A1A1A] p-1"
         >
           <ChevronDown
             size={16}
@@ -112,7 +112,7 @@ function MobileDropdown({
             <Link
               key={item.href}
               href={item.href}
-              className="text-[#8B7355]/80 hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
+              className="text-[#6B5842]/80 hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
               onClick={onNavigate}
             >
               {item.label}
@@ -148,7 +148,7 @@ export default function Navbar() {
                 Realtor Rutch
               </p>
               <p
-                className="text-[#8B7355] text-xs tracking-[0.3em] uppercase"
+                className="text-[#6B5842] text-xs tracking-[0.3em] uppercase"
                 style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
               >
                 Cebu Real Estate
@@ -164,19 +164,19 @@ export default function Navbar() {
             />
             <Link
               href="/blog"
-              className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
+              className="text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
             >
               Blogs
             </Link>
             <Link
               href="/about"
-              className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
+              className="text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
             >
               About
             </Link>
             <Link
               href="/contact"
-              className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
+              className="text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase transition"
             >
               Contact
             </Link>
@@ -185,6 +185,8 @@ export default function Navbar() {
           <button
             className="md:hidden text-[#1A1A1A]"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -202,21 +204,21 @@ export default function Navbar() {
             />
             <Link
               href="/blog"
-              className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
+              className="text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
               onClick={() => setIsOpen(false)}
             >
               Blogs
             </Link>
             <Link
               href="/about"
-              className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
+              className="text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
               onClick={() => setIsOpen(false)}
             >
               About
             </Link>
             <Link
               href="/contact"
-              className="text-[#8B7355] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
+              className="text-[#6B5842] hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
               onClick={() => setIsOpen(false)}
             >
               Contact
