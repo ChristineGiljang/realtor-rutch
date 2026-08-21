@@ -36,10 +36,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <Script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="nIdREsSgZJJsPQ7AmdquzA"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
       </head>
       <body
