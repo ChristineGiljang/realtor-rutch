@@ -9,7 +9,7 @@ export default function AboutTeaser() {
           {/* Image */}
           <div className="relative h-[500px] overflow-hidden">
             <Image
-              src="https://res.cloudinary.com/drczxmxfb/image/upload/f_auto,q_auto,w_1000/v1783941551/agent_o1qnqf.jpg"
+              src="agent_o1qnqf.jpg"
               alt="Rutchilyn Llagoso, Cebu real estate agent"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
