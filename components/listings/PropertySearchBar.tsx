@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
   MapPin,
@@ -11,6 +11,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
+import { CITIES, type CityDef } from "@/lib/cities";
 
 type FilterTab = "category" | "type" | "price" | "more";
 
@@ -71,6 +72,34 @@ export default function PropertySearchBar() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<"all" | FilterTab>("all");
 
+  // City autocomplete dropdown
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const desktopWrapRef = useRef<HTMLDivElement>(null);
+  const mobileWrapRef = useRef<HTMLDivElement>(null);
+
+  const filteredCities: CityDef[] =
+    locationInput.trim().length > 0
+      ? CITIES.filter((c) =>
+          c.name.toLowerCase().includes(locationInput.trim().toLowerCase()),
+        ).slice(0, 6)
+      : [];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      if (
+        desktopWrapRef.current?.contains(target) ||
+        mobileWrapRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setShowSuggestions(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const activeFilterCount = [category, type, priceMax, bedsMin, sort].filter(
     Boolean,
   ).length;
@@ -91,8 +120,78 @@ export default function PropertySearchBar() {
 
   const submitLocation = () => {
     setDesktopOpenTab(null);
+    setShowSuggestions(false);
     router.push(`/listings?${buildParams({ q: locationInput }).toString()}`);
   };
+
+  const selectCity = (city: CityDef) => {
+    setLocationInput(city.name);
+    setShowSuggestions(false);
+    setActiveIndex(-1);
+    setDesktopOpenTab(null);
+    setMobileSheetOpen(false);
+    router.push(`/${city.slug}`);
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocationInput(e.target.value);
+    setShowSuggestions(true);
+    setActiveIndex(-1);
+  };
+
+  const handleLocationFocus = () => {
+    if (locationInput.trim().length > 0) setShowSuggestions(true);
+  };
+
+  const handleLocationKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || filteredCities.length === 0) {
+      if (e.key === "Enter") submitLocation();
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % filteredCities.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? filteredCities.length - 1 : i - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex >= 0 && filteredCities[activeIndex]) {
+        selectCity(filteredCities[activeIndex]);
+      } else {
+        submitLocation();
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setActiveIndex(-1);
+    }
+  };
+
+  const renderCitySuggestions = () =>
+    showSuggestions &&
+    filteredCities.length > 0 && (
+      <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-[#E2D9C8] shadow-lg rounded-xl py-2 max-h-64 overflow-y-auto">
+        {filteredCities.map((city, i) => (
+          <button
+            key={city.slug}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              selectCity(city);
+            }}
+            onMouseEnter={() => setActiveIndex(i)}
+            className={`flex items-center gap-2 w-full text-left px-4 py-2 text-sm transition ${
+              i === activeIndex
+                ? "bg-[#F5F0E8] text-[#1A1A1A]"
+                : "text-[#1A1A1A] hover:bg-[#F5F0E8]"
+            }`}
+          >
+            <MapPin size={14} className="text-[#8B7355] shrink-0" />
+            {city.name}
+          </button>
+        ))}
+      </div>
+    );
 
   const clearAll = () => {
     setLocationInput("");
@@ -127,14 +226,22 @@ export default function PropertySearchBar() {
 
       {/* ── Desktop search bar ── */}
       <div className="hidden md:flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 bg-white border border-[#E2D9C8] rounded-full px-4 py-2.5 flex-1 min-w-[260px] focus-within:border-[#C9A96E] transition">
+        <div
+          ref={desktopWrapRef}
+          className="relative flex items-center gap-2 bg-white border border-[#E2D9C8] rounded-full px-4 py-2.5 flex-1 min-w-[260px] focus-within:border-[#C9A96E] transition"
+        >
           <MapPin size={16} className="text-[#8B7355] shrink-0" />
           <input
             value={locationInput}
-            onChange={(e) => setLocationInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submitLocation()}
+            onChange={handleLocationChange}
+            onFocus={handleLocationFocus}
+            onKeyDown={handleLocationKeyDown}
             placeholder="Enter an address, street, barangay, city or province"
             className="flex-1 text-sm text-[#1A1A1A] placeholder:text-[#8B7355]/70 outline-none bg-transparent"
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={showSuggestions && filteredCities.length > 0}
+            aria-autocomplete="list"
           />
           <button
             type="button"
@@ -144,6 +251,7 @@ export default function PropertySearchBar() {
           >
             <Search size={16} />
           </button>
+          {renderCitySuggestions()}
         </div>
 
         {/* Category */}
@@ -318,15 +426,24 @@ export default function PropertySearchBar() {
 
       {/* ── Mobile search bar ── */}
       <div className="flex md:hidden items-center gap-2">
-        <div className="flex items-center gap-2 bg-white border border-[#E2D9C8] rounded-full px-4 py-2.5 flex-1 min-w-0">
+        <div
+          ref={mobileWrapRef}
+          className="relative flex items-center gap-2 bg-white border border-[#E2D9C8] rounded-full px-4 py-2.5 flex-1 min-w-0"
+        >
           <MapPin size={16} className="text-[#8B7355] shrink-0" />
           <input
             value={locationInput}
-            onChange={(e) => setLocationInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submitLocation()}
+            onChange={handleLocationChange}
+            onFocus={handleLocationFocus}
+            onKeyDown={handleLocationKeyDown}
             placeholder="Enter an address, street, barangay..."
             className="flex-1 min-w-0 text-sm text-[#1A1A1A] placeholder:text-[#8B7355]/70 outline-none bg-transparent"
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={showSuggestions && filteredCities.length > 0}
+            aria-autocomplete="list"
           />
+          {renderCitySuggestions()}
         </div>
         <button
           type="button"

@@ -146,6 +146,28 @@ export function getListingsMeta(
   };
 }
 
+// ── Localize a /listings ListingsMeta for a searched city ────────
+// getListingsMeta() always writes "Cebu" / "Cebu City" since it has
+// no idea what was searched. When the ?q= on /listings matches a
+// known city (via getCityByFreeText in lib/cities.ts), swap that
+// wording for the matched city's name so "All Listings in Cebu"
+// becomes "All Listings in Mandaue City" etc. "Cebu City" is matched
+// first so cities without "City" in their name (e.g. Cordova) don't
+// end up with a leftover "City City".
+export function localizeListingsMeta(
+  meta: ListingsMeta,
+  cityName: string,
+): ListingsMeta {
+  const localize = (s: string) =>
+    s.replace(/Cebu City/g, cityName).replace(/\bCebu\b/g, cityName);
+
+  return {
+    h1: localize(meta.h1),
+    title: localize(meta.title),
+    description: localize(meta.description),
+  };
+}
+
 // ── SEO label map for /[city] and /[city]/[filterSlug] ──────────
 // One entry per CityDef in lib/cities.ts. Add a case here whenever a
 // new city is added there, or it falls back to the generic template.

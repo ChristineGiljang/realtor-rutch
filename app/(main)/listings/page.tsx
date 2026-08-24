@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getListingsMeta } from "@/lib/listings-meta";
+import { getListingsMeta, localizeListingsMeta } from "@/lib/listings-meta";
+import { getCityByFreeText } from "@/lib/cities";
 import { queryListings } from "@/lib/listings-query";
 import PropertySearchBar from "@/components/listings/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
@@ -22,8 +23,12 @@ interface Props {
 export async function generateMetadata({
   searchParams,
 }: Props): Promise<Metadata> {
-  const { type, subtype, category, page } = await searchParams;
-  const meta = getListingsMeta(type, subtype, category);
+  const { type, subtype, category, q, page } = await searchParams;
+  const rawMeta = getListingsMeta(type, subtype, category);
+  const matchedCity = q ? getCityByFreeText(q) : undefined;
+  const meta = matchedCity
+    ? localizeListingsMeta(rawMeta, matchedCity.name)
+    : rawMeta;
 
   const params = new URLSearchParams();
   if (type) params.set("type", type);
@@ -79,7 +84,11 @@ export default async function ListingsPage({ searchParams }: Props) {
     orderBy,
   );
 
-  const meta = getListingsMeta(type, subtype, category);
+  const rawMeta = getListingsMeta(type, subtype, category);
+  const matchedCity = q ? getCityByFreeText(q) : undefined;
+  const meta = matchedCity
+    ? localizeListingsMeta(rawMeta, matchedCity.name)
+    : rawMeta;
 
   const hrefForPage = (targetPage: number) => {
     const p = new URLSearchParams();
