@@ -23,6 +23,7 @@ interface Props {
   onSelectAddress: (address: string) => void;
   onClear: () => void;
   stacked?: boolean;
+  pill?: boolean;
 }
 
 export default function LocationAutocomplete({
@@ -31,6 +32,7 @@ export default function LocationAutocomplete({
   onSelectAddress,
   onClear,
   stacked = false,
+  pill = false,
 }: Props) {
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<Result[]>([]);
@@ -92,9 +94,9 @@ export default function LocationAutocomplete({
   return (
     <div ref={containerRef} className="relative">
       <div
-        className={`flex items-center gap-2 bg-white border border-[#E2D9C8] focus-within:border-[#C9A96E] px-3 ${
-          stacked ? "w-full" : ""
-        }`}
+        className={`flex items-center gap-2 bg-white border border-[#E2D9C8] focus-within:border-[#C9A96E] transition ${
+          pill ? "rounded-full px-4" : "px-3"
+        } ${stacked ? "w-full" : ""}`}
       >
         <MapPin size={15} className="text-[#8B7355] shrink-0" />
         <input
@@ -125,7 +127,11 @@ export default function LocationAutocomplete({
       </div>
 
       {open && query.trim().length >= 2 && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#E2D9C8] shadow-lg z-[70] max-h-72 overflow-y-auto">
+        <div
+          className={`absolute left-0 right-0 top-full mt-2 bg-white border border-[#E2D9C8] shadow-lg z-[70] max-h-72 overflow-y-auto ${
+            pill ? "rounded-xl overflow-hidden" : ""
+          }`}
+        >
           {loading ? (
             <p className="px-4 py-3 text-sm text-[#8B7355]">Searching…</p>
           ) : results.length === 0 ? (
