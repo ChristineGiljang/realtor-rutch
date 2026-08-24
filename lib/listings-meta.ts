@@ -2,6 +2,11 @@
 // Keyed off the exact type/subtype/category combos used by
 // components/layout/Navbar.tsx, so every nav click lands on a page
 // with its own H1, <title>, and meta description.
+//
+// NOTE: titles here are intentionally BARE (no "| Realtor Rutch"
+// suffix). The root layout.tsx applies a title template
+// (`"%s | Realtor Rutch"`) to every page automatically — adding the
+// suffix here too caused it to appear twice in rendered <title> tags.
 
 export interface ListingsMeta {
   h1: string;
@@ -18,56 +23,56 @@ export function getListingsMeta(
   if (subtype === "preselling" && type === "house")
     return {
       h1: "Preselling House and Lot in Cebu",
-      title: "Preselling House and Lot in Cebu | Realtor Rutch",
+      title: "Preselling House and Lot in Cebu",
       description:
         "Browse preselling house and lot properties in Cebu City and nearby areas. Early-bird pricing, flexible payment terms. Inquire with Realtor Rutch.",
     };
   if (subtype === "rfo" && type === "house")
     return {
       h1: "RFO House and Lot in Cebu",
-      title: "RFO House and Lot in Cebu — Ready for Occupancy | Realtor Rutch",
+      title: "RFO House and Lot in Cebu — Ready for Occupancy",
       description:
         "Ready-for-occupancy house and lot listings in Cebu City. Move in now — no waiting, verified properties. Browse with Realtor Rutch.",
     };
   if (subtype === "rent-to-own" && type === "house")
     return {
       h1: "Rent to Own House and Lot in Cebu",
-      title: "Rent to Own House and Lot in Cebu | Realtor Rutch",
+      title: "Rent to Own House and Lot in Cebu",
       description:
         "Find rent-to-own house and lot deals in Cebu City. Affordable path to homeownership. Inquire with Realtor Rutch today.",
     };
   if (subtype === "rfo-subdivision")
     return {
       h1: "RFO Subdivision in Cebu",
-      title: "RFO Subdivision in Cebu — Ready for Occupancy | Realtor Rutch",
+      title: "RFO Subdivision in Cebu — Ready for Occupancy",
       description:
         "Ready-for-occupancy subdivision lots and homes in Cebu. Gated communities, complete amenities. Browse with Realtor Rutch.",
     };
   if (subtype === "preselling" && type === "condo")
     return {
       h1: "Preselling Condo in Cebu",
-      title: "Preselling Condo in Cebu | Realtor Rutch",
+      title: "Preselling Condo in Cebu",
       description:
         "Preselling condominium units in Cebu City. Lock in the best prices before turnover. Inquire with Realtor Rutch.",
     };
   if (subtype === "rfo" && type === "condo")
     return {
       h1: "RFO Condo in Cebu",
-      title: "RFO Condo in Cebu — Ready for Occupancy | Realtor Rutch",
+      title: "RFO Condo in Cebu — Ready for Occupancy",
       description:
         "Ready-for-occupancy condo units in Cebu City. Move in now — verified listings. Browse with Realtor Rutch.",
     };
   if (subtype === "rent-to-own" && type === "condo")
     return {
       h1: "Rent to Own Condo in Cebu",
-      title: "Rent to Own Condo in Cebu | Realtor Rutch",
+      title: "Rent to Own Condo in Cebu",
       description:
         "Rent-to-own condominium units in Cebu City. Affordable monthly payments toward ownership. Inquire with Realtor Rutch.",
     };
   if (subtype === "warehouse")
     return {
       h1: "Warehouse for Rent in Cebu",
-      title: "Warehouse for Rent in Cebu | Realtor Rutch",
+      title: "Warehouse for Rent in Cebu",
       description:
         "Warehouse and storage spaces for rent in Cebu City and Metro Cebu. Various sizes available. Inquire with Realtor Rutch.",
     };
@@ -76,63 +81,63 @@ export function getListingsMeta(
   if (type === "house" && category === "rent")
     return {
       h1: "House for Rent in Cebu",
-      title: "House for Rent in Cebu | Realtor Rutch",
+      title: "House for Rent in Cebu",
       description:
         "Houses for rent in Cebu City and nearby areas. Various sizes, gated subdivisions available. Browse with Realtor Rutch.",
     };
   if (type === "condo" && category === "rent")
     return {
       h1: "Condo for Rent in Cebu",
-      title: "Condo for Rent in Cebu | Realtor Rutch",
+      title: "Condo for Rent in Cebu",
       description:
         "Condominium units for rent in Cebu City. Studio to 3-bedroom units near business districts. Browse with Realtor Rutch.",
     };
   if (type === "commercial" && category === "rent")
     return {
       h1: "Commercial Space for Rent in Cebu",
-      title: "Commercial Space for Rent in Cebu | Realtor Rutch",
+      title: "Commercial Space for Rent in Cebu",
       description:
         "Office, retail, and commercial spaces for rent in Cebu City. Prime locations, flexible terms. Inquire with Realtor Rutch.",
     };
   if (type === "land")
     return {
       h1: "Lot for Sale in Cebu",
-      title: "Lot for Sale in Cebu | Realtor Rutch",
+      title: "Lot for Sale in Cebu",
       description:
         "Residential and commercial lots for sale in Cebu City and nearby areas. Browse with Realtor Rutch.",
     };
   if (type === "house")
     return {
       h1: "House and Lot for Sale in Cebu",
-      title: "House and Lot for Sale in Cebu | Realtor Rutch",
+      title: "House and Lot for Sale in Cebu",
       description:
         "Find your ideal house and lot for sale in Cebu City. Verified listings, gated subdivisions, and luxury homes. Browse with Realtor Rutch.",
     };
   if (type === "condo")
     return {
       h1: "Condo for Sale in Cebu",
-      title: "Condo for Sale in Cebu | Realtor Rutch",
+      title: "Condo for Sale in Cebu",
       description:
         "Condominium units for sale in Cebu City. Studio to penthouse units in prime locations. Browse with Realtor Rutch.",
     };
   if (type === "commercial")
     return {
       h1: "Commercial Properties in Cebu",
-      title: "Commercial Properties in Cebu | Realtor Rutch",
+      title: "Commercial Properties in Cebu",
       description:
         "Commercial real estate for sale and rent in Cebu City. Office, warehouse, and retail spaces. Browse with Realtor Rutch.",
     };
   if (category === "rent")
     return {
       h1: "Properties for Rent in Cebu",
-      title: "Properties for Rent in Cebu | Realtor Rutch",
+      title: "Properties for Rent in Cebu",
       description:
         "Houses, condos, and commercial spaces for rent in Cebu City. Updated listings. Browse with Realtor Rutch.",
     };
   if (category === "sale")
     return {
       h1: "Properties for Sale in Cebu",
-      title: "Properties for Sale in Cebu | Realtor Rutch",
+      title: "Properties for Sale in Cebu",
       description:
         "Houses, condos, lots, and commercial properties for sale in Cebu City. Browse with Realtor Rutch.",
     };
@@ -140,7 +145,7 @@ export function getListingsMeta(
   // Default
   return {
     h1: "All Listings in Cebu",
-    title: "Property Listings in Cebu | Realtor Rutch",
+    title: "Property Listings in Cebu",
     description:
       "Browse houses, condos, lots, and commercial properties for sale or rent in Cebu City with Realtor Rutch.",
   };
@@ -190,37 +195,35 @@ export function getCityListingsMeta(
     case "Cebu City":
       return {
         h1: "Properties for Sale and Rent in Cebu City",
-        title: "Cebu City Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        title: "Cebu City Real Estate — Houses, Condos & Lots",
         description:
           "Browse houses, condos, lots, and commercial properties for sale or rent in Cebu City. Verified listings, updated daily. Inquire with Realtor Rutch.",
       };
     case "Mandaue City":
       return {
         h1: "Properties for Sale and Rent in Mandaue City",
-        title:
-          "Mandaue City Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        title: "Mandaue City Real Estate — Houses, Condos & Lots",
         description:
           "Browse houses, condos, lots, and commercial properties for sale or rent in Mandaue City. Verified listings, updated daily. Inquire with Realtor Rutch.",
       };
     case "Lapu-Lapu City":
       return {
         h1: "Properties for Sale and Rent in Lapu-Lapu City",
-        title:
-          "Lapu-Lapu City Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        title: "Lapu-Lapu City Real Estate | Homes & Condos",
         description:
           "Browse houses, condos, lots, and commercial properties for sale or rent in Lapu-Lapu City, including Mactan. Verified listings. Inquire with Realtor Rutch.",
       };
     case "Cordova":
       return {
         h1: "Properties for Sale and Rent in Cordova",
-        title: "Cordova Real Estate — Houses, Condos & Lots | Realtor Rutch",
+        title: "Cordova Real Estate — Houses, Condos & Lots",
         description:
           "Browse houses, condos, lots, and commercial properties for sale or rent in Cordova, Cebu. Verified listings, updated daily. Inquire with Realtor Rutch.",
       };
     default:
       return {
         h1: `Properties for Sale and Rent in ${cityName}`,
-        title: `${cityName} Real Estate — Houses, Condos & Lots | Realtor Rutch`,
+        title: `${cityName} Real Estate — Houses, Condos & Lots`,
         description: `Browse houses, condos, lots, and commercial properties for sale or rent in ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
       };
   }

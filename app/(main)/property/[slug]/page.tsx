@@ -51,7 +51,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     `${property.beds}BR ${typeLabel} in ${property.city} | ${priceLabel}`,
   );
   const location = [property.city, property.state].filter(Boolean).join(", ");
-  const description = `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. ${property.description.slice(0, 140)}`;
+  // Google's effective snippet cutoff is ~155-160 chars. The prefix below
+  // is variable length (city/state/type vary per listing), so slicing the
+  // raw description to a flat 140 chars on top of it was overflowing the
+  // total by 15-30 chars on longer prefixes. Budget the WHOLE string
+  // instead, and trim to the last full word so it doesn't cut mid-word.
+  const DESCRIPTION_BUDGET = 155;
+  const prefix = `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. `;
+  const remaining = DESCRIPTION_BUDGET - prefix.length;
+  let snippet = property.description.slice(0, Math.max(remaining, 0));
+  if (property.description.length > remaining) {
+    snippet = snippet.slice(0, snippet.lastIndexOf(" ")).trimEnd() + "…";
+  }
+  const description = `${prefix}${snippet}`;
   const ogImage = property.images[0]?.url;
   return {
     title,
