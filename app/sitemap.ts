@@ -62,6 +62,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  // /listings query-param combo pages — the general (non-city-specific)
+  // "<type> for <sale/rent> in Cebu" pages, e.g. /listings?type=house&category=sale.
+  // These carry the broad "Cebu" keyword (not tied to one city), matching
+  // getListingsMeta()'s titles/H1s directly.
+  const listingsComboPages = [
+    { type: "house", category: "sale" },
+    { type: "condo", category: "sale" },
+    { type: "land", category: "sale" },
+    { type: "house", category: "rent" },
+    { type: "condo", category: "rent" },
+  ].map(({ type, category }) => ({
+    url: `${baseUrl}/listings?type=${type}&category=${category}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+
   // Dynamic property detail pages (matches app/(main)/property/[slug]/page.tsx)
   const properties = await db.property.findMany({
     select: { slug: true, updatedAt: true },
@@ -91,6 +108,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticPages,
     ...cityPages,
     ...cityFilterPages,
+    ...listingsComboPages,
     ...listingPages,
     ...blogPages,
   ];

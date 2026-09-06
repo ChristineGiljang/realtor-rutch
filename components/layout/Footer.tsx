@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#1A1A1A] border-t border-[#E2D9C8]/20 text-[#faf9f6]/70 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
             <h3 className="text-[#faf9f6] text-xl font-bold tracking-widest uppercase mb-3">
@@ -35,6 +35,39 @@ export default function Footer() {
               </Link>
               <Link href="/contact" className="hover:text-[#C9A96E] transition">
                 Contact
+              </Link>
+            </div>
+          </div>
+
+          {/* Popular Searches — internal links to the SEO filter pages */}
+          <div>
+            <h4 className="text-[#faf9f6] text-sm tracking-wider uppercase mb-4">
+              Popular Searches
+            </h4>
+            <div className="flex flex-col gap-2 text-sm">
+              <Link
+                href="/cebu-city/house-and-lot-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                House and Lot for Sale in Cebu
+              </Link>
+              <Link
+                href="/cebu-city/condo-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                Condo for Sale in Cebu City
+              </Link>
+              <Link
+                href="/cebu-city/lot-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                Lot for Sale in Cebu
+              </Link>
+              <Link
+                href="/mandaue-city/house-and-lot-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                House and Lot in Mandaue City
               </Link>
             </div>
           </div>
