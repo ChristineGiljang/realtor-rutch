@@ -66,6 +66,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // "<type> for <sale/rent> in Cebu" pages, e.g. /listings?type=house&category=sale.
   // These carry the broad "Cebu" keyword (not tied to one city), matching
   // getListingsMeta()'s titles/H1s directly.
+  //
+  // NOTE: the "&" joining multiple query params must be escaped to "&amp;"
+  // here — this array is the only spot in the sitemap with multi-param
+  // URLs, and an unescaped "&" breaks XML parsing ("EntityRef: expecting
+  // ';'") since XML treats & as the start of an entity reference.
   const listingsComboPages = [
     { type: "house", category: "sale" },
     { type: "condo", category: "sale" },
@@ -73,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { type: "house", category: "rent" },
     { type: "condo", category: "rent" },
   ].map(({ type, category }) => ({
-    url: `${baseUrl}/listings?type=${type}&category=${category}`,
+    url: `${baseUrl}/listings?type=${type}&amp;category=${category}`,
     lastModified: new Date(),
     changeFrequency: "daily" as const,
     priority: 0.7,
