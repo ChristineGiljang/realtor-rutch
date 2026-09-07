@@ -301,7 +301,13 @@ export default async function PropertyDetailPage({ params }: Props) {
                       : "For Sale"
                   }
                 />
-                <DetailRow label="Built In" value={property.yearBuilt} />
+                {/* FIX #1: yearBuilt of 0 means "not set" in the DB, not a
+                    real construction year — hide the row instead of
+                    displaying "Built In 0". */}
+                <DetailRow
+                  label="Built In"
+                  value={property.yearBuilt ? property.yearBuilt : null}
+                />
                 <DetailRow
                   label="Car Parks"
                   value={property.garage ? `${property.garage}` : null}
@@ -318,10 +324,14 @@ export default async function PropertyDetailPage({ params }: Props) {
                       : null
                   }
                 />
+                {/* FIX #2: "Land Size" doesn't apply to condo units — owners
+                    hold the unit, not land. Hide the row for condos even
+                    when a (likely leftover/incorrect) lotSize value exists
+                    in the DB, instead of only checking that it's truthy. */}
                 <DetailRow
                   label="Land Size"
                   value={
-                    property.lotSize
+                    property.lotSize && property.type !== "condo"
                       ? `${property.lotSize.toLocaleString()} sqm`
                       : null
                   }
