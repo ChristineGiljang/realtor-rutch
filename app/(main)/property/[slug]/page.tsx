@@ -22,6 +22,10 @@ interface Props {
 // before a crawl does.
 const TITLE_BUDGET = 43;
 
+// Land and commercial listings don't have bedrooms/bathrooms/car parks —
+// used for the SEO title/description and the Quick Stats Bar below.
+const NO_BEDS_TYPES = ["land", "commercial"];
+
 function safeTitle(title: string): string {
   if (title.length <= TITLE_BUDGET) return title;
   if (process.env.NODE_ENV !== "production") {
@@ -48,7 +52,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // "2BR Condo in Cebu City | ₱25,000,000" stays well under the ~60 char
   // limit even before any site-wide title template suffix is appended.
   const title = safeTitle(
-    `${property.beds}BR ${typeLabel} in ${property.city} | ${priceLabel}`,
+    NO_BEDS_TYPES.includes(property.type)
+      ? `${typeLabel} in ${property.city} | ${priceLabel}`
+      : `${property.beds}BR ${typeLabel} in ${property.city} | ${priceLabel}`,
   );
   const location = [property.city, property.state].filter(Boolean).join(", ");
   // Google's effective snippet cutoff is ~155-160 chars. The prefix below
@@ -57,7 +63,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // total by 15-30 chars on longer prefixes. Budget the WHOLE string
   // instead, and trim to the last full word so it doesn't cut mid-word.
   const DESCRIPTION_BUDGET = 155;
-  const prefix = `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. `;
+  const prefix = NO_BEDS_TYPES.includes(property.type)
+    ? `${property.type} in ${location}. `
+    : `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. `;
   const remaining = DESCRIPTION_BUDGET - prefix.length;
   let snippet = property.description.slice(0, Math.max(remaining, 0));
   if (property.description.length > remaining) {
@@ -124,11 +132,6 @@ export default async function PropertyDetailPage({ params }: Props) {
     land: "Lot Only",
     commercial: "Commercial",
   };
-  // Short per-property tag ("2BR Condo in Cebu City") interpolated into every
-  // section H2 below so each one is unique across listings instead of every
-  // property page sharing the exact same "Property Overview" / "Features" /
-  // "Payment Terms" / etc. heading text.
-  const propertyLabel = `${property.beds}BR ${TYPE_LABELS[property.type] || property.type} in ${property.city}`;
   const matchedCity = getCityByFreeText(property.city);
   const breadcrumbs = [
     { label: "Home", href: "/" },
@@ -257,33 +260,48 @@ export default async function PropertyDetailPage({ params }: Props) {
               </p>
             </div>
 
-            {/* Quick Stats Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#E2D9C8]">
-              {[
-                { label: "Bedrooms", value: property.beds },
-                { label: "Bathrooms", value: property.baths },
-                {
-                  label: "Floor Area (sqm)",
-                  value: property.sqft ? property.sqft.toLocaleString() : "--",
-                },
-                { label: "Car Parks", value: property.garage ?? "--" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="bg-[#faf9f6] px-5 py-5 text-center"
-                >
-                  <p className="text-2xl font-bold text-[#1A1A1A]">{s.value}</p>
-                  <p className="text-xs tracking-widest uppercase text-[#8B7355] mt-1">
-                    {s.label}
-                  </p>
+            {/* Quick Stats Bar — Bedrooms/Bathrooms/Car Parks/Floor Area
+                only make sense for residential types; land and commercial
+                listings already show Total Area in the Overview table
+                below, so the bar doesn't render for them at all. */}
+            {(() => {
+              const stats = NO_BEDS_TYPES.includes(property.type)
+                ? []
+                : [
+                    { label: "Bedrooms", value: property.beds },
+                    { label: "Bathrooms", value: property.baths },
+                    {
+                      label: "Floor Area (sqm)",
+                      value: property.sqft
+                        ? property.sqft.toLocaleString()
+                        : "--",
+                    },
+                    { label: "Car Parks", value: property.garage ?? "--" },
+                  ];
+              if (stats.length === 0) return null;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#E2D9C8]">
+                  {stats.map((s) => (
+                    <div
+                      key={s.label}
+                      className="bg-[#faf9f6] px-5 py-5 text-center"
+                    >
+                      <p className="text-2xl font-bold text-[#1A1A1A]">
+                        {s.value}
+                      </p>
+                      <p className="text-xs tracking-widest uppercase text-[#8B7355] mt-1">
+                        {s.label}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
 
             {/* Property Overview */}
             <div>
               <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                {propertyLabel} — Overview
+                Overview
               </h2>
               <div className="divide-y divide-[#E2D9C8]">
                 <DetailRow
@@ -301,9 +319,6 @@ export default async function PropertyDetailPage({ params }: Props) {
                       : "For Sale"
                   }
                 />
-                {/* FIX #1: yearBuilt of 0 means "not set" in the DB, not a
-                    real construction year — hide the row instead of
-                    displaying "Built In 0". */}
                 <DetailRow
                   label="Built In"
                   value={property.yearBuilt ? property.yearBuilt : null}
@@ -324,10 +339,6 @@ export default async function PropertyDetailPage({ params }: Props) {
                       : null
                   }
                 />
-                {/* FIX #2: "Land Size" doesn't apply to condo units — owners
-                    hold the unit, not land. Hide the row for condos even
-                    when a (likely leftover/incorrect) lotSize value exists
-                    in the DB, instead of only checking that it's truthy. */}
                 <DetailRow
                   label="Land Size"
                   value={
@@ -346,7 +357,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {/* Description */}
             <div>
               <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                {propertyLabel} — Description
+                Description
               </h2>
               <div className="text-[#8B7355] leading-relaxed space-y-2 text-sm">
                 {property.description.split("\n").map((line, i) =>
@@ -372,7 +383,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {amenityList.length > 0 && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  {propertyLabel} — Details
+                  Details
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   {amenityList.map((item) => (
@@ -391,7 +402,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {property.features && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  {propertyLabel} — Features
+                  Features
                 </h2>
                 <div className="text-[#8B7355] leading-relaxed space-y-1 text-sm">
                   {property.features.split("\n").map((line, i) =>
@@ -416,7 +427,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {property.paymentTerms && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  {propertyLabel} — Payment Terms
+                  Payment Terms
                 </h2>
                 <div className="text-[#8B7355] leading-relaxed space-y-1 text-sm">
                   {property.paymentTerms.split("\n").map((line, i) =>
@@ -441,7 +452,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {property.lat && property.lng && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  {propertyLabel} — Location
+                  Location
                 </h2>
                 <PropertyMapWrapper
                   lat={property.lat}
