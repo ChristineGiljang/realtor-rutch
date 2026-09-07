@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   experimental: {
-    optimizeCss: true,
+    inlineCss: true,
   },
   images: {
     loader: "custom",
