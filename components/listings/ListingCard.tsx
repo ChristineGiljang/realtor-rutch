@@ -64,6 +64,12 @@ export default function ListingCard({ listing }: { listing: Listing }) {
                 >
                   <img
                     src={optimizedUrl(img.url, { width: 500 })}
+                    srcSet={`
+                      ${optimizedUrl(img.url, { width: 400 })} 400w,
+                      ${optimizedUrl(img.url, { width: 500 })} 500w,
+                      ${optimizedUrl(img.url, { width: 800 })} 800w
+                    `}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
                     alt={img.alt || listing.title}
                     loading={i === 0 ? "eager" : "lazy"}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { optimizedUrl } from "@/lib/cloudinary-url";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -30,13 +31,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "article",
       publishedTime: post.publishedAt?.toISOString(),
-      images: post.coverImage ? [{ url: post.coverImage }] : undefined,
+      images: post.coverImage
+        ? [{ url: optimizedUrl(post.coverImage, { width: 1200 }) }]
+        : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description,
-      images: post.coverImage ? [post.coverImage] : undefined,
+      images: post.coverImage
+        ? [optimizedUrl(post.coverImage, { width: 1200 })]
+        : undefined,
     },
   };
 }
@@ -52,7 +57,9 @@ export default async function BlogPostPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
-    image: post.coverImage ? [post.coverImage] : undefined,
+    image: post.coverImage
+      ? [optimizedUrl(post.coverImage, { width: 1200 })]
+      : undefined,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt,
     author: {
@@ -77,8 +84,15 @@ export default async function BlogPostPage({ params }: Props) {
       {post.coverImage && (
         <div className="relative h-[420px] overflow-hidden bg-[#E2D9C8]">
           <img
-            src={post.coverImage}
+            src={optimizedUrl(post.coverImage, { width: 1200 })}
+            srcSet={`
+              ${optimizedUrl(post.coverImage, { width: 640 })} 640w,
+              ${optimizedUrl(post.coverImage, { width: 1200 })} 1200w,
+              ${optimizedUrl(post.coverImage, { width: 1920 })} 1920w
+            `}
+            sizes="100vw"
             alt={post.title}
+            loading="eager"
             className="w-full h-full object-cover"
           />
         </div>

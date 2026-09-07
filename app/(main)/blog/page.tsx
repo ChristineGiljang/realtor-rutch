@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { optimizedUrl } from "@/lib/cloudinary-url";
 
 export const revalidate = 0;
 
@@ -50,8 +51,15 @@ export default async function BlogPage() {
                 <div className="relative h-56 overflow-hidden bg-[#E2D9C8] mb-4">
                   {post.coverImage ? (
                     <img
-                      src={post.coverImage}
+                      src={optimizedUrl(post.coverImage, { width: 500 })}
+                      srcSet={`
+                        ${optimizedUrl(post.coverImage, { width: 400 })} 400w,
+                        ${optimizedUrl(post.coverImage, { width: 500 })} 500w,
+                        ${optimizedUrl(post.coverImage, { width: 800 })} 800w
+                      `}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
                       alt={post.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />
                   ) : (

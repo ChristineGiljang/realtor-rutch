@@ -48,6 +48,13 @@ export default function PropertyGallery({ images, title, featured }: Props) {
               >
                 <img
                   src={optimizedUrl(img.url, { width: 1280 })}
+                  srcSet={`
+                    ${optimizedUrl(img.url, { width: 640 })} 640w,
+                    ${optimizedUrl(img.url, { width: 1024 })} 1024w,
+                    ${optimizedUrl(img.url, { width: 1280 })} 1280w,
+                    ${optimizedUrl(img.url, { width: 1920 })} 1920w
+                  `}
+                  sizes="(max-width: 768px) 100vw, 1280px"
                   alt={img.alt || title}
                   loading={i === 0 ? "eager" : "lazy"}
                   className="max-h-full max-w-full object-contain"
