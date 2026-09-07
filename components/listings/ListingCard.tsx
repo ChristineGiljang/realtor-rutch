@@ -129,8 +129,13 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           </p>
           <p className="text-[#1A1A1A] mb-2 font-medium">{listing.title}</p>
           <p className="text-[#8B7355] text-sm mb-1">
-            {listing.beds} bd · {listing.baths} ba ·{" "}
-            {listing.sqft === 0 ? "--" : listing.sqft.toLocaleString()} sqm
+            {/* Land/commercial listings have no bedrooms or bathrooms —
+                show just the area instead of "0 bd · 0 ba · ...". */}
+            {listing.type === "land" || listing.type === "commercial"
+              ? `${listing.sqft === 0 ? "--" : listing.sqft.toLocaleString()} sqm`
+              : `${listing.beds} bd · ${listing.baths} ba · ${
+                  listing.sqft === 0 ? "--" : listing.sqft.toLocaleString()
+                } sqm`}
           </p>
           <p className="text-[#8B7355] text-sm">{listing.city}</p>
         </div>
