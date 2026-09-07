@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   images: {
     loader: "custom",
     loaderFile: "./lib/cloudinary-loader.ts",
+    deviceSizes: [380, 640, 750, 828, 1080, 1200, 1920, 2560, 3840],
   },
   async redirects() {
     return [
