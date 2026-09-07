@@ -121,12 +121,29 @@ export default function PropertyForm() {
     setParsed(true);
   };
 
+  const stripRtf = (rtf: string) => {
+    return rtf
+      .replace(/\\par[d]?/g, "\n")
+      .replace(/\\'([0-9a-fA-F]{2})/g, (_, hex) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      )
+      .replace(/\{\\[^{}]*\}/g, "")
+      .replace(/\\[a-zA-Z]+-?\d*[ ]?/g, "")
+      .replace(/[{}]/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target?.result as string;
+      let text = event.target?.result as string;
+      const isRtf =
+        file.name.toLowerCase().endsWith(".rtf") ||
+        text.trimStart().startsWith("{\\rtf");
+      if (isRtf) text = stripRtf(text);
       parseTemplate(text);
     };
     reader.readAsText(file);
@@ -214,7 +231,7 @@ export default function PropertyForm() {
         </p>
         <input
           type="file"
-          accept=".txt"
+          accept=".txt,.rtf,text/plain,text/rtf"
           onChange={handleFileUpload}
           className="w-full text-sm text-[#8B7355] file:mr-4 file:py-2 file:px-4 file:border file:border-[#E2D9C8] file:bg-[#1A1A1A] file:text-[#faf9f6] file:text-sm file:cursor-pointer hover:file:bg-[#C9A96E] file:transition"
         />
