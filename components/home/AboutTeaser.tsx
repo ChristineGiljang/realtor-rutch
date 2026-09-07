@@ -12,7 +12,8 @@ export default function AboutTeaser() {
               src="agent_o1qnqf.jpg"
               alt="Rutchilyn Llagoso, Cebu real estate agent"
               fill
-              sizes="(max-width: 768px) 100vw, 50vw"
+              sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1024px) calc(50vw - 40px), calc(50vw - 64px)"
+              quality={70}
               className="object-cover"
             />
           </div>

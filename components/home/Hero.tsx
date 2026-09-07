@@ -11,7 +11,7 @@ export default function Hero() {
         priority
         fetchPriority="high"
         sizes="100vw"
-        quality={45}
+        quality={30}
         className="object-cover"
       />
       <div className="absolute inset-0 bg-black/70" />
