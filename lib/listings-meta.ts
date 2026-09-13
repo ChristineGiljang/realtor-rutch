@@ -99,26 +99,49 @@ export function getListingsMeta(
       description:
         "Office, retail, and commercial spaces for rent in Cebu City. Prime locations, flexible terms. Inquire with Realtor Rutch.",
     };
-  if (type === "land")
-    return {
-      h1: "Lot for Sale in Cebu",
-      title: "Lot for Sale in Cebu",
-      description:
-        "Residential and commercial lots for sale in Cebu City and nearby areas. Browse with Realtor Rutch.",
-    };
-  if (type === "house")
+  if (type === "house" && category === "sale")
     return {
       h1: "House and Lot for Sale in Cebu",
       title: "House and Lot for Sale in Cebu",
       description:
         "Find your ideal house and lot for sale in Cebu City. Verified listings, gated subdivisions, and luxury homes. Browse with Realtor Rutch.",
     };
-  if (type === "condo")
+  if (type === "condo" && category === "sale")
     return {
       h1: "Condo for Sale in Cebu",
       title: "Condo for Sale in Cebu",
       description:
         "Condominium units for sale in Cebu City. Studio to penthouse units in prime locations. Browse with Realtor Rutch.",
+    };
+  if (type === "land" && category === "sale")
+    return {
+      h1: "Lot for Sale in Cebu",
+      title: "Lot for Sale in Cebu",
+      description:
+        "Residential and commercial lots for sale in Cebu City and nearby areas. Browse with Realtor Rutch.",
+    };
+
+  // Type-only pages — no category param, so listings include both sale and rent
+  if (type === "land")
+    return {
+      h1: "Lots in Cebu",
+      title: "Lots in Cebu — For Sale & Rent",
+      description:
+        "Browse residential and commercial lots for sale and rent in Cebu City and nearby areas. Browse with Realtor Rutch.",
+    };
+  if (type === "house")
+    return {
+      h1: "Houses in Cebu",
+      title: "Houses in Cebu — For Sale & Rent",
+      description:
+        "Browse houses and lots for sale and rent in Cebu City. Verified listings, gated subdivisions, and luxury homes. Browse with Realtor Rutch.",
+    };
+  if (type === "condo")
+    return {
+      h1: "Condos in Cebu",
+      title: "Condos in Cebu — For Sale & Rent",
+      description:
+        "Browse condominium units for sale and rent in Cebu City. Studio to penthouse units in prime locations. Browse with Realtor Rutch.",
     };
   if (type === "commercial")
     return {
