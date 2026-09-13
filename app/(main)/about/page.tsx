@@ -54,12 +54,11 @@ export default function AboutPage() {
           {/* Image */}
           <div className="relative h-[600px] overflow-hidden bg-[#E2D9C8]">
             <Image
-              src="/images/agent2.jpeg"
+              src="agent2.jpg"
               alt="Rutchilyn Llagoso"
               fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              sizes="(max-width: 768px) calc(100vw - 32px), 500px"
               className="object-cover"
-              priority
             />
           </div>
 

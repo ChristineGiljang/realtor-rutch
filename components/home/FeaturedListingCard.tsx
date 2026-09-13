@@ -65,7 +65,7 @@ export default function FeaturedListingCard({ listing }: { listing: Listing }) {
                     src={img.url}
                     alt={img.alt || listing.title}
                     fill
-                    sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1200px) calc(33vw - 16px), 380px"
+                    sizes="(max-width: 768px) calc(100vw - 32px), 420px"
                     loading={i === 0 ? "eager" : "lazy"}
                     className="object-cover group-hover:scale-105 transition duration-500"
                   />
