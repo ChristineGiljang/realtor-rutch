@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import RichTextEditor from "./RichTextEditor";
 
 interface Props {
   mode: "create" | "edit";
@@ -22,6 +23,7 @@ export default function BlogForm({ mode, postId, initialValues }: Props) {
     initialValues?.coverImage ?? null,
   );
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [content, setContent] = useState(initialValues?.content ?? "");
 
   const inputClass =
     "w-full bg-white border border-[#E2D9C8] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#C9A96E] placeholder:text-[#8B7355]";
@@ -37,11 +39,19 @@ export default function BlogForm({ mode, postId, initialValues }: Props) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const isContentEmpty = content.replace(/<[^>]*>/g, "").trim().length === 0;
+    if (isContentEmpty) {
+      setError("Content is required.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     const form = e.currentTarget;
     const formData = new FormData(form);
+    formData.set("content", content);
     if (coverFile) formData.set("coverImage", coverFile);
 
     try {
@@ -110,13 +120,10 @@ export default function BlogForm({ mode, postId, initialValues }: Props) {
 
           <div>
             <label className={labelClass}>Content *</label>
-            <textarea
-              name="content"
-              required
-              rows={16}
-              defaultValue={initialValues?.content}
-              placeholder="Write the post here. Leave a blank line between paragraphs."
-              className={inputClass}
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              placeholder="Write the post here. Use H2/H3/H4 for your SEO outline, and the image button to drop photos into the body."
             />
           </div>
 

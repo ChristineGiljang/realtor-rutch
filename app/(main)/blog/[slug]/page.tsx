@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import DOMPurify from "isomorphic-dompurify";
 import { optimizedUrl } from "@/lib/cloudinary-url";
 
 interface Props {
@@ -17,7 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Post Not Found" };
   }
 
-  const plainText = post.content.replace(/\s+/g, " ").trim();
+  const plainText = post.content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const description = `${plainText.slice(0, 155)}${plainText.length > 155 ? "…" : ""}`;
 
   return {
@@ -119,13 +123,12 @@ export default async function BlogPostPage({ params }: Props) {
           {post.title}
         </h1>
 
-        <div className="text-[#8B7355] leading-relaxed space-y-4">
-          {post.content
-            .split("\n")
-            .map((line, i) =>
-              line.trim() ? <p key={i}>{line.trim()}</p> : null,
-            )}
-        </div>
+        <div
+          className="blog-content text-[#8B7355] leading-relaxed"
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(post.content),
+          }}
+        />
 
         {/* CTA */}
         <div className="mt-16 pt-10 border-t border-[#E2D9C8] text-center">
