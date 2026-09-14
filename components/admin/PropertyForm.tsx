@@ -122,16 +122,43 @@ export default function PropertyForm() {
   };
 
   const stripRtf = (rtf: string) => {
-    return rtf
-      .replace(/\\par[d]?/g, "\n")
+    let text = rtf;
+
+    // Decode unicode escapes first: \uNNNN is followed by one ASCII
+    // fallback char (per RTF spec) which we should drop.
+    text = text.replace(/\\u(-?\d+)\s?./g, (_, code) =>
+      String.fromCharCode(((parseInt(code, 10) % 65536) + 65536) % 65536),
+    );
+
+    text = text
+      // Paragraph / line breaks -> newline
+      .replace(/\\par[d]?\b/g, "\n")
+      .replace(/\\line\b/g, "\n")
+      // Mac TextEdit soft breaks: backslash immediately followed by a raw newline
+      .replace(/\\\r?\n/g, "\n")
+      // Hex-escaped chars, e.g. curly quotes: \'92 -> char
       .replace(/\\'([0-9a-fA-F]{2})/g, (_, hex) =>
         String.fromCharCode(parseInt(hex, 16)),
-      )
-      .replace(/\{\\[^{}]*\}/g, "")
+      );
+
+    // Strip destination groups (font table, color table, etc.) - repeat
+    // until stable since these can be nested.
+    let prev;
+    do {
+      prev = text;
+      text = text.replace(/\{\\[^{}]*\}/g, "");
+    } while (text !== prev);
+
+    text = text
+      // Remaining control words
       .replace(/\\[a-zA-Z]+-?\d*[ ]?/g, "")
+      // Remaining braces
       .replace(/[{}]/g, "")
+      // Collapse extra blank lines
       .replace(/\n{3,}/g, "\n\n")
       .trim();
+
+    return text;
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,13 +167,16 @@ export default function PropertyForm() {
     const reader = new FileReader();
     reader.onload = (event) => {
       let text = event.target?.result as string;
+      // Normalize Windows/old-Mac line endings to \n
+      text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
       const isRtf =
         file.name.toLowerCase().endsWith(".rtf") ||
         text.trimStart().startsWith("{\\rtf");
       if (isRtf) text = stripRtf(text);
       parseTemplate(text);
     };
-    reader.readAsText(file);
+    reader.readAsText(file, "utf-8");
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,13 +251,14 @@ export default function PropertyForm() {
         </div>
       )}
 
-      {/* Upload from Notepad */}
+      {/* Upload from Notepad / TextEdit */}
       <section className="bg-white border border-[#E2D9C8] p-6">
         <h2 className="text-lg font-semibold mb-2 text-[#1A1A1A]">
-          Upload from Notepad
+          Upload from Notepad / TextEdit
         </h2>
         <p className="text-[#8B7355] text-sm mb-4">
-          Upload a .txt file to auto-fill the form instantly.
+          Upload a .txt or .rtf file to auto-fill the form instantly. Works with
+          Windows Notepad or Mac TextEdit — no need to change any save settings.
         </p>
         <input
           type="file"
