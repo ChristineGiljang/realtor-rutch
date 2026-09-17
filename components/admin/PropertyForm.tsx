@@ -9,6 +9,7 @@ export default function PropertyForm() {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [alts, setAlts] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [compressing, setCompressing] = useState(false);
   const [parsed, setParsed] = useState(false);
@@ -196,11 +197,13 @@ export default function PropertyForm() {
       setImages((prev) => [...prev, ...compressedFiles]);
       const urls = compressedFiles.map((f) => URL.createObjectURL(f));
       setPreviews((prev) => [...prev, ...urls]);
+      setAlts((prev) => [...prev, ...compressedFiles.map(() => "")]);
     } catch (err) {
       console.error("Compression error:", err);
       setImages((prev) => [...prev, ...files]);
       const urls = files.map((f) => URL.createObjectURL(f));
       setPreviews((prev) => [...prev, ...urls]);
+      setAlts((prev) => [...prev, ...files.map(() => "")]);
     } finally {
       setCompressing(false);
     }
@@ -209,6 +212,11 @@ export default function PropertyForm() {
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
+    setAlts((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateAlt = (index: number, value: string) => {
+    setAlts((prev) => prev.map((a, i) => (i === index ? value : a)));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -219,6 +227,10 @@ export default function PropertyForm() {
     const form = e.currentTarget;
     const formData = new FormData(form);
     images.forEach((img) => formData.append("images", img));
+    // Sent as one JSON array so ordering lines up 1:1 with the "images"
+    // files above; the API route parses this and assigns alts[i] to the
+    // i-th uploaded image when creating each PropertyImage.
+    formData.append("imageAlts", JSON.stringify(alts));
 
     try {
       const res = await fetch("/api/properties", {
@@ -652,33 +664,40 @@ Reservation: 50000
           <div className="mt-4 mb-2">
             <p className="text-[#8B7355] text-sm">
               {previews.length} photo{previews.length > 1 ? "s" : ""} selected —
-              hover to remove
+              add a short description for each so search engines and screen
+              readers know what it shows.
             </p>
           </div>
         )}
 
         {previews.length > 0 && (
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
             {previews.map((src, i) => (
-              <div
-                key={i}
-                className="relative group aspect-square overflow-hidden"
-              >
-                <img
-                  src={src}
-                  alt={`Preview ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(i)}
-                  className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full font-bold"
-                >
-                  ×
-                </button>
-                <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                  {i + 1}
+              <div key={i} className="relative group">
+                <div className="relative aspect-square overflow-hidden">
+                  <img
+                    src={src}
+                    alt={`Preview ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full font-bold"
+                  >
+                    ×
+                  </button>
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    {i + 1}
+                  </div>
                 </div>
+                <input
+                  type="text"
+                  value={alts[i] || ""}
+                  onChange={(e) => updateAlt(i, e.target.value)}
+                  placeholder="e.g. Living room with view of garden"
+                  className="w-full mt-2 bg-white border border-[#E2D9C8] text-[#1A1A1A] text-xs px-3 py-2 focus:outline-none focus:border-[#C9A96E] placeholder:text-[#8B7355]"
+                />
               </div>
             ))}
           </div>

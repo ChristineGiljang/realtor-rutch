@@ -98,22 +98,60 @@ export async function PATCH(
         slug,
       },
     });
-    // Update existing image order
+
+    // Alt text for existing images, keyed by image id (see
+    // EditPropertyForm.tsx). Parsed once so we can merge it into the same
+    // update as the reordering below instead of a second round-trip.
+    let existingImageAlts: Record<string, string> = {};
+    const existingImageAltsRaw = formData.get("existingImageAlts") as
+      | string
+      | null;
+    if (existingImageAltsRaw) {
+      try {
+        const parsed = JSON.parse(existingImageAltsRaw);
+        if (parsed && typeof parsed === "object") existingImageAlts = parsed;
+      } catch {
+        // Malformed JSON — skip alt updates rather than failing the save.
+      }
+    }
+
+    // Update existing image order (and alt text, if provided)
     const imageOrder = formData.getAll("imageOrder") as string[];
     if (imageOrder.length > 0) {
       await Promise.all(
-        imageOrder.map((id, index) =>
-          db.propertyImage.update({
-            where: { id },
-            data: { order: index },
-          }),
-        ),
+        imageOrder.map((imgId, index) => {
+          const alt = existingImageAlts[imgId]?.trim();
+          return db.propertyImage.update({
+            where: { id: imgId },
+            data: {
+              order: index,
+              ...(alt ? { alt } : {}),
+            },
+          });
+        }),
       );
+    }
+
+    // Alt text for newly uploaded images, in the same order as "images"
+    // below (see EditPropertyForm.tsx).
+    let newImageAlts: string[] = [];
+    const newImageAltsRaw = formData.get("newImageAlts") as string | null;
+    if (newImageAltsRaw) {
+      try {
+        const parsed = JSON.parse(newImageAltsRaw);
+        if (Array.isArray(parsed)) newImageAlts = parsed;
+      } catch {
+        // Malformed JSON — fall back to the title below for every image.
+      }
     }
 
     // Handle new image uploads
     const images = formData.getAll("images") as File[];
     if (images && images.length > 0 && images[0].size > 0) {
+      // New images are appended after whatever's already on the property,
+      // so their "order" continues from the existing count.
+      const startOrder = imageOrder.length;
+
       const imageUploadPromises = images.map(async (image, index) => {
         const bytes = await image.arrayBuffer();
         const buffer = Buffer.from(bytes);
@@ -122,11 +160,13 @@ export async function PATCH(
           `${slug}-${Date.now()}-${index}`,
         );
 
+        const alt = newImageAlts[index]?.trim() || title;
+
         return db.propertyImage.create({
           data: {
             url: result.secure_url,
-            alt: title,
-            order: index,
+            alt,
+            order: startOrder + index,
             propertyId: property.id,
           },
         });

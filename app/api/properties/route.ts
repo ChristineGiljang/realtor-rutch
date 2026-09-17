@@ -68,9 +68,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Per-image alt text, sent from the form as a JSON array in the same
+    // order as the "images" files below (see PropertyForm.tsx).
+    let imageAlts: string[] = [];
+    const imageAltsRaw = formData.get("imageAlts") as string | null;
+    if (imageAltsRaw) {
+      try {
+        const parsed = JSON.parse(imageAltsRaw);
+        if (Array.isArray(parsed)) imageAlts = parsed;
+      } catch {
+        // Malformed JSON — fall back to titles below rather than failing
+        // the whole upload over alt text.
+      }
+    }
+
     // Upload images to Cloudinary
     const imageFiles = formData.getAll("images") as File[];
-    const imageUrls: { url: string; order: number }[] = [];
+    const imageUrls: { url: string; alt: string | null; order: number }[] = [];
 
     for (let i = 0; i < imageFiles.length; i++) {
       const file = imageFiles[i];
@@ -94,8 +108,10 @@ export async function POST(request: NextRequest) {
       });
 
       if (result && typeof result === "object" && "secure_url" in result) {
+        const alt = imageAlts[i]?.trim() || null;
         imageUrls.push({
           url: (result as any).secure_url,
+          alt,
           order: i,
         });
       }
@@ -132,9 +148,11 @@ export async function POST(request: NextRequest) {
         paymentTerms,
         slug,
         images: {
+          // Use the agent's description when they gave one; otherwise fall
+          // back to the listing title so alt text is never blank.
           create: imageUrls.map((img) => ({
             url: img.url,
-            alt: title,
+            alt: img.alt || title,
             order: img.order,
           })),
         },

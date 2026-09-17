@@ -49,8 +49,12 @@ export default function EditPropertyForm({ property }: Props) {
   const [error, setError] = useState("");
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
+  const [newAlts, setNewAlts] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<Image[]>(
     property.images,
+  );
+  const [existingAlts, setExistingAlts] = useState<Record<string, string>>(
+    Object.fromEntries(property.images.map((img) => [img.id, img.alt || ""])),
   );
   const [compressing, setCompressing] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -75,6 +79,7 @@ export default function EditPropertyForm({ property }: Props) {
         ...prev,
         ...compressedFiles.map((f) => URL.createObjectURL(f)),
       ]);
+      setNewAlts((prev) => [...prev, ...compressedFiles.map(() => "")]);
     } catch (err) {
       console.error("Compression error:", err);
       setNewImages((prev) => [...prev, ...files]);
@@ -82,6 +87,7 @@ export default function EditPropertyForm({ property }: Props) {
         ...prev,
         ...files.map((f) => URL.createObjectURL(f)),
       ]);
+      setNewAlts((prev) => [...prev, ...files.map(() => "")]);
     } finally {
       setCompressing(false);
     }
@@ -91,11 +97,24 @@ export default function EditPropertyForm({ property }: Props) {
     if (!confirm("Remove this image?")) return;
     await fetch(`/api/properties/images/${imageId}`, { method: "DELETE" });
     setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+    setExistingAlts((prev) => {
+      const { [imageId]: _removed, ...rest } = prev;
+      return rest;
+    });
   };
 
   const removeNewImage = (index: number) => {
     setNewImages((prev) => prev.filter((_, i) => i !== index));
     setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+    setNewAlts((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateExistingAlt = (imageId: string, value: string) => {
+    setExistingAlts((prev) => ({ ...prev, [imageId]: value }));
+  };
+
+  const updateNewAlt = (index: number, value: string) => {
+    setNewAlts((prev) => prev.map((a, i) => (i === index ? value : a)));
   };
 
   const handleExistingDrop = (dropIndex: number) => {
@@ -111,14 +130,17 @@ export default function EditPropertyForm({ property }: Props) {
     if (dragIndex === null || dragIndex === dropIndex) return;
     const updatedImages = [...newImages];
     const updatedPreviews = [...newPreviews];
+    const updatedAlts = [...newAlts];
     updatedImages.splice(dropIndex, 0, updatedImages.splice(dragIndex, 1)[0]);
     updatedPreviews.splice(
       dropIndex,
       0,
       updatedPreviews.splice(dragIndex, 1)[0],
     );
+    updatedAlts.splice(dropIndex, 0, updatedAlts.splice(dragIndex, 1)[0]);
     setNewImages(updatedImages);
     setNewPreviews(updatedPreviews);
+    setNewAlts(updatedAlts);
     setDragIndex(null);
     setDragType(null);
   };
@@ -136,7 +158,14 @@ export default function EditPropertyForm({ property }: Props) {
       formData.append("imageOrder", img.id);
     });
 
+    // Alt text for existing images, keyed by image id so the API route
+    // can update each PropertyImage regardless of its current order.
+    formData.append("existingImageAlts", JSON.stringify(existingAlts));
+
     newImages.forEach((img) => formData.append("images", img));
+    // Alt text for newly uploaded images, in the same order as "images"
+    // above (after any drag-to-reorder).
+    formData.append("newImageAlts", JSON.stringify(newAlts));
 
     try {
       const res = await fetch(`/api/properties/${property.id}`, {
@@ -423,12 +452,14 @@ export default function EditPropertyForm({ property }: Props) {
           Current Images
         </h2>
         <p className="text-[#8B7355] text-sm mb-4">
-          Drag to reorder — first image is the cover photo
+          Drag to reorder — first image is the cover photo. Add a short
+          description of each photo so search engines and screen readers know
+          what it shows.
         </p>
         {existingImages.length === 0 ? (
           <p className="text-[#8B7355] text-sm">No images uploaded yet.</p>
         ) : (
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {existingImages.map((img, i) => (
               <div
                 key={img.id}
@@ -443,29 +474,40 @@ export default function EditPropertyForm({ property }: Props) {
                   setDragIndex(null);
                   setDragType(null);
                 }}
-                className={`relative group aspect-square overflow-hidden cursor-grab active:cursor-grabbing border-2 transition ${
-                  dragType === "existing" && dragIndex === i
-                    ? "border-[#C9A96E] opacity-50"
-                    : "border-transparent"
-                }`}
+                className="group"
               >
-                <img
-                  src={img.url}
-                  alt={img.alt || ""}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleDeleteImage(img.id)}
-                  className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full"
-                >
-                  ×
-                </button>
                 <div
-                  className={`absolute bottom-2 left-2 text-white text-xs px-2 py-1 rounded ${i === 0 ? "bg-[#C9A96E]" : "bg-black/50"}`}
+                  className={`relative aspect-square overflow-hidden cursor-grab active:cursor-grabbing border-2 transition ${
+                    dragType === "existing" && dragIndex === i
+                      ? "border-[#C9A96E] opacity-50"
+                      : "border-transparent"
+                  }`}
                 >
-                  {i === 0 ? "Cover" : i + 1}
+                  <img
+                    src={img.url}
+                    alt={existingAlts[img.id] || property.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteImage(img.id)}
+                    className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full"
+                  >
+                    ×
+                  </button>
+                  <div
+                    className={`absolute bottom-2 left-2 text-white text-xs px-2 py-1 rounded ${i === 0 ? "bg-[#C9A96E]" : "bg-black/50"}`}
+                  >
+                    {i === 0 ? "Cover" : i + 1}
+                  </div>
                 </div>
+                <input
+                  type="text"
+                  value={existingAlts[img.id] || ""}
+                  onChange={(e) => updateExistingAlt(img.id, e.target.value)}
+                  placeholder="e.g. Living room with view of garden"
+                  className="w-full mt-2 bg-white border border-[#E2D9C8] text-[#1A1A1A] text-xs px-3 py-2 focus:outline-none focus:border-[#C9A96E] placeholder:text-[#8B7355]"
+                />
               </div>
             ))}
           </div>
@@ -494,7 +536,7 @@ export default function EditPropertyForm({ property }: Props) {
             <p className="text-[#8B7355] text-sm mt-4 mb-2">
               Drag to reorder new images — hover to remove
             </p>
-            <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
               {newPreviews.map((src, i) => (
                 <div
                   key={i}
@@ -509,27 +551,38 @@ export default function EditPropertyForm({ property }: Props) {
                     setDragIndex(null);
                     setDragType(null);
                   }}
-                  className={`relative group aspect-square overflow-hidden cursor-grab active:cursor-grabbing border-2 transition ${
-                    dragType === "new" && dragIndex === i
-                      ? "border-[#C9A96E] opacity-50"
-                      : "border-transparent"
-                  }`}
+                  className="group"
                 >
-                  <img
-                    src={src}
-                    alt={`New ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeNewImage(i)}
-                    className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full"
+                  <div
+                    className={`relative aspect-square overflow-hidden cursor-grab active:cursor-grabbing border-2 transition ${
+                      dragType === "new" && dragIndex === i
+                        ? "border-[#C9A96E] opacity-50"
+                        : "border-transparent"
+                    }`}
                   >
-                    ×
-                  </button>
-                  <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                    {i + 1}
+                    <img
+                      src={src}
+                      alt={`New ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeNewImage(i)}
+                      className="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full"
+                    >
+                      ×
+                    </button>
+                    <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                      {i + 1}
+                    </div>
                   </div>
+                  <input
+                    type="text"
+                    value={newAlts[i] || ""}
+                    onChange={(e) => updateNewAlt(i, e.target.value)}
+                    placeholder="e.g. Kitchen with granite countertops"
+                    className="w-full mt-2 bg-white border border-[#E2D9C8] text-[#1A1A1A] text-xs px-3 py-2 focus:outline-none focus:border-[#C9A96E] placeholder:text-[#8B7355]"
+                  />
                 </div>
               ))}
             </div>
