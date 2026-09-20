@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { optimizedUrl } from "@/lib/cloudinary-url";
 
@@ -18,6 +18,20 @@ interface Props {
 
 export default function PropertyGallery({ images, title, featured }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Warm the browser cache for the next/previous photo whenever the active
+  // one changes, so tapping the arrows or a thumbnail feels instant instead
+  // of kicking off a fresh download at the moment of the tap (which is what
+  // native `loading="lazy"` does on a transform-based carousel like this).
+  useEffect(() => {
+    const preload = (index: number) => {
+      if (index < 0 || index >= images.length) return;
+      const img = new window.Image();
+      img.src = optimizedUrl(images[index].url, { width: 1280 });
+    };
+    preload(activeIndex + 1);
+    preload(activeIndex - 1);
+  }, [activeIndex, images]);
 
   const prev = () =>
     setActiveIndex((i) => (i === 0 ? images.length - 1 : i - 1));
