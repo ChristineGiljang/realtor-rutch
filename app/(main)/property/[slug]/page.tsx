@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PropertyGallery from "@/components/listings/PropertyGallery";
@@ -13,6 +14,18 @@ import Link from "next/link";
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+// generateMetadata() and the page component both need this property, and
+// Next.js runs them separately — without this, that meant two full
+// round-trips to Supabase for the exact same row on every single page
+// visit. React's cache() makes both calls within one request share a
+// single query instead.
+const getPropertyBySlug = cache(async (slug: string) => {
+  return db.property.findUnique({
+    where: { slug },
+    include: { images: { orderBy: { order: "asc" } } },
+  });
+});
 
 // Root layout's title.template ("%s | Realtor Rutch") adds ~17 chars to
 // whatever we return here, and Google's practical cutoff is ~60 chars
@@ -38,10 +51,7 @@ function safeTitle(title: string): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const property = await db.property.findUnique({
-    where: { slug },
-    include: { images: { orderBy: { order: "asc" }, take: 1 } },
-  });
+  const property = await getPropertyBySlug(slug);
   if (!property) return { title: "Listing Not Found" };
   const priceLabel = `₱${property.price.toLocaleString()}${property.listingCategory === "rent" ? "/mo" : ""}`;
   const typeLabel =
@@ -112,10 +122,7 @@ function DetailRow({
 
 export default async function PropertyDetailPage({ params }: Props) {
   const { slug } = await params;
-  const property = await db.property.findUnique({
-    where: { slug },
-    include: { images: { orderBy: { order: "asc" } } },
-  });
+  const property = await getPropertyBySlug(slug);
   if (!property) notFound();
 
   // Parse amenities string (newline-separated) into array
