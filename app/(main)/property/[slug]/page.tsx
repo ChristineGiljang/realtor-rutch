@@ -385,15 +385,51 @@ export default async function PropertyDetailPage({ params }: Props) {
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
                   Details
                 </h2>
-                <div className="flex flex-wrap gap-3">
-                  {amenityList.map((item) => (
-                    <span
-                      key={item}
-                      className="px-4 py-2 border border-[#E2D9C8] bg-white text-sm text-[#1A1A1A] rounded-sm"
-                    >
-                      {item}
-                    </span>
-                  ))}
+                <div className="space-y-4">
+                  {(() => {
+                    // Lines ending in ":" (e.g. "Ideal for:") are section
+                    // headers, not pills — group the pills that follow
+                    // under their nearest preceding header.
+                    const groups: {
+                      heading: string | null;
+                      items: string[];
+                    }[] = [];
+                    let current: { heading: string | null; items: string[] } = {
+                      heading: null,
+                      items: [],
+                    };
+                    amenityList.forEach((item) => {
+                      if (item.endsWith(":")) {
+                        if (current.heading || current.items.length)
+                          groups.push(current);
+                        current = { heading: item.slice(0, -1), items: [] };
+                      } else {
+                        current.items.push(item);
+                      }
+                    });
+                    if (current.heading || current.items.length)
+                      groups.push(current);
+
+                    return groups.map((group, i) => (
+                      <div key={i}>
+                        {group.heading && (
+                          <p className="text-sm font-semibold text-[#1A1A1A] mb-2">
+                            {group.heading}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-3">
+                          {group.items.map((item) => (
+                            <span
+                              key={item}
+                              className="px-4 py-2 border border-[#E2D9C8] bg-white text-sm text-[#1A1A1A] rounded-sm"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
             )}

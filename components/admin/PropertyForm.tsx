@@ -15,6 +15,7 @@ export default function PropertyForm() {
   const [parsed, setParsed] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
+  const referenceNameRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const typeRef = useRef<HTMLSelectElement>(null);
   const subtypeRef = useRef<HTMLSelectElement>(null);
@@ -54,6 +55,7 @@ export default function PropertyForm() {
       if (
         [
           "TITLE",
+          "REFERENCE",
           "PRICE",
           "TYPE",
           "SUBTYPE",
@@ -88,6 +90,8 @@ export default function PropertyForm() {
     if (currentKey) data[currentKey] = multilineValue.trim();
 
     if (titleRef.current && data.TITLE) titleRef.current.value = data.TITLE;
+    if (referenceNameRef.current && data.REFERENCE)
+      referenceNameRef.current.value = data.REFERENCE;
     if (priceRef.current && data.PRICE)
       priceRef.current.value = data.PRICE.replace(/[^0-9.]/g, "");
     if (typeRef.current && data.TYPE)
@@ -289,6 +293,7 @@ export default function PropertyForm() {
             View Template Format
           </summary>
           <pre className="bg-[#faf9f6] p-4 text-xs text-[#8B7355] leading-relaxed overflow-x-auto mt-2 whitespace-pre-wrap">{`TITLE: Property Title Here
+REFERENCE: Owner's Name
 PRICE: 5000000
 TYPE: house
 SUBTYPE: rfo
@@ -337,6 +342,18 @@ Reservation: 50000
               name="title"
               required
               placeholder="Property Title"
+              className={inputClass}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className={labelClass}>Reference (Listing Owner)</label>
+            <p className="text-xs text-[#8B7355] mb-2">
+              For internal use only — not shown on the public site.
+            </p>
+            <input
+              ref={referenceNameRef}
+              name="referenceName"
+              placeholder="Owner's name"
               className={inputClass}
             />
           </div>

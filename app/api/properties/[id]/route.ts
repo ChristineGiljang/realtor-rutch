@@ -47,6 +47,7 @@ export async function PATCH(
     const luxury = formData.get("luxury") === "true";
     const features = (formData.get("features") as string) || null;
     const paymentTerms = (formData.get("paymentTerms") as string) || null;
+    const referenceName = (formData.get("referenceName") as string) || null;
     const listingCategory =
       (formData.get("listingCategory") as string) || "sale";
     const lotSize = formData.get("lotSize")
@@ -90,6 +91,7 @@ export async function PATCH(
         listingCategory,
         features,
         paymentTerms,
+        referenceName,
         lotSize,
         garage,
         yearBuilt,

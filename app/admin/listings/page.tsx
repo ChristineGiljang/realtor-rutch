@@ -54,7 +54,8 @@ export default async function AdminListingsPage() {
             {/* Table Header */}
             <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#1A1A1A] text-[#faf9f6] text-xs tracking-widest uppercase">
               <div className="col-span-1">Image</div>
-              <div className="col-span-4">Property</div>
+              <div className="col-span-3">Property</div>
+              <div className="col-span-1">Reference</div>
               <div className="col-span-2">Price</div>
               <div className="col-span-1">Beds</div>
               <div className="col-span-1">Type</div>
@@ -88,12 +89,22 @@ export default async function AdminListingsPage() {
                 </div>
 
                 {/* Title & Location */}
-                <div className="col-span-4">
+                <div className="col-span-3">
                   <p className="font-semibold text-sm truncate">
                     {property.title}
                   </p>
                   <p className="text-[#8B7355] text-xs mt-1">
                     {property.city}, {property.state}
+                  </p>
+                </div>
+
+                {/* Reference (listing owner) */}
+                <div className="col-span-1">
+                  <p
+                    className="text-xs text-[#8B7355] truncate"
+                    title={property.referenceName ?? ""}
+                  >
+                    {property.referenceName || "—"}
                   </p>
                 </div>
 

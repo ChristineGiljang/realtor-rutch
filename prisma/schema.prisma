@@ -39,6 +39,7 @@ model Property {
   ownershipType   String?
   propertyFloor   Int?
   amenities       String?
+  referenceName   String?
   leads           Lead[]
   images          PropertyImage[]
 }

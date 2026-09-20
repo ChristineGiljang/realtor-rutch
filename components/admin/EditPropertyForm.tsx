@@ -214,6 +214,18 @@ export default function EditPropertyForm({ property }: Props) {
             />
           </div>
           <div className="md:col-span-2">
+            <label className={labelClass}>Reference (Listing Owner)</label>
+            <p className="text-xs text-[#8B7355] mb-2">
+              For internal use only — not shown on the public site.
+            </p>
+            <input
+              name="referenceName"
+              defaultValue={property.referenceName ?? ""}
+              placeholder="Owner's name"
+              className={inputClass}
+            />
+          </div>
+          <div className="md:col-span-2">
             <label className={labelClass}>Description *</label>
             <textarea
               name="description"

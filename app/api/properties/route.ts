@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
       ? parseInt(formData.get("propertyFloor") as string)
       : null;
     const amenities = (formData.get("amenities") as string) || null;
+    const referenceName = (formData.get("referenceName") as string) || null;
 
     // Optional fields
     const lotSize = formData.get("lotSize")
@@ -136,6 +137,7 @@ export async function POST(request: NextRequest) {
         ownershipType,
         propertyFloor,
         amenities,
+        referenceName,
         lotSize,
         garage,
         yearBuilt,
