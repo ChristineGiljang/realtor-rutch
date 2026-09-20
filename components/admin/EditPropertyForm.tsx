@@ -33,6 +33,7 @@ interface Property {
   listingCategory: string;
   features: string | null;
   paymentTerms: string | null;
+  referenceName: string | null;
   lat: number | null;
   lng: number | null;
   slug: string;
