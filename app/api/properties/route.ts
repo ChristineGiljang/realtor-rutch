@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
     const address = formData.get("address") as string;
     const city = formData.get("city") as string;
     const state = (formData.get("state") as string) || "";
+    const barangay = (formData.get("barangay") as string) || null;
+    const building = (formData.get("building") as string) || null;
     const zip = formData.get("zip") as string;
     const beds = parseInt(formData.get("beds") as string);
     const baths = parseFloat(formData.get("baths") as string);

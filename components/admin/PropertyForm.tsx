@@ -523,6 +523,24 @@ Reservation: 50000
             />
           </div>
           <div>
+            <label className={labelClass}>Barangay / Area (optional)</label>
+            <input
+              name="barangay"
+              placeholder="Banawa"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>
+              Building / Project Name (optional)
+            </label>
+            <input
+              name="building"
+              placeholder="AppleOne Banawa"
+              className={inputClass}
+            />
+          </div>
+          <div>
             <label className={labelClass}>ZIP *</label>
             <input
               ref={zipRef}

@@ -2,6 +2,8 @@ import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { CITIES } from "@/lib/cities";
 import { FILTERS } from "@/lib/filter-slugs";
+import { AREAS } from "@/lib/areas";
+import { BUILDINGS } from "@/lib/buildings";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = (
@@ -59,6 +61,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "daily" as const,
       priority: 0.75,
+    })),
+  );
+  // Area hub pages — /[city]/[filterSlug]/[area], e.g.
+  // /cebu-city/condo-for-rent/banawa
+  const areaFilterPages = AREAS.flatMap((area) =>
+    FILTERS.map((filter) => ({
+      url: `${baseUrl}/${area.citySlug}/${filter.slug}/${area.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.65,
+    })),
+  );
+
+  // Building hub pages — /[city]/[filterSlug]/[area]/[building]
+  const buildingFilterPages = BUILDINGS.flatMap((building) =>
+    FILTERS.filter((f) => f.type === "condo").map((filter) => ({
+      url: `${baseUrl}/${building.citySlug}/${filter.slug}/${building.areaSlug}/${building.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.6,
     })),
   );
 

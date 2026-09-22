@@ -10,6 +10,16 @@ import { CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getCityByFreeText } from "@/lib/cities";
 import { optimizedUrl } from "@/lib/cloudinary-url";
 import Link from "next/link";
+import {
+  Home,
+  Tag,
+  Calendar,
+  Car,
+  BadgeCheck,
+  Maximize2,
+  Ruler,
+  Building2,
+} from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -100,24 +110,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: ogImage ? [ogImage] : undefined,
     },
   };
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
-  if (!value && value !== 0) return null;
-  return (
-    <div className="flex justify-between items-start py-3 border-b border-[#E2D9C8] last:border-0">
-      <span className="text-sm text-[#8B7355]">{label}</span>
-      <span className="text-sm text-[#1A1A1A] font-medium capitalize text-right max-w-[60%]">
-        {value}
-      </span>
-    </div>
-  );
 }
 
 export default async function PropertyDetailPage({ params }: Props) {
@@ -305,59 +297,95 @@ export default async function PropertyDetailPage({ params }: Props) {
               );
             })()}
 
-            {/* Property Overview */}
+            {/* Property Details */}
             <div>
               <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                Overview
+                Property Details
               </h2>
-              <div className="divide-y divide-[#E2D9C8]">
-                <DetailRow
-                  label="Category"
-                  value={
-                    property.type.charAt(0).toUpperCase() +
-                    property.type.slice(1)
-                  }
-                />
-                <DetailRow
-                  label="Listing Type"
-                  value={
-                    property.listingCategory === "rent"
-                      ? "For Rent"
-                      : "For Sale"
-                  }
-                />
-                <DetailRow
-                  label="Built In"
-                  value={property.yearBuilt ? property.yearBuilt : null}
-                />
-                <DetailRow
-                  label="Car Parks"
-                  value={property.garage ? `${property.garage}` : null}
-                />
-                <DetailRow
-                  label="Type of Ownership"
-                  value={property.ownershipType ?? "Freehold"}
-                />
-                <DetailRow
-                  label="Total Area"
-                  value={
-                    property.sqft
-                      ? `${property.sqft.toLocaleString()} sqm`
-                      : null
-                  }
-                />
-                <DetailRow
-                  label="Land Size"
-                  value={
-                    property.lotSize && property.type !== "condo"
-                      ? `${property.lotSize.toLocaleString()} sqm`
-                      : null
-                  }
-                />
-                <DetailRow
-                  label="Property Floor"
-                  value={property.propertyFloor}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-[#E2D9C8]">
+                {(() => {
+                  const items = [
+                    {
+                      icon: Home,
+                      label: "Category",
+                      value:
+                        property.type.charAt(0).toUpperCase() +
+                        property.type.slice(1),
+                    },
+                    {
+                      icon: Tag,
+                      label: "Listing Type",
+                      value:
+                        property.listingCategory === "rent"
+                          ? "For Rent"
+                          : "For Sale",
+                    },
+                    {
+                      icon: Calendar,
+                      label: "Built In",
+                      value: property.yearBuilt || null,
+                    },
+                    {
+                      icon: Car,
+                      label: "Car Parks",
+                      value: property.garage ? `${property.garage}` : null,
+                    },
+                    {
+                      icon: BadgeCheck,
+                      label: "Type of Ownership",
+                      value: property.ownershipType ?? "Freehold",
+                    },
+                    {
+                      icon: Maximize2,
+                      label: "Total Area",
+                      value: property.sqft
+                        ? `${property.sqft.toLocaleString()} sqm`
+                        : null,
+                    },
+                    {
+                      icon: Ruler,
+                      label: "Land Size",
+                      value:
+                        property.lotSize && property.type !== "condo"
+                          ? `${property.lotSize.toLocaleString()} sqm`
+                          : null,
+                    },
+                    {
+                      icon: Building2,
+                      label: "Property Floor",
+                      value: property.propertyFloor,
+                    },
+                  ].filter((d) => d.value !== null && d.value !== undefined);
+
+                  return items.map((item, i) => {
+                    const Icon = item.icon;
+                    // If there's an odd item left dangling at the end, span
+                    // it across both columns instead of leaving the grid's
+                    // background color showing through an empty cell.
+                    const isTrailingOdd =
+                      items.length % 2 === 1 && i === items.length - 1;
+                    return (
+                      <div
+                        key={item.label}
+                        className={`bg-[#faf9f6] px-5 py-4 flex items-center gap-4 ${
+                          isTrailingOdd ? "sm:col-span-2" : ""
+                        }`}
+                      >
+                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-[#F5F0E8] text-[#C9A96E]">
+                          <Icon size={18} strokeWidth={1.75} />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#8B7355]">
+                            {item.label}
+                          </p>
+                          <p className="text-sm font-semibold text-[#1A1A1A] mt-0.5">
+                            {item.value}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 

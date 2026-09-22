@@ -251,3 +251,32 @@ export function getCityListingsMeta(
       };
   }
 }
+
+// ── SEO label map for /[city]/[filterSlug]/[area] ────────────
+export function getAreaListingsMeta(
+  cityName: string,
+  areaName: string,
+  filterLabel?: string,
+): ListingsMeta {
+  const scope = filterLabel ?? "Properties";
+  return {
+    h1: `${scope} in ${areaName}, ${cityName}`,
+    title: `${scope} in ${areaName}, ${cityName}`,
+    description: `Browse ${scope.toLowerCase()} in ${areaName}, ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+  };
+}
+
+// ── SEO label map for /[city]/[filterSlug]/[area]/[building] ─
+export function getBuildingListingsMeta(
+  buildingName: string,
+  areaName: string,
+  cityName: string,
+  filterLabel?: string,
+): ListingsMeta {
+  const scope = filterLabel ?? "Units";
+  return {
+    h1: `${scope} at ${buildingName}, ${areaName}, ${cityName}`,
+    title: `${buildingName} — ${scope} in ${areaName}, ${cityName}`,
+    description: `Browse available units at ${buildingName} in ${areaName}, ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+  };
+}

@@ -34,12 +34,13 @@ interface Property {
   features: string | null;
   paymentTerms: string | null;
   referenceName: string | null;
+  barangay: string | null;
+  building: string | null;
   lat: number | null;
   lng: number | null;
   slug: string;
   images: Image[];
 }
-
 interface Props {
   property: Property;
 }
@@ -320,6 +321,26 @@ export default function EditPropertyForm({ property }: Props) {
               defaultValue={property.address}
               className={inputClass}
             />
+            <div>
+              <label className={labelClass}>Barangay / Area (optional)</label>
+              <input
+                name="barangay"
+                defaultValue={property.barangay ?? ""}
+                placeholder="Banawa"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>
+                Building / Project Name (optional)
+              </label>
+              <input
+                name="building"
+                defaultValue={property.building ?? ""}
+                placeholder="AppleOne Banawa"
+                className={inputClass}
+              />
+            </div>
           </div>
           <div>
             <label className={labelClass}>City *</label>

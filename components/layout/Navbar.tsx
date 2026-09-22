@@ -50,21 +50,26 @@ function DesktopDropdown({
         />
       </button>
 
-      {open && (
-        <div className="absolute top-full left-0 pt-3 z-50">
-          <div className="bg-white border border-[#E2D9C8] shadow-lg py-2 min-w-[220px]">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="block px-4 py-2 text-sm text-[#6B5842] hover:text-[#1A1A1A] hover:bg-[#F5F0E8] transition whitespace-nowrap"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+      {/* Always in the DOM — visibility toggled with CSS, not conditional
+          rendering — so the "For Sale"/"For Rent" links are present in the
+          server-rendered HTML and crawlable without needing hover/click. */}
+      <div
+        className={`absolute top-full left-0 pt-3 z-50 ${
+          open ? "block" : "hidden"
+        }`}
+      >
+        <div className="bg-white border border-[#E2D9C8] shadow-lg py-2 min-w-[220px]">
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="block px-4 py-2 text-sm text-[#6B5842] hover:text-[#1A1A1A] hover:bg-[#F5F0E8] transition whitespace-nowrap"
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -106,20 +111,19 @@ function MobileDropdown({
         </button>
       </div>
 
-      {open && (
-        <div className="mt-4 ml-4 flex flex-col gap-4">
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-[#6B5842]/80 hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
-              onClick={onNavigate}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      )}
+      {/* Same fix as the desktop dropdown — kept in the DOM, toggled via CSS. */}
+      <div className={`mt-4 ml-4 flex-col gap-4 ${open ? "flex" : "hidden"}`}>
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="text-[#6B5842]/80 hover:text-[#1A1A1A] text-sm tracking-wider uppercase"
+            onClick={onNavigate}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
@@ -193,6 +197,9 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile panel itself can stay conditionally rendered — it's a
+          slide-out triggered by the hamburger button, not a source of
+          crawlable nav links distinct from the desktop menu above. */}
       {isOpen && (
         <div className="md:hidden bg-[#F5F0E8] border-t border-[#E2D9C8]">
           <div className="flex flex-col px-4 py-6 gap-6">
