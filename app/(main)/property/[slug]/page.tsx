@@ -4,32 +4,18 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PropertyGallery from "@/components/listings/PropertyGallery";
 import ContactForm from "@/components/listings/ContactForm";
-import PropertyMapWrapper from "@/components/listings/PropertyMapWrapper";
+import { Suspense } from "react";
+import NearbyAmenitiesSection from "@/components/listings/NearbyAmenitiesSection";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
 import { CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getCityByFreeText } from "@/lib/cities";
 import { optimizedUrl } from "@/lib/cloudinary-url";
 import Link from "next/link";
-import {
-  Home,
-  Tag,
-  Calendar,
-  Car,
-  BadgeCheck,
-  Maximize2,
-  Ruler,
-  Building2,
-} from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// generateMetadata() and the page component both need this property, and
-// Next.js runs them separately — without this, that meant two full
-// round-trips to Supabase for the exact same row on every single page
-// visit. React's cache() makes both calls within one request share a
-// single query instead.
 const getPropertyBySlug = cache(async (slug: string) => {
   return db.property.findUnique({
     where: { slug },
@@ -37,16 +23,7 @@ const getPropertyBySlug = cache(async (slug: string) => {
   });
 });
 
-// Root layout's title.template ("%s | Realtor Rutch") adds ~17 chars to
-// whatever we return here, and Google's practical cutoff is ~60 chars
-// total — so keep this page's own portion under ~43. If a future long
-// city name or price ever pushes past that, this clamps it instead of
-// silently shipping an overlong title, and warns in dev so it gets caught
-// before a crawl does.
 const TITLE_BUDGET = 43;
-
-// Land and commercial listings don't have bedrooms/bathrooms/car parks —
-// used for the SEO title/description and the Quick Stats Bar below.
 const NO_BEDS_TYPES = ["land", "commercial"];
 
 function safeTitle(title: string): string {
@@ -68,20 +45,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     { house: "House", condo: "Condo", land: "Lot", commercial: "Commercial" }[
       property.type
     ] || property.type;
-  // Short, formula-based SEO title — NOT the full marketing headline.
-  // "2BR Condo in Cebu City | ₱25,000,000" stays well under the ~60 char
-  // limit even before any site-wide title template suffix is appended.
   const title = safeTitle(
     NO_BEDS_TYPES.includes(property.type)
       ? `${typeLabel} in ${property.city} | ${priceLabel}`
       : `${property.beds}BR ${typeLabel} in ${property.city} | ${priceLabel}`,
   );
   const location = [property.city, property.state].filter(Boolean).join(", ");
-  // Google's effective snippet cutoff is ~155-160 chars. The prefix below
-  // is variable length (city/state/type vary per listing), so slicing the
-  // raw description to a flat 140 chars on top of it was overflowing the
-  // total by 15-30 chars on longer prefixes. Budget the WHOLE string
-  // instead, and trim to the last full word so it doesn't cut mid-word.
   const DESCRIPTION_BUDGET = 155;
   const prefix = NO_BEDS_TYPES.includes(property.type)
     ? `${property.type} in ${location}. `
@@ -112,12 +81,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className="flex justify-between items-start py-3 border-b border-[#E2D9C8] last:border-0">
+      <span className="text-sm text-[#8B7355]">{label}</span>
+      <span className="text-sm text-[#1A1A1A] font-medium capitalize text-right max-w-[60%]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export default async function PropertyDetailPage({ params }: Props) {
   const { slug } = await params;
   const property = await getPropertyBySlug(slug);
   if (!property) notFound();
 
-  // Parse amenities string (newline-separated) into array
   const amenityList = property.amenities
     ? property.amenities
         .split("\n")
@@ -259,10 +245,7 @@ export default async function PropertyDetailPage({ params }: Props) {
               </p>
             </div>
 
-            {/* Quick Stats Bar — Bedrooms/Bathrooms/Car Parks/Floor Area
-                only make sense for residential types; land and commercial
-                listings already show Total Area in the Overview table
-                below, so the bar doesn't render for them at all. */}
+            {/* Quick Stats Bar */}
             {(() => {
               const stats = NO_BEDS_TYPES.includes(property.type)
                 ? []
@@ -297,95 +280,59 @@ export default async function PropertyDetailPage({ params }: Props) {
               );
             })()}
 
-            {/* Property Details */}
+            {/* Property Overview */}
             <div>
               <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                Property Details
+                Overview
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-[#E2D9C8]">
-                {(() => {
-                  const items = [
-                    {
-                      icon: Home,
-                      label: "Category",
-                      value:
-                        property.type.charAt(0).toUpperCase() +
-                        property.type.slice(1),
-                    },
-                    {
-                      icon: Tag,
-                      label: "Listing Type",
-                      value:
-                        property.listingCategory === "rent"
-                          ? "For Rent"
-                          : "For Sale",
-                    },
-                    {
-                      icon: Calendar,
-                      label: "Built In",
-                      value: property.yearBuilt || null,
-                    },
-                    {
-                      icon: Car,
-                      label: "Car Parks",
-                      value: property.garage ? `${property.garage}` : null,
-                    },
-                    {
-                      icon: BadgeCheck,
-                      label: "Type of Ownership",
-                      value: property.ownershipType ?? "Freehold",
-                    },
-                    {
-                      icon: Maximize2,
-                      label: "Total Area",
-                      value: property.sqft
-                        ? `${property.sqft.toLocaleString()} sqm`
-                        : null,
-                    },
-                    {
-                      icon: Ruler,
-                      label: "Land Size",
-                      value:
-                        property.lotSize && property.type !== "condo"
-                          ? `${property.lotSize.toLocaleString()} sqm`
-                          : null,
-                    },
-                    {
-                      icon: Building2,
-                      label: "Property Floor",
-                      value: property.propertyFloor,
-                    },
-                  ].filter((d) => d.value !== null && d.value !== undefined);
-
-                  return items.map((item, i) => {
-                    const Icon = item.icon;
-                    // If there's an odd item left dangling at the end, span
-                    // it across both columns instead of leaving the grid's
-                    // background color showing through an empty cell.
-                    const isTrailingOdd =
-                      items.length % 2 === 1 && i === items.length - 1;
-                    return (
-                      <div
-                        key={item.label}
-                        className={`bg-[#faf9f6] px-5 py-4 flex items-center gap-4 ${
-                          isTrailingOdd ? "sm:col-span-2" : ""
-                        }`}
-                      >
-                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-[#F5F0E8] text-[#C9A96E]">
-                          <Icon size={18} strokeWidth={1.75} />
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#8B7355]">
-                            {item.label}
-                          </p>
-                          <p className="text-sm font-semibold text-[#1A1A1A] mt-0.5">
-                            {item.value}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
+              <div className="divide-y divide-[#E2D9C8]">
+                <DetailRow
+                  label="Category"
+                  value={
+                    property.type.charAt(0).toUpperCase() +
+                    property.type.slice(1)
+                  }
+                />
+                <DetailRow
+                  label="Listing Type"
+                  value={
+                    property.listingCategory === "rent"
+                      ? "For Rent"
+                      : "For Sale"
+                  }
+                />
+                <DetailRow
+                  label="Built In"
+                  value={property.yearBuilt ? property.yearBuilt : null}
+                />
+                <DetailRow
+                  label="Car Parks"
+                  value={property.garage ? `${property.garage}` : null}
+                />
+                <DetailRow
+                  label="Type of Ownership"
+                  value={property.ownershipType ?? "Freehold"}
+                />
+                <DetailRow
+                  label="Total Area"
+                  value={
+                    property.sqft
+                      ? `${property.sqft.toLocaleString()} sqm`
+                      : null
+                  }
+                />
+                <DetailRow
+                  label="Land Size"
+                  value={
+                    property.lotSize && property.type !== "condo"
+                      ? `${property.lotSize.toLocaleString()} sqm`
+                      : null
+                  }
+                />
+                <DetailRow
+                  label="Property Floor"
+                  value={property.propertyFloor}
+                />
               </div>
             </div>
 
@@ -422,9 +369,6 @@ export default async function PropertyDetailPage({ params }: Props) {
                 </h2>
                 <div className="space-y-4">
                   {(() => {
-                    // Lines ending in ":" (e.g. "Ideal for:") are section
-                    // headers, not pills — group the pills that follow
-                    // under their nearest preceding header.
                     const groups: {
                       heading: string | null;
                       items: string[];
@@ -519,20 +463,25 @@ export default async function PropertyDetailPage({ params }: Props) {
               </div>
             )}
 
-            {/* Map */}
+            {/* Location & What's Nearby */}
+            {/* Location & What's Nearby */}
             {property.lat && property.lng && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-[#E2D9C8] text-[#1A1A1A]">
-                  Location
+                  Location & What's Nearby
                 </h2>
-                <PropertyMapWrapper
-                  lat={property.lat}
-                  lng={property.lng}
-                  title={property.title}
-                  address={[property.address, property.city]
-                    .filter(Boolean)
-                    .join(", ")}
-                />
+                <Suspense
+                  fallback={
+                    <div className="w-full h-[420px] bg-[#E2D9C8] flex items-center justify-center text-[#8B7355] text-sm border border-[#E2D9C8]">
+                      Loading nearby amenities…
+                    </div>
+                  }
+                >
+                  <NearbyAmenitiesSection
+                    lat={property.lat}
+                    lng={property.lng}
+                  />
+                </Suspense>
                 <a
                   href={`https://maps.google.com/?q=${property.lat},${property.lng}`}
                   target="_blank"
@@ -588,14 +537,11 @@ async function RecommendedProperties({
   city: string;
   listingCategory: string;
 }) {
-  // Pull a wider pool of same-category candidates (same city OR same type),
-  // then rank city matches above type-only matches before trimming to 3 —
-  // Prisma can't express "same city first" as an orderBy on its own.
   const candidates = await db.property.findMany({
     where: {
       slug: { not: currentSlug },
       status: "active",
-      listingCategory, // never mix rentals into a for-sale page or vice versa
+      listingCategory,
       OR: [{ city }, { type }],
     },
     take: 12,
