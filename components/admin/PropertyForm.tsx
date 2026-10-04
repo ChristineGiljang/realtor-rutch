@@ -296,7 +296,7 @@ export default function PropertyForm() {
 REFERENCE: Owner's Name
 PRICE: 5000000
 TYPE: house
-SUBTYPE: rfo
+SUBTYPE: preselling
 CATEGORY: sale
 STATUS: active
 OWNERSHIP: freehold
@@ -429,13 +429,10 @@ Reservation: 50000
               <option value="">None</option>
               <optgroup label="House &amp; Lot">
                 <option value="preselling">Preselling</option>
-                <option value="rfo">RFO</option>
                 <option value="rent-to-own">Rent to Own</option>
-                <option value="rfo-subdivision">RFO Subdivision</option>
               </optgroup>
               <optgroup label="Condo">
                 <option value="preselling">Preselling Condo</option>
-                <option value="rfo">RFO Condo</option>
                 <option value="rent-to-own">Rent to Own Condo</option>
               </optgroup>
               <optgroup label="Commercial">

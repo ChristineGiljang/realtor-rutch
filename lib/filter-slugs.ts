@@ -40,24 +40,11 @@ export const FILTERS: FilterDef[] = [
     breadcrumbLabel: "Preselling House and Lot",
   },
   {
-    slug: "rfo-house-and-lot",
-    type: "house",
-    subtype: "rfo",
-    label: "RFO Ready for Occupancy House and Lot",
-    breadcrumbLabel: "RFO House and Lot",
-  },
-  {
     slug: "rent-to-own-house-and-lot",
     type: "house",
     subtype: "rent-to-own",
     label: "Rent to Own House and Lot",
     breadcrumbLabel: "Rent to Own House and Lot",
-  },
-  {
-    slug: "rfo-subdivision",
-    subtype: "rfo-subdivision",
-    label: "RFO Ready for Occupancy Subdivision",
-    breadcrumbLabel: "RFO Subdivision",
   },
   {
     slug: "condo-for-sale",
@@ -79,13 +66,6 @@ export const FILTERS: FilterDef[] = [
     subtype: "preselling",
     label: "Preselling Condo",
     breadcrumbLabel: "Preselling Condo",
-  },
-  {
-    slug: "rfo-condo",
-    type: "condo",
-    subtype: "rfo",
-    label: "RFO Condo",
-    breadcrumbLabel: "RFO Condo",
   },
   {
     slug: "rent-to-own-condo",

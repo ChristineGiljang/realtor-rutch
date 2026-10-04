@@ -25,6 +25,22 @@ const nextConfig: NextConfig = {
         destination: "https://realtor-rutch.com/:path*",
         permanent: true,
       },
+      // ── Retired RFO pages → closest remaining category ──
+      {
+        source: "/:city/rfo-condo/:path*",
+        destination: "/:city/condo-for-sale/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:city/rfo-house-and-lot/:path*",
+        destination: "/:city/house-and-lot-for-sale/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:city/rfo-subdivision/:path*",
+        destination: "/:city/house-and-lot-for-sale/:path*",
+        permanent: true,
+      },
     ];
   },
 };

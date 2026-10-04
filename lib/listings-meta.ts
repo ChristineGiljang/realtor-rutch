@@ -20,19 +20,13 @@ export function getListingsMeta(
   category?: string,
 ): ListingsMeta {
   // Subtype-specific pages
+  // Subtype-specific pages
   if (subtype === "preselling" && type === "house")
     return {
       h1: "Preselling House and Lot in Cebu",
       title: "Preselling House and Lot in Cebu",
       description:
         "Browse preselling house and lot properties in Cebu City and nearby areas. Early-bird pricing, flexible payment terms. Inquire with Realtor Rutch.",
-    };
-  if (subtype === "rfo" && type === "house")
-    return {
-      h1: "RFO House and Lot in Cebu",
-      title: "RFO House and Lot in Cebu — Ready for Occupancy",
-      description:
-        "Ready-for-occupancy house and lot listings in Cebu City. Move in now — no waiting, verified properties. Browse with Realtor Rutch.",
     };
   if (subtype === "rent-to-own" && type === "house")
     return {
@@ -41,26 +35,12 @@ export function getListingsMeta(
       description:
         "Find rent-to-own house and lot deals in Cebu City. Affordable path to homeownership. Inquire with Realtor Rutch today.",
     };
-  if (subtype === "rfo-subdivision")
-    return {
-      h1: "RFO Subdivision in Cebu",
-      title: "RFO Subdivision in Cebu — Ready for Occupancy",
-      description:
-        "Ready-for-occupancy subdivision lots and homes in Cebu. Gated communities, complete amenities. Browse with Realtor Rutch.",
-    };
   if (subtype === "preselling" && type === "condo")
     return {
       h1: "Preselling Condo in Cebu",
       title: "Preselling Condo in Cebu",
       description:
         "Preselling condominium units in Cebu City. Lock in the best prices before turnover. Inquire with Realtor Rutch.",
-    };
-  if (subtype === "rfo" && type === "condo")
-    return {
-      h1: "RFO Condo in Cebu",
-      title: "RFO Condo in Cebu — Ready for Occupancy",
-      description:
-        "Ready-for-occupancy condo units in Cebu City. Move in now — verified listings. Browse with Realtor Rutch.",
     };
   if (subtype === "rent-to-own" && type === "condo")
     return {
