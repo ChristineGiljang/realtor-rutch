@@ -61,6 +61,9 @@ export default async function BlogPage() {
                       alt={post.title}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      style={{
+                        objectPosition: `${post.coverPositionX}% ${post.coverPositionY}%`,
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-[#8B7355] text-sm">

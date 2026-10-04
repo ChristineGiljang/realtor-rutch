@@ -10,6 +10,12 @@ function slugify(title: string) {
     .replace(/[^a-z0-9-]/g, "");
 }
 
+function parsePosition(value: FormDataEntryValue | null, fallback = 50) {
+  const n = Number(value);
+  if (value === null || value === "" || !Number.isFinite(n)) return fallback;
+  return Math.min(100, Math.max(0, Math.round(n)));
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -45,6 +51,8 @@ export async function POST(request: NextRequest) {
         slug,
         content,
         coverImage,
+        coverPositionX: parsePosition(formData.get("coverPositionX")),
+        coverPositionY: parsePosition(formData.get("coverPositionY")),
         published,
         publishedAt: published ? new Date() : null,
       },

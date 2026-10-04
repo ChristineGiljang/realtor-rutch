@@ -98,6 +98,9 @@ export default async function BlogPostPage({ params }: Props) {
             alt={post.title}
             loading="eager"
             className="w-full h-full object-cover"
+            style={{
+              objectPosition: `${post.coverPositionX}% ${post.coverPositionY}%`,
+            }}
           />
         </div>
       )}

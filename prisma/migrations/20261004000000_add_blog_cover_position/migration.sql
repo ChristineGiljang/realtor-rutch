@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "BlogPost" ADD COLUMN     "coverPositionX" INTEGER NOT NULL DEFAULT 50,
+ADD COLUMN     "coverPositionY" INTEGER NOT NULL DEFAULT 50;
