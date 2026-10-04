@@ -2,12 +2,37 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import { optimizedUrl } from "@/lib/cloudinary-url";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+const sanitizeOptions: sanitizeHtml.IOptions = {
+  allowedTags: [
+    ...sanitizeHtml.defaults.allowedTags,
+    "img",
+    "figure",
+    "figcaption",
+    "colgroup",
+    "col",
+  ],
+  allowedAttributes: {
+    a: ["href", "name", "target", "rel"],
+    img: ["src", "srcset", "alt", "title", "width", "height", "loading"],
+    th: ["colspan", "rowspan", "colwidth"],
+    td: ["colspan", "rowspan", "colwidth"],
+    col: ["span"],
+  },
+  allowedSchemes: ["http", "https", "mailto", "tel"],
+  allowedSchemesByTag: {
+    img: ["http", "https", "data"],
+  },
+  transformTags: {
+    a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }),
+  },
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -129,7 +154,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div
           className="blog-content text-[#8B7355] leading-relaxed"
           dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(post.content),
+            __html: sanitizeHtml(post.content, sanitizeOptions),
           }}
         />
 
