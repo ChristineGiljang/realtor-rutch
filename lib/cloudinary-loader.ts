@@ -12,7 +12,19 @@ export default function cloudinaryLoader({
     return src;
   }
 
-  const transforms = `f_auto,q_${quality || "auto"},w_${width}`;
+  // Next.js's <Image> component always passes a numeric quality (defaulting
+  // to 75) even when the `quality` prop isn't set on the component. That
+  // means a bare `quality || "auto"` fallback can never actually trigger —
+  // every image ends up flattened to q_75, overriding Cloudinary's smarter
+  // auto-quality algorithm (which picks the lowest quality that's still
+  // visually indistinguishable, per image).
+  //
+  // Treat the untouched default (75) as "no explicit opinion" and fall back
+  // to Cloudinary's auto:eco quality. Only respect a *deliberately lowered*
+  // quality prop (e.g. Hero.tsx uses 30, AboutTeaser.tsx uses 50) — those
+  // stay in full control since they're below 75.
+  const q = quality && quality < 75 ? quality : "auto:eco";
+  const transforms = `f_auto,q_${q},w_${width}`;
 
   // `src` may already be a full Cloudinary delivery URL (e.g. when it comes
   // straight from the DB as img.url: "https://res.cloudinary.com/<cloud>/image/upload/v<version>/<public_id>").

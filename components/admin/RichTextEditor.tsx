@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
 import TiptapLink from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import { TableKit } from "@tiptap/extension-table";
 import {
   Bold,
   Italic,
@@ -20,6 +21,7 @@ import {
   Undo2,
   Redo2,
   Pilcrow,
+  Table as TableIcon,
 } from "lucide-react";
 
 interface Props {
@@ -46,6 +48,9 @@ export default function RichTextEditor({
       }),
       TiptapImage.configure({ inline: false }),
       TiptapLink.configure({ openOnClick: false, autolink: true }),
+      // Tables: also lets pasted HTML tables (from Claude, Word, Google
+      // Docs, web pages) stay as real tables instead of flattening to text.
+      TableKit.configure({ table: { resizable: false } }),
       Placeholder.configure({
         placeholder: placeholder || "Write your post here…",
       }),
@@ -238,6 +243,21 @@ export default function RichTextEditor({
           onChange={handleFileChange}
         />
 
+        <button
+          type="button"
+          title="Insert table"
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+          className={btnClass(editor.isActive("table"))}
+        >
+          <TableIcon size={15} />
+        </button>
+
         <div className="w-px h-5 bg-[#E2D9C8] mx-1" />
 
         <button
@@ -261,6 +281,40 @@ export default function RichTextEditor({
           <span className="text-xs text-[#8B7355] ml-2">Uploading image…</span>
         )}
       </div>
+
+      {editor.isActive("table") && (
+        <div className="flex flex-wrap items-center gap-1.5 p-2 border-b border-[#E2D9C8] bg-[#f3efe6] text-xs">
+          <span className="text-[#8B7355] mr-1">Table:</span>
+          {[
+            ["+ Row above", () => editor.chain().focus().addRowBefore().run()],
+            ["+ Row below", () => editor.chain().focus().addRowAfter().run()],
+            ["− Row", () => editor.chain().focus().deleteRow().run()],
+            [
+              "+ Col left",
+              () => editor.chain().focus().addColumnBefore().run(),
+            ],
+            [
+              "+ Col right",
+              () => editor.chain().focus().addColumnAfter().run(),
+            ],
+            ["− Col", () => editor.chain().focus().deleteColumn().run()],
+            [
+              "Header row",
+              () => editor.chain().focus().toggleHeaderRow().run(),
+            ],
+            ["Delete table", () => editor.chain().focus().deleteTable().run()],
+          ].map(([label, run]) => (
+            <button
+              key={label as string}
+              type="button"
+              onClick={run as () => void}
+              className="px-2 py-1 border border-[#E2D9C8] bg-white text-[#8B7355] hover:bg-[#F5F0E8]"
+            >
+              {label as string}
+            </button>
+          ))}
+        </div>
+      )}
 
       <EditorContent editor={editor} />
     </div>

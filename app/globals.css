@@ -95,6 +95,57 @@ body {
   display: block;
 }
 
+/* Tables (TipTap table extension + pasted tables). */
+.blog-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.75rem 0;
+  font-size: 0.95rem;
+  table-layout: auto;
+}
+
+.blog-content th,
+.blog-content td {
+  border: 1px solid var(--border);
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+  position: relative;
+}
+
+.blog-content th {
+  background: #f3efe6;
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.blog-content td p,
+.blog-content th p {
+  margin-bottom: 0;
+}
+
+.blog-content tbody tr:nth-child(even) td {
+  background: rgba(226, 217, 200, 0.18);
+}
+
+/* Highlight selected cells while editing. */
+.blog-content .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(201, 169, 110, 0.25);
+  pointer-events: none;
+}
+
+/* Let wide tables scroll sideways on phones instead of breaking layout. */
+@media (max-width: 640px) {
+  .blog-content table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
 .blog-content p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--muted);
