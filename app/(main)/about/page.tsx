@@ -54,7 +54,7 @@ export default function AboutPage() {
           {/* Image */}
           <div className="relative h-[600px] overflow-hidden bg-[#E2D9C8]">
             <Image
-              src="agent2.jpg"
+              src="https://res.cloudinary.com/drczxmxfb/image/upload/v1791157777/IMG_1570_ekapmg.jpg"
               alt="Rutchilyn Llagoso"
               fill
               sizes="(max-width: 768px) calc(100vw - 32px), 500px"
