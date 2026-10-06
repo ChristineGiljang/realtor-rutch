@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { uniquePropertySlug } from "@/lib/slug";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
@@ -31,14 +32,12 @@ export async function PATCH(
     const { id } = await params;
     const formData = await request.formData();
 
-    const title = formData.get("title") as string;
+    const title = ((formData.get("title") as string) || "").trim();
     const description = formData.get("description") as string;
     const price = parseFloat(formData.get("price") as string);
     const address = formData.get("address") as string;
     const city = formData.get("city") as string;
     const state = (formData.get("state") as string) || "";
-    const barangay = (formData.get("barangay") as string) || null;
-    const building = (formData.get("building") as string) || null;
     const zip = formData.get("zip") as string;
     const beds = parseInt(formData.get("beds") as string);
     const baths = parseFloat(formData.get("baths") as string);
@@ -68,10 +67,40 @@ export async function PATCH(
       ? parseFloat(formData.get("lng") as string)
       : null;
 
-    const slug = title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
+    // These fields exist on the create form. Only touch them here if the
+    // edit form actually sends them, so a missing field never wipes
+    // existing data.
+    const optionalText = (key: string) =>
+      formData.has(key) ? { [key]: (formData.get(key) as string) || null } : {};
+    const optionalFields = {
+      ...optionalText("barangay"),
+      ...optionalText("building"),
+      ...optionalText("subtype"),
+      ...optionalText("ownershipType"),
+      ...optionalText("amenities"),
+      ...(formData.has("propertyFloor")
+        ? {
+            propertyFloor: formData.get("propertyFloor")
+              ? parseInt(formData.get("propertyFloor") as string)
+              : null,
+          }
+        : {}),
+    };
+
+    if (!title || !description || !price || !address || !city || !zip) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
+    }
+
+    // Keep the listing's existing URL when the title changes (links and
+    // search rankings stay intact). Only generate a slug if it has none.
+    const current = await db.property.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
+    const slug = current?.slug || (await uniquePropertySlug(title, id));
 
     const property = await db.property.update({
       where: { id },
@@ -100,6 +129,7 @@ export async function PATCH(
         lat,
         lng,
         slug,
+        ...optionalFields,
       },
     });
 
