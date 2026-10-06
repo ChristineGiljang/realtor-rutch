@@ -1,42 +1,56 @@
-import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { uniquePropertySlug, isUniqueViolation } from "@/lib/slug";
-import { v2 as cloudinary } from "cloudinary";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { uniquePropertySlug } from "@/lib/slug";
+import { NextRequest, NextResponse } from "next/server";
 
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-export async function POST(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
+    const { id } = await params;
+
+    await db.property.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting property:", error);
+    return NextResponse.json(
+      { error: "Failed to delete property" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
     const formData = await request.formData();
 
-    // Extract form fields
     const title = ((formData.get("title") as string) || "").trim();
     const description = formData.get("description") as string;
     const price = parseFloat(formData.get("price") as string);
     const address = formData.get("address") as string;
     const city = formData.get("city") as string;
     const state = (formData.get("state") as string) || "";
-    const barangay = (formData.get("barangay") as string) || null;
-    const building = (formData.get("building") as string) || null;
     const zip = formData.get("zip") as string;
     const beds = parseInt(formData.get("beds") as string);
     const baths = parseFloat(formData.get("baths") as string);
     const sqft = parseInt(formData.get("sqft") as string);
     const type = formData.get("type") as string;
-    const subtype = (formData.get("subtype") as string) || null;
     const status = formData.get("status") as string;
-    const ownershipType = (formData.get("ownershipType") as string) || null;
-    const propertyFloor = formData.get("propertyFloor")
-      ? parseInt(formData.get("propertyFloor") as string)
-      : null;
-    const amenities = (formData.get("amenities") as string) || null;
+    const featured = formData.get("featured") === "true";
+    const luxury = formData.get("luxury") === "true";
+    const features = (formData.get("features") as string) || null;
+    const paymentTerms = (formData.get("paymentTerms") as string) || null;
     const referenceName = (formData.get("referenceName") as string) || null;
-
-    // Optional fields
+    const listingCategory =
+      (formData.get("listingCategory") as string) || "sale";
     const lotSize = formData.get("lotSize")
       ? parseFloat(formData.get("lotSize") as string)
       : null;
@@ -52,15 +66,27 @@ export async function POST(request: NextRequest) {
     const lng = formData.get("lng")
       ? parseFloat(formData.get("lng") as string)
       : null;
-    const featured = formData.get("featured") === "true";
-    const luxury = formData.get("luxury") === "true";
 
-    const features = (formData.get("features") as string) || null;
-    const paymentTerms = (formData.get("paymentTerms") as string) || null;
-    const listingCategory =
-      (formData.get("listingCategory") as string) || "sale";
+    // These fields exist on the create form. Only touch them here if the
+    // edit form actually sends them, so a missing field never wipes
+    // existing data.
+    const optionalText = (key: string) =>
+      formData.has(key) ? { [key]: (formData.get(key) as string) || null } : {};
+    const optionalFields = {
+      ...optionalText("barangay"),
+      ...optionalText("building"),
+      ...optionalText("subtype"),
+      ...optionalText("ownershipType"),
+      ...optionalText("amenities"),
+      ...(formData.has("propertyFloor")
+        ? {
+            propertyFloor: formData.get("propertyFloor")
+              ? parseInt(formData.get("propertyFloor") as string)
+              : null,
+          }
+        : {}),
+    };
 
-    // Validate required fields (before any slug work or image uploads)
     if (!title || !description || !price || !address || !city || !zip) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -68,122 +94,126 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Per-image alt text, sent from the form as a JSON array in the same
-    // order as the "images" files below (see PropertyForm.tsx).
-    let imageAlts: string[] = [];
-    const imageAltsRaw = formData.get("imageAlts") as string | null;
-    if (imageAltsRaw) {
+    // Keep the listing's existing URL when the title changes (links and
+    // search rankings stay intact). Only generate a slug if it has none.
+    const current = await db.property.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
+    const slug = current?.slug || (await uniquePropertySlug(title, id));
+
+    const property = await db.property.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        price,
+        address,
+        city,
+        state,
+        zip,
+        beds,
+        baths,
+        sqft,
+        type,
+        status,
+        featured,
+        luxury,
+        listingCategory,
+        features,
+        paymentTerms,
+        referenceName,
+        lotSize,
+        garage,
+        yearBuilt,
+        lat,
+        lng,
+        slug,
+        ...optionalFields,
+      },
+    });
+
+    // Alt text for existing images, keyed by image id (see
+    // EditPropertyForm.tsx). Parsed once so we can merge it into the same
+    // update as the reordering below instead of a second round-trip.
+    let existingImageAlts: Record<string, string> = {};
+    const existingImageAltsRaw = formData.get("existingImageAlts") as
+      | string
+      | null;
+    if (existingImageAltsRaw) {
       try {
-        const parsed = JSON.parse(imageAltsRaw);
-        if (Array.isArray(parsed)) imageAlts = parsed;
+        const parsed = JSON.parse(existingImageAltsRaw);
+        if (parsed && typeof parsed === "object") existingImageAlts = parsed;
       } catch {
-        // Malformed JSON — fall back to titles below rather than failing
-        // the whole upload over alt text.
+        // Malformed JSON — skip alt updates rather than failing the save.
       }
     }
 
-    // Upload images to Cloudinary
-    const imageFiles = formData.getAll("images") as File[];
-    const imageUrls: { url: string; alt: string | null; order: number }[] = [];
+    // Update existing image order (and alt text, if provided)
+    const imageOrder = formData.getAll("imageOrder") as string[];
+    if (imageOrder.length > 0) {
+      await Promise.all(
+        imageOrder.map((imgId, index) => {
+          const alt = existingImageAlts[imgId]?.trim();
+          return db.propertyImage.update({
+            where: { id: imgId },
+            data: {
+              order: index,
+              ...(alt ? { alt } : {}),
+            },
+          });
+        }),
+      );
+    }
 
-    for (let i = 0; i < imageFiles.length; i++) {
-      const file = imageFiles[i];
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+    // Alt text for newly uploaded images, in the same order as "images"
+    // below (see EditPropertyForm.tsx).
+    let newImageAlts: string[] = [];
+    const newImageAltsRaw = formData.get("newImageAlts") as string | null;
+    if (newImageAltsRaw) {
+      try {
+        const parsed = JSON.parse(newImageAltsRaw);
+        if (Array.isArray(parsed)) newImageAlts = parsed;
+      } catch {
+        // Malformed JSON — fall back to the title below for every image.
+      }
+    }
 
-      // Upload to Cloudinary
-      const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder: "real-estate/properties",
-            resource_type: "auto",
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          },
+    // Handle new image uploads
+    const images = formData.getAll("images") as File[];
+    if (images && images.length > 0 && images[0].size > 0) {
+      // New images are appended after whatever's already on the property,
+      // so their "order" continues from the existing count.
+      const startOrder = imageOrder.length;
+
+      const imageUploadPromises = images.map(async (image, index) => {
+        const bytes = await image.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const result: any = await uploadToCloudinary(
+          buffer,
+          `${slug}-${Date.now()}-${index}`,
         );
 
-        uploadStream.end(buffer);
+        const alt = newImageAlts[index]?.trim() || title;
+
+        return db.propertyImage.create({
+          data: {
+            url: result.secure_url,
+            alt,
+            order: startOrder + index,
+            propertyId: property.id,
+          },
+        });
       });
 
-      if (result && typeof result === "object" && "secure_url" in result) {
-        const alt = imageAlts[i]?.trim() || null;
-        imageUrls.push({
-          url: (result as { secure_url: string }).secure_url,
-          alt,
-          order: i,
-        });
-      }
+      await Promise.all(imageUploadPromises);
     }
 
-    // Create property with images. The slug is generated to be unique, and
-    // we retry if two saves race for the same slug at the same moment.
-    let property;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const slug = await uniquePropertySlug(title);
-      try {
-        property = await db.property.create({
-          data: {
-            title,
-            description,
-            price,
-            address,
-            city,
-            barangay,
-            building,
-            state,
-            zip,
-            beds,
-            baths,
-            sqft,
-            type,
-            subtype,
-            status,
-            ownershipType,
-            propertyFloor,
-            amenities,
-            referenceName,
-            lotSize,
-            garage,
-            yearBuilt,
-            lat,
-            lng,
-            featured,
-            listingCategory,
-            luxury,
-            features,
-            paymentTerms,
-            slug,
-            images: {
-              // Use the agent's description when they gave one; otherwise
-              // fall back to the listing title so alt text is never blank.
-              create: imageUrls.map((img) => ({
-                url: img.url,
-                alt: img.alt || title,
-                order: img.order,
-              })),
-            },
-          },
-          include: {
-            images: true,
-          },
-        });
-        break;
-      } catch (err) {
-        if (isUniqueViolation(err) && attempt < 2) continue;
-        throw err;
-      }
-    }
-
-    return NextResponse.json(property, { status: 201 });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Property creation error:", error);
+    console.error("Error updating property:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to create property",
-      },
+      { error: "Failed to update property" },
       { status: 500 },
     );
   }
