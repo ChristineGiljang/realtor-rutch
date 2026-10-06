@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { uniquePropertySlug, isUniqueViolation } from "@/lib/slug";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
 
     // Extract form fields
-    const title = formData.get("title") as string;
+    const title = ((formData.get("title") as string) || "").trim();
     const description = formData.get("description") as string;
     const price = parseFloat(formData.get("price") as string);
     const address = formData.get("address") as string;
@@ -58,12 +59,8 @@ export async function POST(request: NextRequest) {
     const paymentTerms = (formData.get("paymentTerms") as string) || null;
     const listingCategory =
       (formData.get("listingCategory") as string) || "sale";
-    const slug = title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
 
-    // Validate required fields
+    // Validate required fields (before any slug work or image uploads)
     if (!title || !description || !price || !address || !city || !zip) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -113,58 +110,71 @@ export async function POST(request: NextRequest) {
       if (result && typeof result === "object" && "secure_url" in result) {
         const alt = imageAlts[i]?.trim() || null;
         imageUrls.push({
-          url: (result as any).secure_url,
+          url: (result as { secure_url: string }).secure_url,
           alt,
           order: i,
         });
       }
     }
 
-    // Create property with images in transaction
-    const property = await db.property.create({
-      data: {
-        title,
-        description,
-        price,
-        address,
-        city,
-        state,
-        zip,
-        beds,
-        baths,
-        sqft,
-        type,
-        subtype,
-        status,
-        ownershipType,
-        propertyFloor,
-        amenities,
-        referenceName,
-        lotSize,
-        garage,
-        yearBuilt,
-        lat,
-        lng,
-        featured,
-        listingCategory,
-        luxury,
-        features,
-        paymentTerms,
-        slug,
-        images: {
-          // Use the agent's description when they gave one; otherwise fall
-          // back to the listing title so alt text is never blank.
-          create: imageUrls.map((img) => ({
-            url: img.url,
-            alt: img.alt || title,
-            order: img.order,
-          })),
-        },
-      },
-      include: {
-        images: true,
-      },
-    });
+    // Create property with images. The slug is generated to be unique, and
+    // we retry if two saves race for the same slug at the same moment.
+    let property;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const slug = await uniquePropertySlug(title);
+      try {
+        property = await db.property.create({
+          data: {
+            title,
+            description,
+            price,
+            address,
+            city,
+            barangay,
+            building,
+            state,
+            zip,
+            beds,
+            baths,
+            sqft,
+            type,
+            subtype,
+            status,
+            ownershipType,
+            propertyFloor,
+            amenities,
+            referenceName,
+            lotSize,
+            garage,
+            yearBuilt,
+            lat,
+            lng,
+            featured,
+            listingCategory,
+            luxury,
+            features,
+            paymentTerms,
+            slug,
+            images: {
+              // Use the agent's description when they gave one; otherwise
+              // fall back to the listing title so alt text is never blank.
+              create: imageUrls.map((img) => ({
+                url: img.url,
+                alt: img.alt || title,
+                order: img.order,
+              })),
+            },
+          },
+          include: {
+            images: true,
+          },
+        });
+        break;
+      } catch (err) {
+        if (isUniqueViolation(err) && attempt < 2) continue;
+        throw err;
+      }
+    }
 
     return NextResponse.json(property, { status: 201 });
   } catch (error) {
