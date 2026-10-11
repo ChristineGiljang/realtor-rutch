@@ -12,32 +12,27 @@ export default function cloudinaryLoader({
     return src;
   }
 
-  // Next.js's <Image> component always passes a numeric quality (defaulting
-  // to 75) even when the `quality` prop isn't set on the component. That
-  // means a bare `quality || "auto"` fallback can never actually trigger —
-  // every image ends up flattened to q_75, overriding Cloudinary's smarter
-  // auto-quality algorithm (which picks the lowest quality that's still
-  // visually indistinguishable, per image).
-  //
-  // Treat the untouched default (75) as "no explicit opinion" and fall back
-  // to Cloudinary's auto:eco quality. Only respect a *deliberately lowered*
-  // quality prop (e.g. Hero.tsx uses 30, AboutTeaser.tsx uses 50) — those
-  // stay in full control since they're below 75.
+  // Next.js always passes a numeric quality (default 75). Treat the untouched
+  // default as "no opinion" and use Cloudinary's auto:eco; only respect a
+  // deliberately lowered quality prop (e.g. Hero 30, AboutTeaser 50).
   const q = quality && quality < 75 ? quality : "auto:eco";
-  const transforms = `f_auto,q_${q},w_${width}`;
+  const transforms = `f_auto,q_${q},w_${width},c_limit`;
 
-  // `src` may already be a full Cloudinary delivery URL (e.g. when it comes
-  // straight from the DB as img.url: "https://res.cloudinary.com/<cloud>/image/upload/v<version>/<public_id>").
-  // In that case, insert the transforms after "/upload/" instead of wrapping
-  // the whole URL as if it were a bare public_id — otherwise we end up
-  // nesting one Cloudinary URL inside another and the image 404s.
+  // Drop a trailing image extension so f_auto can choose AVIF/WebP/JPEG
+  // per browser instead of being pinned to the extension in the URL.
+  const stripExt = (s: string) =>
+    s.replace(/\.(jpe?g|png|webp|avif|gif)$/i, "");
+
+  // Full Cloudinary URL from the DB: insert transforms after "/upload/"
   const marker = "/upload/";
   const idx = src.indexOf(marker);
   if (idx !== -1) {
     const insertAt = idx + marker.length;
-    return src.slice(0, insertAt) + transforms + "/" + src.slice(insertAt);
+    return (
+      src.slice(0, insertAt) + transforms + "/" + stripExt(src.slice(insertAt))
+    );
   }
 
-  // Otherwise treat `src` as a bare public_id (no version, no host).
-  return `https://res.cloudinary.com/drczxmxfb/image/upload/${transforms}/${src}`;
+  // Bare public_id
+  return `https://res.cloudinary.com/drczxmxfb/image/upload/${transforms}/${stripExt(src)}`;
 }

@@ -8,6 +8,7 @@ import Script from "next/script";
 
 const geist = Geist({
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export const metadata: Metadata = {
     apple: "/images/favicon.png",
   },
 };
+
 export default function RootLayout({
   children,
 }: {
@@ -38,11 +40,6 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        <Script
-          src="https://analytics.ahrefs.com/analytics.js"
-          data-key="nIdREsSgZJJsPQ7AmdquzA"
-          strategy="lazyOnload"
-        />
       </head>
       <body
         className={`${geist.className} bg-[#F5F0E8] text-[#1A1A1A] antialiased`}
@@ -50,10 +47,15 @@ export default function RootLayout({
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="nIdREsSgZJJsPQ7AmdquzA"
+          strategy="lazyOnload"
+        />
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
       </body>
-      {process.env.NEXT_PUBLIC_GA_ID && (
-        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
-      )}
     </html>
   );
 }

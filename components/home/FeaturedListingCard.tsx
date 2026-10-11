@@ -26,18 +26,33 @@ interface Listing {
 
 export default function FeaturedListingCard({ listing }: { listing: Listing }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const hasMultiple = listing.images.length > 1;
+  // Only photos the visitor has reached (plus neighbors) are mounted,
+  // so the rest don't download on page load and compete with the hero.
+  const [loaded, setLoaded] = useState<Set<number>>(() => new Set([0]));
+  const count = listing.images.length;
+  const hasMultiple = count > 1;
+
+  const goTo = (index: number) => {
+    setActiveIndex(index);
+    setLoaded((prev) => {
+      const nextSet = new Set(prev);
+      nextSet.add(index);
+      nextSet.add((index + 1) % count);
+      nextSet.add((index - 1 + count) % count);
+      return nextSet;
+    });
+  };
 
   const prev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setActiveIndex((i) => (i === 0 ? listing.images.length - 1 : i - 1));
+    goTo(activeIndex === 0 ? count - 1 : activeIndex - 1);
   };
 
   const next = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setActiveIndex((i) => (i === listing.images.length - 1 ? 0 : i + 1));
+    goTo(activeIndex === count - 1 ? 0 : activeIndex + 1);
   };
 
   return (
@@ -45,30 +60,29 @@ export default function FeaturedListingCard({ listing }: { listing: Listing }) {
       <div className="group cursor-pointer">
         {/* Image */}
         <div className="relative overflow-hidden h-72 mb-4">
-          {listing.images.length > 0 ? (
+          {count > 0 ? (
             <div
               className="flex h-full transition-transform duration-300 ease-out"
               style={{
-                width: `${listing.images.length * 100}%`,
-                transform: `translateX(-${
-                  (activeIndex * 100) / listing.images.length
-                }%)`,
+                width: `${count * 100}%`,
+                transform: `translateX(-${(activeIndex * 100) / count}%)`,
               }}
             >
               {listing.images.map((img, i) => (
                 <div
                   key={img.id}
                   className="relative h-full flex-shrink-0 overflow-hidden"
-                  style={{ width: `${100 / listing.images.length}%` }}
+                  style={{ width: `${100 / count}%` }}
                 >
-                  <Image
-                    src={img.url}
-                    alt={img.alt || listing.title}
-                    fill
-                    sizes="(max-width: 768px) calc(100vw - 32px), 420px"
-                    loading={i === 0 ? "eager" : "lazy"}
-                    className="object-cover group-hover:scale-105 transition duration-500"
-                  />
+                  {loaded.has(i) && (
+                    <Image
+                      src={img.url}
+                      alt={img.alt || listing.title}
+                      fill
+                      sizes="(max-width: 768px) calc(100vw - 32px), 420px"
+                      className="object-cover group-hover:scale-105 transition duration-500"
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -84,7 +98,6 @@ export default function FeaturedListingCard({ listing }: { listing: Listing }) {
             {listing.status}
           </div>
 
-          {/* Mini carousel arrows — only when there's more than one photo */}
           {hasMultiple && (
             <>
               <button
@@ -102,7 +115,6 @@ export default function FeaturedListingCard({ listing }: { listing: Listing }) {
                 <ChevronRight size={16} />
               </button>
 
-              {/* Dots */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                 {listing.images.map((img, i) => (
                   <span
