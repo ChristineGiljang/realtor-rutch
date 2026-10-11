@@ -1,12 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { sendGAEvent } from "@next/third-parties/google";
 
+const VALID_INTENTS = ["buyer", "seller", "both"];
+
 export default function ContactPageForm() {
+  const searchParams = useSearchParams();
+  const intentParam = searchParams.get("intent");
+
+  const [intent, setIntent] = useState(
+    intentParam && VALID_INTENTS.includes(intentParam) ? intentParam : "buyer",
+  );
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  const isSeller = intent === "seller";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -73,9 +84,13 @@ export default function ContactPageForm() {
 
   return (
     <div className="border border-[#E2D9C8] bg-white p-8">
-      <h3 className="text-xl font-bold mb-2">Send a Message</h3>
+      <h3 className="text-xl font-bold mb-2">
+        {isSeller ? "Sell Your Property" : "Send a Message"}
+      </h3>
       <p className="text-[#8B7355] text-sm mb-8">
-        Fill out the form below and I'll be in touch shortly.
+        {isSeller
+          ? "Tell me about your property and I'll get back to you with next steps."
+          : "Fill out the form below and I'll be in touch shortly."}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -113,13 +128,18 @@ export default function ContactPageForm() {
             <input
               name="phone"
               type="tel"
-              placeholder="+1 (555) 000-0000"
+              placeholder="+63 9XX XXX XXXX"
               className={inputClass}
             />
           </div>
           <div>
             <label className={labelClass}>I am a</label>
-            <select name="intent" className={inputClass}>
+            <select
+              name="intent"
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              className={inputClass}
+            >
               <option value="buyer">Buyer</option>
               <option value="seller">Seller</option>
               <option value="both">Buyer & Seller</option>
@@ -127,29 +147,33 @@ export default function ContactPageForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label className={labelClass}>Budget Min</label>
-            <input
-              name="budgetMin"
-              type="number"
-              placeholder="500000"
-              className={inputClass}
-            />
+        {!isSeller && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label className={labelClass}>Budget Min</label>
+              <input
+                name="budgetMin"
+                type="number"
+                placeholder="500000"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Budget Max</label>
+              <input
+                name="budgetMax"
+                type="number"
+                placeholder="2000000"
+                className={inputClass}
+              />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Budget Max</label>
-            <input
-              name="budgetMax"
-              type="number"
-              placeholder="2000000"
-              className={inputClass}
-            />
-          </div>
-        </div>
+        )}
 
         <div>
-          <label className={labelClass}>Timeline</label>
+          <label className={labelClass}>
+            {isSeller ? "When do you want to sell?" : "Timeline"}
+          </label>
           <select name="timeline" className={inputClass}>
             <option value="">Select timeline</option>
             <option value="asap">As soon as possible</option>
@@ -161,11 +185,17 @@ export default function ContactPageForm() {
         </div>
 
         <div>
-          <label className={labelClass}>Message</label>
+          <label className={labelClass}>
+            {isSeller ? "Property Details" : "Message"}
+          </label>
           <textarea
             name="message"
             rows={5}
-            placeholder="Tell me about what you're looking for..."
+            placeholder={
+              isSeller
+                ? "Property type, location, lot/floor area, asking price, title status..."
+                : "Tell me about what you're looking for..."
+            }
             className={inputClass}
           />
         </div>
@@ -175,7 +205,11 @@ export default function ContactPageForm() {
           disabled={loading}
           className="w-full bg-[#1A1A1A] text-[#faf9f6] text-sm tracking-widest uppercase py-4 font-semibold hover:bg-[#C9A96E] transition disabled:opacity-50"
         >
-          {loading ? "Sending..." : "Send Message"}
+          {loading
+            ? "Sending..."
+            : isSeller
+              ? "Submit Property"
+              : "Send Message"}
         </button>
       </form>
     </div>

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import ContactPageForm from "@/components/contact/ContactPageForm";
 import { PhoneLink, EmailLink } from "@/components/contact/ContactLinks";
@@ -100,7 +101,9 @@ export default function ContactPage() {
 
           {/* Right: Form */}
           <div>
-            <ContactPageForm />
+            <Suspense fallback={null}>
+              <ContactPageForm />
+            </Suspense>
           </div>
         </div>
       </div>

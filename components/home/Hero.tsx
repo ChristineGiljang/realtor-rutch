@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import SellButton from "./SellButton";
 
 export default function Hero() {
   return (
@@ -31,16 +32,11 @@ export default function Hero() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/listings"
-            className="bg-[#faf9f6] text-[#1A1A1A] px-8 py-4 text-sm tracking-wider uppercase font-semibold hover:bg-[#C9A96E] transition"
+            className="bg-[#faf9f6] text-[#1A1A1A] px-8 py-4 text-sm tracking-wider uppercase font-semibold hover:bg-white/80 transition"
           >
             View Listings
           </Link>
-          <Link
-            href="/contact"
-            className="border border-white text-white px-8 py-4 text-sm tracking-wider uppercase font-semibold hover:bg-white/10 transition"
-          >
-            Contact Us
-          </Link>
+          <SellButton />
         </div>
       </div>
 
