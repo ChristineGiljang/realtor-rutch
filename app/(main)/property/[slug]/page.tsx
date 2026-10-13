@@ -132,6 +132,15 @@ export default async function PropertyDetailPage({ params }: Props) {
       label: property.city,
       href: matchedCity ? `/${matchedCity.slug}` : undefined,
     },
+    // Barangay crumb: only shown when the listing has one
+    ...(property.barangay
+      ? [
+          {
+            label: property.barangay,
+            href: `/listings?q=${encodeURIComponent(property.barangay)}&type=${property.type}&category=${property.listingCategory}`,
+          },
+        ]
+      : []),
     { label: property.title },
   ];
 
