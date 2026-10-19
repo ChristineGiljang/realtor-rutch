@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getCityBySlug, cityWhereClause } from "@/lib/cities";
 import { getAreaBySlug, areaWhereClause } from "@/lib/areas";
@@ -6,6 +7,14 @@ import { getBuildingBySlug, buildingWhereClause } from "@/lib/buildings";
 import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getBuildingListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
+import {
+  parseListingParams,
+  listingsOrderBy,
+  priceBedsWhere,
+  ensurePageInRange,
+  type ListingParams,
+  type RawSearchParams,
+} from "@/lib/listing-params";
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
@@ -19,28 +28,72 @@ interface Props {
     area: string;
     building: string;
   }>;
-  searchParams: Promise<{
-    priceMax?: string;
-    bedsMin?: string;
-    sort?: string;
-    page?: string;
-  }>;
+  searchParams: Promise<RawSearchParams>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+// generateMetadata and the page both need the results; cache() makes the
+// database query run once per request.
+const loadResults = cache(async (key: string) => {
+  const { citySlug, filterSlug, areaSlug, buildingSlug, query } = JSON.parse(
+    key,
+  ) as {
+    citySlug: string;
+    filterSlug: string;
+    areaSlug: string;
+    buildingSlug: string;
+    query: ListingParams;
+  };
+  const city = getCityBySlug(citySlug);
+  const filter = getFilterBySlug(filterSlug);
+  const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
+  const building =
+    city && area
+      ? getBuildingBySlug(city.slug, area.slug, buildingSlug)
+      : undefined;
+  if (!city || !filter || !area || !building) return null;
+
+  const where: any = {
+    status: "active",
+    AND: [
+      { OR: cityWhereClause(city) },
+      { OR: areaWhereClause(area) },
+      { OR: buildingWhereClause(building) },
+    ],
+    ...priceBedsWhere(query),
+  };
+  if (filter.type) where.type = filter.type;
+  if (filter.subtype) where.subtype = filter.subtype;
+  if (filter.category) where.listingCategory = filter.category;
+
+  const results = await queryListings(
+    where,
+    String(query.page),
+    listingsOrderBy(query.sort),
+  );
+
+  return { city, filter, area, building, ...results };
+});
+
+async function getResults(props: Props) {
   const {
     city: citySlug,
     filterSlug,
     area: areaSlug,
     building: buildingSlug,
-  } = await params;
-  const city = getCityBySlug(citySlug);
-  const filter = getFilterBySlug(filterSlug);
-  const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
-  const building = area
-    ? getBuildingBySlug(city!.slug, area.slug, buildingSlug)
-    : undefined;
-  if (!city || !filter || !area || !building) return {};
+  } = await props.params;
+  const query = parseListingParams(await props.searchParams);
+
+  const data = await loadResults(
+    JSON.stringify({ citySlug, filterSlug, areaSlug, buildingSlug, query }),
+  );
+  if (!data) notFound();
+  ensurePageInRange(query.page, data.totalPages);
+
+  return { query, ...data };
+}
+
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const { city, filter, area, building, totalCount } = await getResults(props);
 
   const meta = getBuildingListingsMeta(
     building.name,
@@ -56,52 +109,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `/${city.slug}/${filter.slug}/${area.slug}/${building.slug}`,
     },
     openGraph: { title: meta.title, description: meta.description },
+    // Keep pages with no listings out of Google's index but let it follow links.
+    ...(totalCount === 0 ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
-export default async function BuildingFilterListingsPage({
-  params,
-  searchParams,
-}: Props) {
+export default async function BuildingFilterListingsPage(props: Props) {
   const {
-    city: citySlug,
-    filterSlug,
-    area: areaSlug,
-    building: buildingSlug,
-  } = await params;
-  const city = getCityBySlug(citySlug);
-  const filter = getFilterBySlug(filterSlug);
-  const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
-  const building = area
-    ? getBuildingBySlug(city!.slug, area.slug, buildingSlug)
-    : undefined;
-  if (!city || !filter || !area || !building) notFound();
-
-  const { priceMax, bedsMin, sort, page } = await searchParams;
-
-  const where: any = {
-    status: "active",
-    AND: [
-      { OR: cityWhereClause(city) },
-      { OR: areaWhereClause(area) },
-      { OR: buildingWhereClause(building) },
-    ],
-  };
-  if (filter.type) where.type = filter.type;
-  if (filter.subtype) where.subtype = filter.subtype;
-  if (filter.category) where.listingCategory = filter.category;
-  if (priceMax) where.price = { lte: parseInt(priceMax) };
-  if (bedsMin) where.beds = { gte: parseInt(bedsMin) };
-
-  let orderBy: any = { createdAt: "desc" };
-  if (sort === "price-asc") orderBy = { price: "asc" };
-  if (sort === "price-desc") orderBy = { price: "desc" };
-
-  const { listings, totalCount, totalPages, currentPage } = await queryListings(
-    where,
-    page,
-    orderBy,
-  );
+    query,
+    city,
+    filter,
+    area,
+    building,
+    listings,
+    totalCount,
+    totalPages,
+    currentPage,
+  } = await getResults(props);
 
   const meta = getBuildingListingsMeta(
     building.name,
@@ -135,9 +159,9 @@ export default async function BuildingFilterListingsPage({
 
   const hrefForPage = (targetPage: number) => {
     const p = new URLSearchParams();
-    if (priceMax) p.set("priceMax", priceMax);
-    if (bedsMin) p.set("bedsMin", bedsMin);
-    if (sort) p.set("sort", sort);
+    if (query.priceMax) p.set("priceMax", query.priceMax);
+    if (query.bedsMin) p.set("bedsMin", query.bedsMin);
+    if (query.sort) p.set("sort", query.sort);
     if (targetPage > 1) p.set("page", String(targetPage));
     const qs = p.toString();
     return `/${city.slug}/${filter.slug}/${area.slug}/${building.slug}${qs ? `?${qs}` : ""}`;
@@ -158,9 +182,9 @@ export default async function BuildingFilterListingsPage({
           initialCity={city.slug}
           initialType={filter.type}
           initialCategory={filter.category}
-          initialPriceMax={priceMax}
-          initialBedsMin={bedsMin}
-          initialSort={sort}
+          initialPriceMax={query.priceMax}
+          initialBedsMin={query.bedsMin}
+          initialSort={query.sort}
         />
 
         <ListingsResults

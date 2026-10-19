@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { cache } from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import PropertyGallery from "@/components/listings/PropertyGallery";
 import ContactForm from "@/components/listings/ContactForm";
@@ -10,6 +10,7 @@ import Breadcrumbs from "@/components/listings/Breadcrumbs";
 import { CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getCityByFreeText } from "@/lib/cities";
 import { optimizedUrl } from "@/lib/cloudinary-url";
+import { findCurrentSlug } from "@/lib/slug-redirects";
 import Link from "next/link";
 
 interface Props {
@@ -102,7 +103,13 @@ function DetailRow({
 export default async function PropertyDetailPage({ params }: Props) {
   const { slug } = await params;
   const property = await getPropertyBySlug(slug);
-  if (!property) notFound();
+  if (!property) {
+    // The listing's URL may have changed after a title edit. Send old URLs
+    // to the current one instead of returning a 404.
+    const currentSlug = await findCurrentSlug(slug);
+    if (currentSlug) permanentRedirect(`/property/${currentSlug}`);
+    notFound();
+  }
 
   const amenityList = property.amenities
     ? property.amenities
@@ -118,6 +125,11 @@ export default async function PropertyDetailPage({ params }: Props) {
     commercial: "Commercial",
   };
   const matchedCity = getCityByFreeText(property.city);
+  // Every crumb except the last must have a URL, otherwise the breadcrumb
+  // structured data is invalid. Cities that aren't in lib/cities (for example
+  // Liloan) fall back to a search link instead of having no href.
+  const searchHref = (q: string) =>
+    `/listings?q=${encodeURIComponent(q)}&type=${property.type}&category=${property.listingCategory}`;
   const breadcrumbs = [
     { label: "Home", href: "/" },
     {
@@ -130,14 +142,14 @@ export default async function PropertyDetailPage({ params }: Props) {
     },
     {
       label: property.city,
-      href: matchedCity ? `/${matchedCity.slug}` : undefined,
+      href: matchedCity ? `/${matchedCity.slug}` : searchHref(property.city),
     },
     // Barangay crumb: only shown when the listing has one
     ...(property.barangay
       ? [
           {
             label: property.barangay,
-            href: `/listings?q=${encodeURIComponent(property.barangay)}&type=${property.type}&category=${property.listingCategory}`,
+            href: searchHref(property.barangay),
           },
         ]
       : []),

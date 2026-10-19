@@ -44,6 +44,7 @@ model Property {
   referenceName   String?
   leads           Lead[]
   images          PropertyImage[]
+  slugRedirects   SlugRedirect[]
 }
 
 model PropertyImage {
@@ -53,6 +54,16 @@ model PropertyImage {
   order      Int      @default(0)
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model SlugRedirect {
+  id         String   @id @default(cuid())
+  oldSlug    String   @unique
+  propertyId String
+  createdAt  DateTime @default(now())
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
 }
 
 model Lead {

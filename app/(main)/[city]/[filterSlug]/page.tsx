@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getCityBySlug, cityWhereClause } from "@/lib/cities";
 import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getCityListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
+import {
+  parseListingParams,
+  listingsOrderBy,
+  priceBedsWhere,
+  ensurePageInRange,
+  type ListingParams,
+  type RawSearchParams,
+} from "@/lib/listing-params";
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
@@ -12,20 +21,54 @@ export const revalidate = 0;
 
 interface Props {
   params: Promise<{ city: string; filterSlug: string }>;
-  searchParams: Promise<{
-    priceMax?: string;
-    bedsMin?: string;
-    sort?: string;
-    page?: string;
-  }>;
+  searchParams: Promise<RawSearchParams>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { city: citySlug, filterSlug } = await params;
+// generateMetadata and the page both need the results; cache() makes the
+// database query run once per request.
+const loadResults = cache(async (key: string) => {
+  const { citySlug, filterSlug, query } = JSON.parse(key) as {
+    citySlug: string;
+    filterSlug: string;
+    query: ListingParams;
+  };
   const city = getCityBySlug(citySlug);
   const filter = getFilterBySlug(filterSlug);
-  if (!city || !filter) return {};
+  if (!city || !filter) return null;
 
+  const where: any = {
+    status: "active",
+    OR: cityWhereClause(city),
+    ...priceBedsWhere(query),
+  };
+  if (filter.type) where.type = filter.type;
+  if (filter.subtype) where.subtype = filter.subtype;
+  if (filter.category) where.listingCategory = filter.category;
+
+  const results = await queryListings(
+    where,
+    String(query.page),
+    listingsOrderBy(query.sort),
+  );
+
+  return { city, filter, ...results };
+});
+
+async function getResults(props: Props) {
+  const { city: citySlug, filterSlug } = await props.params;
+  const query = parseListingParams(await props.searchParams);
+
+  const data = await loadResults(
+    JSON.stringify({ citySlug, filterSlug, query }),
+  );
+  if (!data) notFound();
+  ensurePageInRange(query.page, data.totalPages);
+
+  return { query, ...data };
+}
+
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const { city, filter, totalCount } = await getResults(props);
   const meta = getCityListingsMeta(city.name, filter.label);
 
   return {
@@ -33,41 +76,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: meta.description,
     alternates: { canonical: `/${city.slug}/${filter.slug}` },
     openGraph: { title: meta.title, description: meta.description },
+    // Keep pages with no listings out of Google's index but let it follow links.
+    ...(totalCount === 0 ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
-export default async function CityFilterListingsPage({
-  params,
-  searchParams,
-}: Props) {
-  const { city: citySlug, filterSlug } = await params;
-  const city = getCityBySlug(citySlug);
-  const filter = getFilterBySlug(filterSlug);
-  if (!city || !filter) notFound();
-
-  const { priceMax, bedsMin, sort, page } = await searchParams;
-
-  const where: any = {
-    status: "active",
-    OR: cityWhereClause(city),
-  };
-  if (filter.type) where.type = filter.type;
-  if (filter.subtype) where.subtype = filter.subtype;
-  if (filter.category) where.listingCategory = filter.category;
-  if (priceMax) where.price = { lte: parseInt(priceMax) };
-  if (bedsMin) where.beds = { gte: parseInt(bedsMin) };
-
-  let orderBy: any = { createdAt: "desc" };
-  if (sort === "price-asc") orderBy = { price: "asc" };
-  if (sort === "price-desc") orderBy = { price: "desc" };
-
-  const { listings, totalCount, totalPages, currentPage } = await queryListings(
-    where,
-    page,
-    orderBy,
-  );
+export default async function CityFilterListingsPage(props: Props) {
+  const { query, city, filter, listings, totalCount, totalPages, currentPage } =
+    await getResults(props);
 
   const meta = getCityListingsMeta(city.name, filter.label);
+
+  // Every crumb except the last must have a URL, otherwise the breadcrumb
+  // structured data is invalid. Filters without a type (for example ones
+  // defined by subtype or category) used to get no href at all.
+  const filterCrumbHref = filter.type
+    ? `/listings?type=${filter.type}`
+    : filter.subtype
+      ? `/listings?subtype=${filter.subtype}`
+      : filter.category
+        ? `/listings?category=${filter.category}`
+        : "/listings";
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
@@ -83,7 +112,7 @@ export default async function CityFilterListingsPage({
       ? [
           {
             label: filter.breadcrumbLabel,
-            href: filter.type ? `/listings?type=${filter.type}` : undefined,
+            href: filterCrumbHref,
           },
         ]
       : []),
@@ -92,9 +121,9 @@ export default async function CityFilterListingsPage({
 
   const hrefForPage = (targetPage: number) => {
     const p = new URLSearchParams();
-    if (priceMax) p.set("priceMax", priceMax);
-    if (bedsMin) p.set("bedsMin", bedsMin);
-    if (sort) p.set("sort", sort);
+    if (query.priceMax) p.set("priceMax", query.priceMax);
+    if (query.bedsMin) p.set("bedsMin", query.bedsMin);
+    if (query.sort) p.set("sort", query.sort);
     if (targetPage > 1) p.set("page", String(targetPage));
     const qs = p.toString();
     return `/${city.slug}/${filter.slug}${qs ? `?${qs}` : ""}`;
@@ -115,9 +144,9 @@ export default async function CityFilterListingsPage({
           initialCity={city.slug}
           initialType={filter.type}
           initialCategory={filter.category}
-          initialPriceMax={priceMax}
-          initialBedsMin={bedsMin}
-          initialSort={sort}
+          initialPriceMax={query.priceMax}
+          initialBedsMin={query.bedsMin}
+          initialSort={query.sort}
         />
 
         <ListingsResults

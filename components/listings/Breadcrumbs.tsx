@@ -6,25 +6,40 @@ export interface Crumb {
   href?: string; // omit for the current page (last crumb, not a link)
 }
 
+const BASE_URL = "https://realtor-rutch.com";
+
 export default function Breadcrumbs({ items }: { items: Crumb[] }) {
+  // Google requires an "item" URL on every crumb except the last one. A
+  // middle crumb without a URL makes the whole BreadcrumbList invalid, so it
+  // is left out of the structured data (it still shows on the page).
+  const lastIndex = items.length - 1;
+  const schemaItems = items.filter(
+    (item, i) => item.label && (item.href || i === lastIndex),
+  );
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((item, i) => ({
+    itemListElement: schemaItems.map((item, i) => ({
       "@type": "ListItem",
       position: i + 1,
       name: item.label,
       ...(item.href && {
-        item: `https://realtor-rutch.com${item.href}`,
+        item: item.href.startsWith("http")
+          ? item.href
+          : `${BASE_URL}${item.href}`,
       }),
     })),
   };
+
+  // Escape "<" so a listing title can never close the script tag early.
+  const jsonLdString = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
       <nav aria-label="Breadcrumb" className="mb-6">
         <ol className="flex flex-wrap items-center gap-1.5 text-xs text-[#8B7355]">

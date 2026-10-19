@@ -1,142 +1,253 @@
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
-import { CITIES } from "@/lib/cities";
+import { CITIES, cityWhereClause, getCityBySlug } from "@/lib/cities";
 import { FILTERS } from "@/lib/filter-slugs";
-import { AREAS } from "@/lib/areas";
-import { BUILDINGS } from "@/lib/buildings";
+import { AREAS, areaWhereClause, getAreaBySlug } from "@/lib/areas";
+import {
+  BUILDINGS,
+  buildingWhereClause,
+  getBuildingBySlug,
+} from "@/lib/buildings";
+
+// Next.js builds sitemap.ts once at deploy time unless told otherwise, so new
+// and removed listings would not show up until the next deploy. Rebuild hourly.
+export const revalidate = 3600;
+
+interface FilterLike {
+  slug: string;
+  type?: string;
+  subtype?: string;
+  category?: string;
+}
+
+// Same filter fields the /[city]/[filterSlug] pages use in their queries.
+const filterFields = (filter: FilterLike) => ({
+  ...(filter.type ? { type: filter.type } : {}),
+  ...(filter.subtype ? { subtype: filter.subtype } : {}),
+  ...(filter.category ? { listingCategory: filter.category } : {}),
+});
+
+// True if at least one active listing matches. Empty pages are left out of the
+// sitemap because Google treats them as soft 404s.
+async function exists(where: any): Promise<boolean> {
+  if (!where) return false;
+  const row = await db.property.findFirst({ where, select: { id: true } });
+  return row !== null;
+}
+
+// Runs the checks a few at a time so a long list can't exhaust the database
+// connection pool.
+async function mapInChunks<T, R>(
+  items: T[],
+  size: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += size) {
+    const chunk = items.slice(i, i + size);
+    results.push(...(await Promise.all(chunk.map(fn))));
+  }
+  return results;
+}
+
+// Mirrors the where clauses in the area and building pages.
+function areaWhere(area: (typeof AREAS)[number]) {
+  const city = getCityBySlug(area.citySlug);
+  if (!city) return null;
+  return {
+    status: "active",
+    AND: [{ OR: cityWhereClause(city) }, { OR: areaWhereClause(area) }],
+  };
+}
+
+function buildingWhere(building: (typeof BUILDINGS)[number]) {
+  const city = getCityBySlug(building.citySlug);
+  const area = city ? getAreaBySlug(city.slug, building.areaSlug) : undefined;
+  const found =
+    city && area
+      ? getBuildingBySlug(city.slug, area.slug, building.slug)
+      : undefined;
+  if (!city || !area || !found) return null;
+  return {
+    status: "active",
+    AND: [
+      { OR: cityWhereClause(city) },
+      { OR: areaWhereClause(area) },
+      { OR: buildingWhereClause(found) },
+    ],
+  };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = (
     process.env.NEXT_PUBLIC_SITE_URL || "https://realtor-rutch.com"
   ).replace(/\/$/, "");
 
-  // Static pages
-  const staticPages = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/listings`,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.5,
-    },
+  const staticPages: MetadataRoute.Sitemap = [
+    { url: baseUrl },
+    { url: `${baseUrl}/listings` },
+    { url: `${baseUrl}/blog` },
+    { url: `${baseUrl}/about` },
+    { url: `${baseUrl}/contact` },
   ];
 
-  // City pages — /[city], e.g. /mandaue-city
-  const cityPages = CITIES.map((city) => ({
-    url: `${baseUrl}/${city.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "daily" as const,
-    priority: 0.85,
-  }));
+  try {
+    const active = { status: "active" };
 
-  // City + filter combo pages — /[city]/[filterSlug], e.g.
-  // /mandaue-city/house-and-lot-for-sale. This is the main SEO surface
-  // for "<property type> in <city>" searches.
-  const cityFilterPages = CITIES.flatMap((city) =>
-    FILTERS.map((filter) => ({
-      url: `${baseUrl}/${city.slug}/${filter.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
-      priority: 0.75,
-    })),
-  );
-  // Area hub pages — /[city]/[filterSlug]/[area], e.g.
-  // /cebu-city/condo-for-rent/banawa
-  const areaFilterPages = AREAS.flatMap((area) =>
-    FILTERS.map((filter) => ({
-      url: `${baseUrl}/${area.citySlug}/${filter.slug}/${area.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
-      priority: 0.65,
-    })),
-  );
+    const [properties, posts] = await Promise.all([
+      db.property.findMany({
+        where: active,
+        select: { slug: true, updatedAt: true },
+      }),
+      db.blogPost.findMany({
+        where: { published: true },
+        select: { slug: true, updatedAt: true },
+      }),
+    ]);
 
-  // Building hub pages — /[city]/[filterSlug]/[area]/[building]
-  const buildingFilterPages = BUILDINGS.flatMap((building) =>
-    FILTERS.filter((f) => f.type === "condo").map((filter) => ({
-      url: `${baseUrl}/${building.citySlug}/${filter.slug}/${building.areaSlug}/${building.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
-      priority: 0.6,
-    })),
-  );
+    // Landing pages change when any listing changes, so use the newest listing
+    // update as their lastModified. Using new Date() on every page teaches
+    // Google to ignore lastModified.
+    const latestListingUpdate = properties.reduce<Date | undefined>(
+      (latest, p) => (!latest || p.updatedAt > latest ? p.updatedAt : latest),
+      undefined,
+    );
+    const landing = (url: string) => ({
+      url,
+      ...(latestListingUpdate ? { lastModified: latestListingUpdate } : {}),
+    });
 
-  // /listings query-param combo pages — the general (non-city-specific)
-  // "<type> for <sale/rent> in Cebu" pages, e.g. /listings?type=house&category=sale.
-  // These carry the broad "Cebu" keyword (not tied to one city), matching
-  // getListingsMeta()'s titles/H1s directly.
-  //
-  // NOTE: the "&" joining multiple query params must be escaped to "&amp;"
-  // here — this array is the only spot in the sitemap with multi-param
-  // URLs, and an unescaped "&" breaks XML parsing ("EntityRef: expecting
-  // ';'") since XML treats & as the start of an entity reference.
-  const listingsComboPages = [
-    { type: "house", category: "sale" },
-    { type: "condo", category: "sale" },
-    { type: "land", category: "sale" },
-    { type: "house", category: "rent" },
-    { type: "condo", category: "rent" },
-  ].map(({ type, category }) => ({
-    url: `${baseUrl}/listings?type=${type}&amp;category=${category}`,
-    lastModified: new Date(),
-    changeFrequency: "daily" as const,
-    priority: 0.7,
-  }));
+    // City pages: /[city]
+    const cityChecks = await mapInChunks(CITIES, 8, (city) =>
+      exists({ ...active, OR: cityWhereClause(city) }),
+    );
+    const activeCities = CITIES.filter((_, i) => cityChecks[i]);
+    const cityPages = activeCities.map((city) =>
+      landing(`${baseUrl}/${city.slug}`),
+    );
 
-  // Dynamic property detail pages (matches app/(main)/property/[slug]/page.tsx)
-  const properties = await db.property.findMany({
-    select: { slug: true, updatedAt: true },
-  });
+    // City + filter pages: /[city]/[filterSlug]
+    const cityFilterPairs = activeCities.flatMap((city) =>
+      FILTERS.map((filter) => ({ city, filter })),
+    );
+    const cityFilterChecks = await mapInChunks(
+      cityFilterPairs,
+      8,
+      ({ city, filter }) =>
+        exists({
+          ...active,
+          OR: cityWhereClause(city),
+          ...filterFields(filter),
+        }),
+    );
+    const cityFilterPages = cityFilterPairs
+      .filter((_, i) => cityFilterChecks[i])
+      .map(({ city, filter }) =>
+        landing(`${baseUrl}/${city.slug}/${filter.slug}`),
+      );
 
-  const listingPages = properties.map((property) => ({
-    url: `${baseUrl}/property/${property.slug}`,
-    lastModified: property.updatedAt,
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
+    // Area pages: /[city]/[filterSlug]/[area]
+    const activeCitySlugs = new Set(activeCities.map((city) => city.slug));
+    const areaCandidates = AREAS.filter((area) =>
+      activeCitySlugs.has(area.citySlug),
+    );
+    const areaChecks = await mapInChunks(areaCandidates, 8, (area) =>
+      exists(areaWhere(area)),
+    );
+    const activeAreas = areaCandidates.filter((_, i) => areaChecks[i]);
 
-  // Dynamic blog pages (matches app/(main)/blog/[slug]/page.tsx)
-  const posts = await db.blogPost.findMany({
-    where: { published: true },
-    select: { slug: true, updatedAt: true },
-  });
+    const areaFilterPairs = activeAreas.flatMap((area) =>
+      FILTERS.map((filter) => ({ area, filter })),
+    );
+    const areaFilterChecks = await mapInChunks(
+      areaFilterPairs,
+      8,
+      ({ area, filter }) => {
+        const where = areaWhere(area);
+        return exists(where ? { ...where, ...filterFields(filter) } : null);
+      },
+    );
+    const areaFilterPages = areaFilterPairs
+      .filter((_, i) => areaFilterChecks[i])
+      .map(({ area, filter }) =>
+        landing(`${baseUrl}/${area.citySlug}/${filter.slug}/${area.slug}`),
+      );
 
-  const blogPages = posts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: post.updatedAt,
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
+    // Building pages: /[city]/[filterSlug]/[area]/[building] (condo filters)
+    const condoFilters = FILTERS.filter((filter) => filter.type === "condo");
+    const buildingChecks = await mapInChunks(BUILDINGS, 8, (building) =>
+      exists(buildingWhere(building)),
+    );
+    const activeBuildings = BUILDINGS.filter((_, i) => buildingChecks[i]);
 
-  return [
-    ...staticPages,
-    ...cityPages,
-    ...cityFilterPages,
-    ...listingsComboPages,
-    ...listingPages,
-    ...blogPages,
-  ];
+    const buildingFilterPairs = activeBuildings.flatMap((building) =>
+      condoFilters.map((filter) => ({ building, filter })),
+    );
+    const buildingFilterChecks = await mapInChunks(
+      buildingFilterPairs,
+      8,
+      ({ building, filter }) => {
+        const where = buildingWhere(building);
+        return exists(where ? { ...where, ...filterFields(filter) } : null);
+      },
+    );
+    const buildingFilterPages = buildingFilterPairs
+      .filter((_, i) => buildingFilterChecks[i])
+      .map(({ building, filter }) =>
+        landing(
+          `${baseUrl}/${building.citySlug}/${filter.slug}/${building.areaSlug}/${building.slug}`,
+        ),
+      );
+
+    // /listings query-param pages: the broad "<type> for <sale/rent> in Cebu"
+    // pages, e.g. /listings?type=house&category=sale.
+    //
+    // NOTE: the "&" between query params is written as "&amp;" on purpose.
+    // This version of Next.js does not escape URLs in sitemap.xml, and a bare
+    // "&" breaks XML parsing. After deploying, open /sitemap.xml and confirm
+    // each URL shows "&amp;" exactly once (not "&amp;amp;").
+    const comboCandidates = [
+      { type: "house", category: "sale" },
+      { type: "condo", category: "sale" },
+      { type: "land", category: "sale" },
+      { type: "house", category: "rent" },
+      { type: "condo", category: "rent" },
+    ];
+    const comboChecks = await mapInChunks(comboCandidates, 5, (combo) =>
+      exists({ ...active, type: combo.type, listingCategory: combo.category }),
+    );
+    const listingsComboPages = comboCandidates
+      .filter((_, i) => comboChecks[i])
+      .map(({ type, category }) =>
+        landing(`${baseUrl}/listings?type=${type}&amp;category=${category}`),
+      );
+
+    // Property detail pages: /property/[slug] (active listings only)
+    const listingPages = properties.map((property) => ({
+      url: `${baseUrl}/property/${property.slug}`,
+      lastModified: property.updatedAt,
+    }));
+
+    // Blog posts: /blog/[slug]
+    const blogPages = posts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: post.updatedAt,
+    }));
+
+    return [
+      ...staticPages,
+      ...cityPages,
+      ...cityFilterPages,
+      ...areaFilterPages,
+      ...buildingFilterPages,
+      ...listingsComboPages,
+      ...listingPages,
+      ...blogPages,
+    ];
+  } catch (error) {
+    // A failing sitemap is worse than a short one: return the static pages
+    // instead of a 500.
+    console.error("sitemap: failed to build dynamic entries", error);
+    return staticPages;
+  }
 }
