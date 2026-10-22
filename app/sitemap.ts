@@ -222,6 +222,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         landing(`${baseUrl}/listings?type=${type}&amp;category=${category}`),
       );
 
+    // Main Cebu landing page. comboCandidates[0] is house + sale, so this is
+    // only listed when there is at least one active house and lot for sale.
+    const cebuHouseLotPage = comboChecks[0]
+      ? [landing(`${baseUrl}/house-and-lot-for-sale-in-cebu`)]
+      : [];
+
     // Property detail pages: /property/[slug] (active listings only)
     const listingPages = properties.map((property) => ({
       url: `${baseUrl}/property/${property.slug}`,
@@ -236,6 +242,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [
       ...staticPages,
+      ...cebuHouseLotPage,
       ...cityPages,
       ...cityFilterPages,
       ...areaFilterPages,
