@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getCityBySlug, cityWhereClause } from "@/lib/cities";
@@ -15,9 +16,11 @@ import {
 } from "@/lib/listing-params";
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
-import Breadcrumbs from "@/components/listings/Breadcrumbs";
+import Breadcrumbs, { type Crumb } from "@/components/listings/Breadcrumbs";
 
 export const revalidate = 0;
+
+const HUB_PATH = "/house-and-lot-for-sale-in-cebu";
 
 interface Props {
   params: Promise<{ city: string; filterSlug: string }>;
@@ -87,6 +90,9 @@ export default async function CityFilterListingsPage(props: Props) {
 
   const meta = getCityListingsMeta(city.name, filter.label);
 
+  // House and lot for sale pages sit under the Cebu-wide hub page.
+  const isHouseForSale = filter.type === "house" && filter.category === "sale";
+
   // Every crumb except the last must have a URL, otherwise the breadcrumb
   // structured data is invalid. Filters without a type (for example ones
   // defined by subtype or category) used to get no href at all.
@@ -98,26 +104,32 @@ export default async function CityFilterListingsPage(props: Props) {
         ? `/listings?category=${filter.category}`
         : "/listings";
 
-  const breadcrumbs = [
-    { label: "Home", href: "/" },
-    ...(filter.category
-      ? [
-          {
-            label: CATEGORY_LABELS[filter.category],
-            href: `/listings?category=${filter.category}`,
-          },
-        ]
-      : []),
-    ...(filter.breadcrumbLabel !== "Properties"
-      ? [
-          {
-            label: filter.breadcrumbLabel,
-            href: filterCrumbHref,
-          },
-        ]
-      : []),
-    { label: city.name },
-  ];
+  const breadcrumbs: Crumb[] = isHouseForSale
+    ? [
+        { label: "Home", href: "/" },
+        { label: "House and Lot for Sale in Cebu", href: HUB_PATH },
+        { label: city.name },
+      ]
+    : [
+        { label: "Home", href: "/" },
+        ...(filter.category
+          ? [
+              {
+                label: CATEGORY_LABELS[filter.category],
+                href: `/listings?category=${filter.category}`,
+              },
+            ]
+          : []),
+        ...(filter.breadcrumbLabel !== "Properties"
+          ? [
+              {
+                label: filter.breadcrumbLabel,
+                href: filterCrumbHref,
+              },
+            ]
+          : []),
+        { label: city.name },
+      ];
 
   const hrefForPage = (targetPage: number) => {
     const p = new URLSearchParams();
@@ -156,6 +168,19 @@ export default async function CityFilterListingsPage(props: Props) {
           currentPage={currentPage}
           hrefForPage={hrefForPage}
         />
+
+        {isHouseForSale && (
+          <p className="mt-10 text-sm text-[#8B7355]">
+            Looking beyond {city.name}?{" "}
+            <Link
+              href={HUB_PATH}
+              className="text-[#C9A96E] underline underline-offset-2 hover:text-[#1A1A1A] transition"
+            >
+              View all house and lot for sale in Cebu
+            </Link>
+            .
+          </p>
+        )}
       </div>
     </div>
   );
