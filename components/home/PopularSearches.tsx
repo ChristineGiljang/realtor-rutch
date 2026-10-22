@@ -2,6 +2,10 @@ import Link from "next/link";
 
 const SEARCHES = [
   {
+    label: "House and Lot for Sale in Cebu",
+    href: "/house-and-lot-for-sale-in-cebu",
+  },
+  {
     label: "House and Lot for Sale in Cebu City",
     href: "/cebu-city/house-and-lot-for-sale",
   },
@@ -19,10 +23,6 @@ const SEARCHES = [
   {
     label: "Preselling House and Lot in Cebu",
     href: "/cebu-city/preselling-house-and-lot",
-  },
-  {
-    label: "All House and Lot Listings in Cebu",
-    href: "/listings?type=house&category=sale",
   },
 ];
 

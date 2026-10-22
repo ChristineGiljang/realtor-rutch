@@ -46,10 +46,16 @@ export default function Footer() {
             </h4>
             <div className="flex flex-col gap-2 text-sm">
               <Link
-                href="/cebu-city/house-and-lot-for-sale"
+                href="/house-and-lot-for-sale-in-cebu"
                 className="hover:text-[#C9A96E] transition"
               >
                 House and Lot for Sale in Cebu
+              </Link>
+              <Link
+                href="/cebu-city/house-and-lot-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                House and Lot in Cebu City
               </Link>
               <Link
                 href="/cebu-city/condo-for-sale"
@@ -79,13 +85,13 @@ export default function Footer() {
             </h4>
             <div className="flex flex-col gap-2 text-sm">
               <a
-                href="tel:+63 9817413929"
+                href="tel:+639817413929"
                 className="hover:text-[#C9A96E] transition"
               >
                 +639817413929
               </a>
               <a
-                href="mailto:agent@email.com"
+                href="mailto:rldreamspaces@gmail.com"
                 className="hover:text-[#C9A96E] transition"
               >
                 rldreamspaces@gmail.com

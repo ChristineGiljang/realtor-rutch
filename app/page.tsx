@@ -8,9 +8,9 @@ import Testimonials from "@/components/home/Testimonials";
 import ContactCTA from "@/components/home/ContactCTA";
 
 export const metadata: Metadata = {
-  title: "House and Lot in Cebu | Realtor Rutch",
+  title: "Cebu Real Estate: Houses, Condos & Lots | Realtor Rutch",
   description:
-    "Find your ideal house and lot in Cebu with Realtor Rutch. Browse verified listings across Cebu City and nearby areas, from starter homes to luxury properties, for sale or rent.",
+    "Realtor Rutch helps you buy, sell, or rent property in Cebu. Browse verified house and lot, condo, and lot listings in Cebu City, Mandaue, Lapu-Lapu, and nearby areas.",
   alternates: {
     canonical: "/",
   },
