@@ -17,6 +17,7 @@ import {
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs, { type Crumb } from "@/components/listings/Breadcrumbs";
+import CityHouseLotContent from "@/components/listings/CityHouseLotContent";
 
 export const revalidate = 0;
 
@@ -168,6 +169,11 @@ export default async function CityFilterListingsPage(props: Props) {
           currentPage={currentPage}
           hrefForPage={hrefForPage}
         />
+
+        {/* Page 1 only, so paginated URLs don't repeat the text */}
+        {isHouseForSale && currentPage === 1 && (
+          <CityHouseLotContent city={city} />
+        )}
 
         {isHouseForSale && (
           <p className="mt-10 text-sm text-[#8B7355]">

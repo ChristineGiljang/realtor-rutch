@@ -29,6 +29,13 @@ export const AREAS: AreaDef[] = [
     citySlug: "cebu-city",
     matches: ["mabolo"],
   },
+  { slug: "apas", name: "Apas", citySlug: "cebu-city", matches: ["apas"] },
+  {
+    slug: "labangon",
+    name: "Labangon",
+    citySlug: "cebu-city",
+    matches: ["labangon"],
+  },
   // add more barangays as you get listings there
 ];
 
