@@ -6,6 +6,7 @@ import { getCityBySlug, cityWhereClause } from "@/lib/cities";
 import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getCityListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
+import { getMarketStats, formatPriceShort } from "@/lib/market-stats";
 import {
   parseListingParams,
   listingsOrderBy,
@@ -28,6 +29,23 @@ interface Props {
   searchParams: Promise<RawSearchParams>;
 }
 
+// Listings that belong to this city + filter, before any price/beds filters
+// from the URL. Stats for the meta description use this, so ?priceMax=...
+// URLs don't change the description.
+function baseWhere(
+  city: NonNullable<ReturnType<typeof getCityBySlug>>,
+  filter: NonNullable<ReturnType<typeof getFilterBySlug>>,
+) {
+  const where: any = {
+    status: "active",
+    OR: cityWhereClause(city),
+  };
+  if (filter.type) where.type = filter.type;
+  if (filter.subtype) where.subtype = filter.subtype;
+  if (filter.category) where.listingCategory = filter.category;
+  return where;
+}
+
 // generateMetadata and the page both need the results; cache() makes the
 // database query run once per request.
 const loadResults = cache(async (key: string) => {
@@ -40,14 +58,7 @@ const loadResults = cache(async (key: string) => {
   const filter = getFilterBySlug(filterSlug);
   if (!city || !filter) return null;
 
-  const where: any = {
-    status: "active",
-    OR: cityWhereClause(city),
-    ...priceBedsWhere(query),
-  };
-  if (filter.type) where.type = filter.type;
-  if (filter.subtype) where.subtype = filter.subtype;
-  if (filter.category) where.listingCategory = filter.category;
+  const where = { ...baseWhere(city, filter), ...priceBedsWhere(query) };
 
   const results = await queryListings(
     where,
@@ -75,11 +86,21 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { city, filter, totalCount } = await getResults(props);
   const meta = getCityListingsMeta(city.name, filter.label);
 
+  let description = meta.description;
+
+  // House and lot for sale pages get a live count and price range
+  if (filter.type === "house" && filter.category === "sale") {
+    const stats = await getMarketStats(baseWhere(city, filter));
+    if (stats.count > 0 && stats.minPrice != null && stats.maxPrice != null) {
+      description = `Browse ${stats.count} house and lot for sale in ${city.name}. Prices from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)}. Book a viewing with Realtor Rutch.`;
+    }
+  }
+
   return {
     title: meta.title,
-    description: meta.description,
+    description,
     alternates: { canonical: `/${city.slug}/${filter.slug}` },
-    openGraph: { title: meta.title, description: meta.description },
+    openGraph: { title: meta.title, description },
     // Keep pages with no listings out of Google's index but let it follow links.
     ...(totalCount === 0 ? { robots: { index: false, follow: true } } : {}),
   };

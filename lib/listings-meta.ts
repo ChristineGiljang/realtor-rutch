@@ -190,7 +190,7 @@ export function getCityListingsMeta(
     return {
       h1: `${filterLabel} in ${cityName}`,
       title: `${filterLabel} in ${cityName}`,
-      description: `Browse ${filterLabel.toLowerCase()} listings in ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+      description: `Browse ${filterLabel.toLowerCase()} listings in ${cityName}. Verified listings. Inquire with Realtor Rutch.`,
     };
   }
 
@@ -200,14 +200,14 @@ export function getCityListingsMeta(
         h1: "Properties for Sale and Rent in Cebu City",
         title: "Cebu City Real Estate — Houses, Condos & Lots",
         description:
-          "Browse houses, condos, lots, and commercial properties for sale or rent in Cebu City. Verified listings, updated daily. Inquire with Realtor Rutch.",
+          "Browse houses, condos, lots, and commercial properties for sale or rent in Cebu City. Verified listings. Inquire with Realtor Rutch.",
       };
     case "Mandaue City":
       return {
         h1: "Properties for Sale and Rent in Mandaue City",
         title: "Mandaue City Real Estate — Houses, Condos & Lots",
         description:
-          "Browse houses, condos, lots, and commercial properties for sale or rent in Mandaue City. Verified listings, updated daily. Inquire with Realtor Rutch.",
+          "Browse houses, condos, lots, and commercial properties for sale or rent in Mandaue City. Verified listings. Inquire with Realtor Rutch.",
       };
     case "Lapu-Lapu City":
       return {
@@ -221,13 +221,13 @@ export function getCityListingsMeta(
         h1: "Properties for Sale and Rent in Cordova",
         title: "Cordova Real Estate — Houses, Condos & Lots",
         description:
-          "Browse houses, condos, lots, and commercial properties for sale or rent in Cordova, Cebu. Verified listings, updated daily. Inquire with Realtor Rutch.",
+          "Browse houses, condos, lots, and commercial properties for sale or rent in Cordova, Cebu. Verified listings. Inquire with Realtor Rutch.",
       };
     default:
       return {
         h1: `Properties for Sale and Rent in ${cityName}`,
         title: `${cityName} Real Estate — Houses, Condos & Lots`,
-        description: `Browse houses, condos, lots, and commercial properties for sale or rent in ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+        description: `Browse houses, condos, lots, and commercial properties for sale or rent in ${cityName}. Verified listings. Inquire with Realtor Rutch.`,
       };
   }
 }
@@ -242,7 +242,7 @@ export function getAreaListingsMeta(
   return {
     h1: `${scope} in ${areaName}, ${cityName}`,
     title: `${scope} in ${areaName}, ${cityName}`,
-    description: `Browse ${scope.toLowerCase()} in ${areaName}, ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+    description: `Browse ${scope.toLowerCase()} in ${areaName}, ${cityName}. Verified listings. Inquire with Realtor Rutch.`,
   };
 }
 
@@ -257,6 +257,6 @@ export function getBuildingListingsMeta(
   return {
     h1: `${scope} at ${buildingName}, ${areaName}, ${cityName}`,
     title: `${buildingName} — ${scope} in ${areaName}, ${cityName}`,
-    description: `Browse available units at ${buildingName} in ${areaName}, ${cityName}. Verified listings, updated daily. Inquire with Realtor Rutch.`,
+    description: `Browse available units at ${buildingName} in ${areaName}, ${cityName}. Verified listings. Inquire with Realtor Rutch.`,
   };
 }

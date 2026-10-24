@@ -24,8 +24,13 @@ const getPropertyBySlug = cache(async (slug: string) => {
   });
 });
 
-const TITLE_BUDGET = 43;
+const TITLE_BUDGET = 43; // 60 minus the " | Realtor Rutch" suffix from layout.tsx
 const NO_BEDS_TYPES = ["land", "commercial"];
+
+// On this site, type "house" means house and lot. If some house-type listings
+// are not (for example townhouses), add their subtype here and they get that
+// wording instead of "House and Lot".
+const NOT_HOUSE_AND_LOT_SUBTYPES = ["townhouse"];
 
 function safeTitle(title: string): string {
   if (title.length <= TITLE_BUDGET) return title;
@@ -34,34 +39,76 @@ function safeTitle(title: string): string {
       `[SEO] Title exceeds ${TITLE_BUDGET} chars and was truncated: "${title}"`,
     );
   }
-  return title.slice(0, TITLE_BUDGET - 1).trimEnd() + "…";
+  return title.slice(0, TITLE_BUDGET - 1).trimEnd() + "\u2026";
+}
+
+function getTypeLabel(type: string, subtype: string | null): string {
+  if (type === "house") {
+    if (subtype && NOT_HOUSE_AND_LOT_SUBTYPES.includes(subtype)) {
+      const words = subtype.replace(/-/g, " ");
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    }
+    return "House and Lot";
+  }
+  const labels: Record<string, string> = {
+    condo: "Condo",
+    land: "Lot",
+    commercial: "Commercial Property",
+  };
+  return labels[type] || type;
+}
+
+// Picks the longest wording that fits the title budget.
+function buildTitle(p: {
+  type: string;
+  subtype: string | null;
+  beds: number;
+  city: string;
+  listingCategory: string;
+}): string {
+  const label = getTypeLabel(p.type, p.subtype);
+  const action = p.listingCategory === "rent" ? "for Rent" : "for Sale";
+  const beds =
+    NO_BEDS_TYPES.includes(p.type) || !p.beds ? null : `${p.beds}BR`;
+
+  const candidates = [
+    beds ? `${beds} ${label} ${action} in ${p.city}` : null,
+    `${label} ${action} in ${p.city}`,
+    beds ? `${beds} ${label} in ${p.city}` : null,
+    `${label} in ${p.city}`,
+  ].filter((c): c is string => Boolean(c));
+
+  return (
+    candidates.find((c) => c.length <= TITLE_BUDGET) ??
+    safeTitle(candidates[candidates.length - 1])
+  );
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const property = await getPropertyBySlug(slug);
   if (!property) return { title: "Listing Not Found" };
-  const priceLabel = `₱${property.price.toLocaleString()}${property.listingCategory === "rent" ? "/mo" : ""}`;
-  const typeLabel =
-    { house: "House", condo: "Condo", land: "Lot", commercial: "Commercial" }[
-      property.type
-    ] || property.type;
-  const title = safeTitle(
-    NO_BEDS_TYPES.includes(property.type)
-      ? `${typeLabel} in ${property.city} | ${priceLabel}`
-      : `${property.beds}BR ${typeLabel} in ${property.city} | ${priceLabel}`,
-  );
+
+  const priceLabel = `\u20B1${property.price.toLocaleString()}${property.listingCategory === "rent" ? "/mo" : ""}`;
+  const label = getTypeLabel(property.type, property.subtype);
+  const title = buildTitle(property);
+
   const location = [property.city, property.state].filter(Boolean).join(", ");
+  const action = property.listingCategory === "rent" ? "for rent" : "for sale";
   const DESCRIPTION_BUDGET = 155;
+
+  // Price now lives in the description instead of the title
   const prefix = NO_BEDS_TYPES.includes(property.type)
-    ? `${property.type} in ${location}. `
-    : `${property.beds} bed, ${property.baths} bath ${property.type} in ${location}. `;
+    ? `${label} ${action} in ${location}. ${priceLabel}. `
+    : `${property.beds} bed, ${property.baths} bath ${label.toLowerCase()} ${action} in ${location}. ${priceLabel}. `;
+
   const remaining = DESCRIPTION_BUDGET - prefix.length;
   let snippet = property.description.slice(0, Math.max(remaining, 0));
   if (property.description.length > remaining) {
-    snippet = snippet.slice(0, snippet.lastIndexOf(" ")).trimEnd() + "…";
+    snippet = snippet.slice(0, snippet.lastIndexOf(" ")).trimEnd() + "\u2026";
   }
-  const description = `${prefix}${snippet}`;
+  const description = `${prefix}${snippet}`.trim();
+
   const ogImage = property.images[0]?.url;
   return {
     title,
