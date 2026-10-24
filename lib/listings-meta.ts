@@ -135,7 +135,7 @@ export function getListingsMeta(
       h1: "Properties for Rent in Cebu",
       title: "Properties for Rent in Cebu",
       description:
-        "Houses, condos, and commercial spaces for rent in Cebu City. Updated listings. Browse with Realtor Rutch.",
+        "Houses, condos, and commercial spaces for rent in Cebu City. Browse with Realtor Rutch.",
     };
   if (category === "sale")
     return {

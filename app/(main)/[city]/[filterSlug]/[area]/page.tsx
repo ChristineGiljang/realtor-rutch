@@ -7,6 +7,11 @@ import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getAreaListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
 import {
+  getMarketStats,
+  formatPriceShort,
+  type MarketStats,
+} from "@/lib/market-stats";
+import {
   parseListingParams,
   listingsOrderBy,
   priceBedsWhere,
@@ -20,9 +25,58 @@ import Breadcrumbs from "@/components/listings/Breadcrumbs";
 
 export const revalidate = 0;
 
+// 60 characters minus the " | Realtor Rutch" suffix the root layout adds
+const TITLE_BUDGET = 44;
+const DESCRIPTION_BUDGET = 155;
+
 interface Props {
   params: Promise<{ city: string; filterSlug: string; area: string }>;
   searchParams: Promise<RawSearchParams>;
+}
+
+// Listings that belong to this city + area + filter, before any price/beds
+// filters from the URL. The meta description stats use this, so ?priceMax=...
+// URLs don't change the description.
+function baseWhere(
+  city: NonNullable<ReturnType<typeof getCityBySlug>>,
+  area: NonNullable<ReturnType<typeof getAreaBySlug>>,
+  filter: NonNullable<ReturnType<typeof getFilterBySlug>>,
+) {
+  const where: any = {
+    status: "active",
+    AND: [{ OR: cityWhereClause(city) }, { OR: areaWhereClause(area) }],
+  };
+  if (filter.type) where.type = filter.type;
+  if (filter.subtype) where.subtype = filter.subtype;
+  if (filter.category) where.listingCategory = filter.category;
+  return where;
+}
+
+// Picks the first title that fits; falls back to the shortest one.
+function fitTitle(candidates: string[]): string {
+  return (
+    candidates.find((c) => c.length <= TITLE_BUDGET) ??
+    candidates[candidates.length - 1]
+  );
+}
+
+function buildDescription(
+  lead: string,
+  stats: MarketStats,
+  isRent: boolean,
+): string {
+  const { minPrice, maxPrice } = stats;
+  let range = "";
+  if (minPrice != null && maxPrice != null) {
+    range =
+      minPrice === maxPrice
+        ? ` ${isRent ? "Rent" : "Priced"} at ${formatPriceShort(minPrice)}${isRent ? "/mo" : ""}.`
+        : isRent
+          ? ` Rents from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)} per month.`
+          : ` Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}.`;
+  }
+  const full = `${lead}${range} Book a viewing with Realtor Rutch.`;
+  return full.length <= DESCRIPTION_BUDGET ? full : `${lead}${range}`;
 }
 
 // generateMetadata and the page both need the results; cache() makes the
@@ -39,14 +93,7 @@ const loadResults = cache(async (key: string) => {
   const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
   if (!city || !filter || !area) return null;
 
-  const where: any = {
-    status: "active",
-    AND: [{ OR: cityWhereClause(city) }, { OR: areaWhereClause(area) }],
-    ...priceBedsWhere(query),
-  };
-  if (filter.type) where.type = filter.type;
-  if (filter.subtype) where.subtype = filter.subtype;
-  if (filter.category) where.listingCategory = filter.category;
+  const where = { ...baseWhere(city, area, filter), ...priceBedsWhere(query) };
 
   const results = await queryListings(
     where,
@@ -74,11 +121,24 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { city, filter, area, totalCount } = await getResults(props);
   const meta = getAreaListingsMeta(city.name, area.name, filter.label);
 
+  const title = fitTitle([meta.title, `${filter.label} in ${area.name}`]);
+
+  // Live count and price range when the area has listings
+  let description = meta.description;
+  const stats = await getMarketStats(baseWhere(city, area, filter));
+  if (stats.count > 0) {
+    description = buildDescription(
+      `Browse ${stats.count} ${filter.label.toLowerCase()} in ${area.name}, ${city.name}.`,
+      stats,
+      filter.category === "rent",
+    );
+  }
+
   return {
-    title: meta.title,
-    description: meta.description,
+    title,
+    description,
     alternates: { canonical: `/${city.slug}/${filter.slug}/${area.slug}` },
-    openGraph: { title: meta.title, description: meta.description },
+    openGraph: { title, description },
     // Keep pages with no listings out of Google's index but let it follow links.
     ...(totalCount === 0 ? { robots: { index: false, follow: true } } : {}),
   };
