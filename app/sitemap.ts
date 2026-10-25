@@ -228,6 +228,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ? [landing(`${baseUrl}/house-and-lot-for-sale-in-cebu`)]
       : [];
 
+    // Condo landing page. comboChecks[1] is condo + sale, so this is only
+    // listed when there is at least one active condo for sale.
+    const cebuCondoPage = comboChecks[1]
+      ? [landing(`${baseUrl}/condo-for-sale-in-cebu`)]
+      : [];
+
     // Property detail pages: /property/[slug] (active listings only)
     const listingPages = properties.map((property) => ({
       url: `${baseUrl}/property/${property.slug}`,
@@ -243,6 +249,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [
       ...staticPages,
       ...cebuHouseLotPage,
+      ...cebuCondoPage,
       ...cityPages,
       ...cityFilterPages,
       ...areaFilterPages,

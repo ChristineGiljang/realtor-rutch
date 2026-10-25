@@ -4,12 +4,17 @@ import {
   type MarketStats,
 } from "@/lib/market-stats";
 
+const DEFAULT_NOTE =
+  "Based on our current listings and updated automatically. Price per sqm is the asking price divided by floor area, so it includes the lot.";
+
 export default function MarketSnapshot({
   heading,
   stats,
+  note = DEFAULT_NOTE,
 }: {
   heading: string;
   stats: MarketStats;
+  note?: string;
 }) {
   if (stats.count === 0 || stats.minPrice == null || stats.maxPrice == null) {
     return null;
@@ -52,10 +57,7 @@ export default function MarketSnapshot({
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-xs text-[#8B7355]">
-        Based on our current listings and updated automatically. Price per sqm
-        is the asking price divided by floor area, so it includes the lot.
-      </p>
+      <p className="mt-3 text-xs text-[#8B7355]">{note}</p>
     </section>
   );
 }

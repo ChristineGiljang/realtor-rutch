@@ -26,7 +26,17 @@ import CityHouseLotContent from "@/components/listings/CityHouseLotContent";
 
 export const revalidate = 0;
 
-const HUB_PATH = "/house-and-lot-for-sale-in-cebu";
+// The Cebu-wide pages that city pages link up to
+const HOUSE_HUB = {
+  path: "/house-and-lot-for-sale-in-cebu",
+  label: "House and Lot for Sale in Cebu",
+  linkText: "View all house and lot for sale in Cebu",
+};
+const CONDO_HUB = {
+  path: "/condo-for-sale-in-cebu",
+  label: "Condo for Sale in Cebu",
+  linkText: "View all condo for sale in Cebu",
+};
 
 // 60 characters minus the " | Realtor Rutch" suffix the root layout adds
 const TITLE_BUDGET = 44;
@@ -157,8 +167,10 @@ export default async function CityFilterListingsPage(props: Props) {
 
   const meta = getCityListingsMeta(city.name, filter.label);
 
-  // House and lot for sale pages sit under the Cebu-wide hub page.
+  // House and lot / condo for sale pages sit under a Cebu-wide hub page.
   const isHouseForSale = filter.type === "house" && filter.category === "sale";
+  const isCondoForSale = filter.type === "condo" && filter.category === "sale";
+  const hub = isHouseForSale ? HOUSE_HUB : isCondoForSale ? CONDO_HUB : null;
 
   // Every crumb except the last must have a URL, otherwise the breadcrumb
   // structured data is invalid. Filters without a type (for example ones
@@ -171,10 +183,10 @@ export default async function CityFilterListingsPage(props: Props) {
         ? `/listings?category=${filter.category}`
         : "/listings";
 
-  const breadcrumbs: Crumb[] = isHouseForSale
+  const breadcrumbs: Crumb[] = hub
     ? [
         { label: "Home", href: "/" },
-        { label: "House and Lot for Sale in Cebu", href: HUB_PATH },
+        { label: hub.label, href: hub.path },
         { label: city.name },
       ]
     : [
@@ -241,14 +253,14 @@ export default async function CityFilterListingsPage(props: Props) {
           <CityHouseLotContent city={city} />
         )}
 
-        {isHouseForSale && (
+        {hub && (
           <p className="mt-10 text-sm text-[#8B7355]">
             Looking beyond {city.name}?{" "}
             <Link
-              href={HUB_PATH}
+              href={hub.path}
               className="text-[#C9A96E] underline underline-offset-2 hover:text-[#1A1A1A] transition"
             >
-              View all house and lot for sale in Cebu
+              {hub.linkText}
             </Link>
             .
           </p>
