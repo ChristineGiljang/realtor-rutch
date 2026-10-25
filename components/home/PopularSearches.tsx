@@ -6,6 +6,10 @@ const SEARCHES = [
     href: "/house-and-lot-for-sale-in-cebu",
   },
   {
+    label: "Condo for Sale in Cebu",
+    href: "/condo-for-sale-in-cebu",
+  },
+  {
     label: "House and Lot for Sale in Cebu City",
     href: "/cebu-city/house-and-lot-for-sale",
   },
