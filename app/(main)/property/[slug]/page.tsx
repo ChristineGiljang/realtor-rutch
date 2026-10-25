@@ -68,8 +68,14 @@ function buildTitle(p: {
 }): string {
   const label = getTypeLabel(p.type, p.subtype);
   const action = p.listingCategory === "rent" ? "for Rent" : "for Sale";
-  const beds =
-    NO_BEDS_TYPES.includes(p.type) || !p.beds ? null : `${p.beds}BR`;
+  // Studio condos have 0 beds, so call them "Studio"
+  const beds = NO_BEDS_TYPES.includes(p.type)
+    ? null
+    : p.beds
+      ? `${p.beds}BR`
+      : p.type === "condo"
+        ? "Studio"
+        : null;
 
   const candidates = [
     beds ? `${beds} ${label} ${action} in ${p.city}` : null,
@@ -97,10 +103,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const action = property.listingCategory === "rent" ? "for rent" : "for sale";
   const DESCRIPTION_BUDGET = 155;
 
-  // Price now lives in the description instead of the title
-  const prefix = NO_BEDS_TYPES.includes(property.type)
-    ? `${label} ${action} in ${location}. ${priceLabel}. `
-    : `${property.beds} bed, ${property.baths} bath ${label.toLowerCase()} ${action} in ${location}. ${priceLabel}. `;
+  // Condos: name the building when there is one (trimmed, in case the
+  // value in admin has stray spaces)
+  const buildingName = property.building?.trim();
+  const where =
+    property.type === "condo" && buildingName
+      ? `${buildingName}, ${location}`
+      : location;
+
+  // "2 bed, 1 bath", leaving out any count that is 0 or blank
+  const bedBath = [
+    property.beds ? `${property.beds} bed` : null,
+    property.baths ? `${property.baths} bath` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  // Price lives in the description instead of the title
+  let prefix: string;
+  if (NO_BEDS_TYPES.includes(property.type)) {
+    prefix = `${label} ${action} in ${where}. ${priceLabel}. `;
+  } else if (property.type === "condo" && !property.beds) {
+    prefix = `Studio ${label.toLowerCase()} ${action} in ${where}. ${priceLabel}. `;
+  } else if (bedBath) {
+    prefix = `${bedBath} ${label.toLowerCase()} ${action} in ${where}. ${priceLabel}. `;
+  } else {
+    prefix = `${label} ${action} in ${where}. ${priceLabel}. `;
+  }
 
   const remaining = DESCRIPTION_BUDGET - prefix.length;
   let snippet = property.description.slice(0, Math.max(remaining, 0));

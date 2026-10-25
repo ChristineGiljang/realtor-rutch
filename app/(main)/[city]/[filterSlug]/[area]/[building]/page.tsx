@@ -74,11 +74,12 @@ function fitTitle(candidates: string[]): string {
 function buildDescription(
   lead: string,
   stats: MarketStats,
-  isRent: boolean,
+  category?: string,
 ): string {
   const { minPrice, maxPrice } = stats;
   let range = "";
-  if (minPrice != null && maxPrice != null) {
+  const isRent = category === "rent";
+  if (category && minPrice != null && maxPrice != null) {
     range =
       minPrice === maxPrice
         ? ` ${isRent ? "Rent" : "Priced"} at ${formatPriceShort(minPrice)}${isRent ? "/mo" : ""}.`
@@ -167,7 +168,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     description = buildDescription(
       `Browse ${stats.count} available ${stats.count === 1 ? "unit" : "units"} at ${building.name} in ${area.name}, ${city.name}.`,
       stats,
-      filter.category === "rent",
+      filter.category,
     );
   }
 

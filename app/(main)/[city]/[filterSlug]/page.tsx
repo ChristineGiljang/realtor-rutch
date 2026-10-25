@@ -6,7 +6,11 @@ import { getCityBySlug, cityWhereClause } from "@/lib/cities";
 import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
 import { getCityListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
-import { getMarketStats, formatPriceShort } from "@/lib/market-stats";
+import {
+  getMarketStats,
+  formatPriceShort,
+  type MarketStats,
+} from "@/lib/market-stats";
 import {
   parseListingParams,
   listingsOrderBy,
@@ -23,6 +27,10 @@ import CityHouseLotContent from "@/components/listings/CityHouseLotContent";
 export const revalidate = 0;
 
 const HUB_PATH = "/house-and-lot-for-sale-in-cebu";
+
+// 60 characters minus the " | Realtor Rutch" suffix the root layout adds
+const TITLE_BUDGET = 44;
+const DESCRIPTION_BUDGET = 155;
 
 interface Props {
   params: Promise<{ city: string; filterSlug: string }>;
@@ -44,6 +52,36 @@ function baseWhere(
   if (filter.subtype) where.subtype = filter.subtype;
   if (filter.category) where.listingCategory = filter.category;
   return where;
+}
+
+// Picks the first title that fits; falls back to the shortest one.
+function fitTitle(candidates: string[]): string {
+  return (
+    candidates.find((c) => c.length <= TITLE_BUDGET) ??
+    candidates[candidates.length - 1]
+  );
+}
+
+// Quotes a price range only when the filter is all sale or all rent.
+// A filter with no category mixes monthly rents with sale prices.
+function buildDescription(
+  lead: string,
+  stats: MarketStats,
+  category?: string,
+): string {
+  const isRent = category === "rent";
+  const { minPrice, maxPrice } = stats;
+  let range = "";
+  if (category && minPrice != null && maxPrice != null) {
+    range =
+      minPrice === maxPrice
+        ? ` ${isRent ? "Rent" : "Priced"} at ${formatPriceShort(minPrice)}${isRent ? "/mo" : ""}.`
+        : isRent
+          ? ` Rents from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)} per month.`
+          : ` Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}.`;
+  }
+  const full = `${lead}${range} Book a viewing with Realtor Rutch.`;
+  return full.length <= DESCRIPTION_BUDGET ? full : `${lead}${range}`;
 }
 
 // generateMetadata and the page both need the results; cache() makes the
@@ -86,21 +124,28 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { city, filter, totalCount } = await getResults(props);
   const meta = getCityListingsMeta(city.name, filter.label);
 
-  let description = meta.description;
+  const title = fitTitle([
+    meta.title,
+    `${filter.label} in ${city.name.replace(/ City$/, "")}`,
+    filter.label,
+  ]);
 
-  // House and lot for sale pages get a live count and price range
-  if (filter.type === "house" && filter.category === "sale") {
-    const stats = await getMarketStats(baseWhere(city, filter));
-    if (stats.count > 0 && stats.minPrice != null && stats.maxPrice != null) {
-      description = `Browse ${stats.count} house and lot for sale in ${city.name}. Prices from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)}. Book a viewing with Realtor Rutch.`;
-    }
+  // Live count (and price range, when it makes sense) for every filter
+  let description = meta.description;
+  const stats = await getMarketStats(baseWhere(city, filter));
+  if (stats.count > 0) {
+    description = buildDescription(
+      `Browse ${stats.count} ${filter.label.toLowerCase()} in ${city.name}.`,
+      stats,
+      filter.category,
+    );
   }
 
   return {
-    title: meta.title,
+    title,
     description,
     alternates: { canonical: `/${city.slug}/${filter.slug}` },
-    openGraph: { title: meta.title, description },
+    openGraph: { title, description },
     // Keep pages with no listings out of Google's index but let it follow links.
     ...(totalCount === 0 ? { robots: { index: false, follow: true } } : {}),
   };
