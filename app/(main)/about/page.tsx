@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import AgentJsonLd from "@/components/seo/AgentJsonLd";
 
 export const metadata: Metadata = {
   title: "About Rutchilyn Llagoso",
@@ -36,6 +37,7 @@ export default function AboutPage() {
 
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
+      <AgentJsonLd />
       {/* Hero Banner */}
       <div className="bg-[#1A1A1A] text-[#faf9f6] py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -105,7 +107,7 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <p className="text-xs tracking-widest uppercase text-[#8B7355] mb-1">
-                    DSHUD
+                    DHSUD
                   </p>
                   <p className="font-semibold text-[#1A1A1A]">
                     #R7-A-01/26-8595

@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import ListingCard from "@/components/listings/ListingCard";
 import { PAGE_SIZE } from "@/lib/listings-query";
 
+const SITE_URL = "https://realtor-rutch.com";
+
 interface Props {
   listings: any[];
   totalCount: number;
@@ -18,8 +20,33 @@ export default function ListingsResults({
   currentPage,
   hrefForPage,
 }: Props) {
+  // Structured data for the listings shown on this page. Positions continue
+  // across pages, so page 2 starts after the last item of page 1.
+  const itemList =
+    listings.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: listings.map((listing, i) => ({
+            "@type": "ListItem",
+            position: (currentPage - 1) * PAGE_SIZE + i + 1,
+            url: `${SITE_URL}/property/${listing.slug}`,
+            name: listing.title,
+          })),
+        }
+      : null;
+
   return (
     <>
+      {itemList && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(itemList).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
+
       {/* Results Count — this also serves as the page's H2 signpost for the
           results section, since it's already dynamic per filter/page and
           more descriptive than a generic "Results" label would be. */}

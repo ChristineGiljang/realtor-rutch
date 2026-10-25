@@ -6,6 +6,7 @@ import PopularSearches from "@/components/home/PopularSearches";
 import AboutTeaser from "@/components/home/AboutTeaser";
 import Testimonials from "@/components/home/Testimonials";
 import ContactCTA from "@/components/home/ContactCTA";
+import AgentJsonLd from "@/components/seo/AgentJsonLd";
 
 export const metadata: Metadata = {
   title: "Cebu Real Estate: Houses, Condos & Lots | Realtor Rutch",
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
+      <AgentJsonLd />
       <Hero />
       <FeaturedListings />
       <PopularSearches />

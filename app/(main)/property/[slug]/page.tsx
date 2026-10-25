@@ -241,7 +241,12 @@ export default async function PropertyDetailPage({ params }: Props) {
     image: property.images.map((img) => img.url),
     datePosted: property.createdAt,
     about: {
-      "@type": "SingleFamilyResidence",
+      "@type":
+        property.type === "condo"
+          ? "Apartment"
+          : NO_BEDS_TYPES.includes(property.type)
+            ? "Place"
+            : "SingleFamilyResidence",
       name: property.title,
       address: {
         "@type": "PostalAddress",
@@ -251,8 +256,12 @@ export default async function PropertyDetailPage({ params }: Props) {
         postalCode: property.zip,
         addressCountry: "PH",
       },
-      numberOfBedrooms: property.beds,
-      numberOfBathroomsTotal: property.baths,
+      numberOfBedrooms: NO_BEDS_TYPES.includes(property.type)
+        ? undefined
+        : property.beds,
+      numberOfBathroomsTotal: NO_BEDS_TYPES.includes(property.type)
+        ? undefined
+        : property.baths,
       floorSize: property.sqft
         ? {
             "@type": "QuantitativeValue",
