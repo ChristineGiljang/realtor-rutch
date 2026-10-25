@@ -58,6 +58,12 @@ export default function Footer() {
                 House and Lot in Cebu City
               </Link>
               <Link
+                href="/condo-for-sale-in-cebu"
+                className="hover:text-[#C9A96E] transition"
+              >
+                Condo for Sale in Cebu
+              </Link>
+              <Link
                 href="/cebu-city/condo-for-sale"
                 className="hover:text-[#C9A96E] transition"
               >
