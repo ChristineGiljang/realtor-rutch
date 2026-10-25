@@ -12,6 +12,8 @@ import { getCityByFreeText } from "@/lib/cities";
 import { optimizedUrl } from "@/lib/cloudinary-url";
 import { findCurrentSlug } from "@/lib/slug-redirects";
 import Link from "next/link";
+import JsonLd from "@/components/seo/JsonLd";
+import { buildPropertySchema } from "@/lib/property-schema";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -232,62 +234,11 @@ export default async function PropertyDetailPage({ params }: Props) {
     { label: property.title },
   ];
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "RealEstateListing",
-    name: property.title,
-    description: property.description,
-    url: `https://realtor-rutch.com/property/${property.slug}`,
-    image: property.images.map((img) => img.url),
-    datePosted: property.createdAt,
-    about: {
-      "@type":
-        property.type === "condo"
-          ? "Apartment"
-          : NO_BEDS_TYPES.includes(property.type)
-            ? "Place"
-            : "SingleFamilyResidence",
-      name: property.title,
-      address: {
-        "@type": "PostalAddress",
-        streetAddress: property.address,
-        addressLocality: property.city,
-        addressRegion: property.state || undefined,
-        postalCode: property.zip,
-        addressCountry: "PH",
-      },
-      numberOfBedrooms: NO_BEDS_TYPES.includes(property.type)
-        ? undefined
-        : property.beds,
-      numberOfBathroomsTotal: NO_BEDS_TYPES.includes(property.type)
-        ? undefined
-        : property.baths,
-      floorSize: property.sqft
-        ? {
-            "@type": "QuantitativeValue",
-            value: property.sqft,
-            unitCode: "MTK",
-          }
-        : undefined,
-    },
-    offers: {
-      "@type": "Offer",
-      price: property.price,
-      priceCurrency: "PHP",
-      availability: "https://schema.org/InStock",
-      businessFunction:
-        property.listingCategory === "rent"
-          ? "http://purl.org/goodrelations/v1#LeaseOut"
-          : "http://purl.org/goodrelations/v1#Sell",
-    },
-  };
+  const jsonLd = buildPropertySchema(property);
 
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       {/* Breadcrumbs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">

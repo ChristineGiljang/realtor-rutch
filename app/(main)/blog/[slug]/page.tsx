@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import sanitizeHtml from "sanitize-html";
 import { optimizedUrl } from "@/lib/cloudinary-url";
+import Breadcrumbs from "@/components/listings/Breadcrumbs";
+import JsonLd from "@/components/seo/JsonLd";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -89,25 +91,27 @@ export default async function BlogPostPage({ params }: Props) {
     image: post.coverImage
       ? [optimizedUrl(post.coverImage, { width: 1200 })]
       : undefined,
-    datePublished: post.publishedAt,
-    dateModified: post.updatedAt,
+    datePublished: post.publishedAt?.toISOString(),
+    dateModified: post.updatedAt.toISOString(),
     author: {
       "@type": "Person",
       name: "Rutchilyn Llagoso",
+      url: "https://realtor-rutch.com/about",
     },
     publisher: {
       "@type": "Organization",
       name: "Realtor Rutch",
+      url: "https://realtor-rutch.com",
     },
-    mainEntityOfPage: `https://realtor-rutch.com/blog/${post.slug}`,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": "https://realtor-rutch.com/blog/" + post.slug,
+    },
   };
 
   return (
     <div className="pt-20 min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       {/* Cover */}
       {post.coverImage && (
@@ -131,12 +135,13 @@ export default async function BlogPostPage({ params }: Props) {
       )}
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <Link
-          href="/blog"
-          className="text-xs tracking-widest uppercase text-[#8B7355] hover:text-[#1A1A1A] transition"
-        >
-          ← Back to Blog
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Blog", href: "/blog" },
+            { label: post.title },
+          ]}
+        />
 
         <p className="text-xs tracking-widest uppercase text-[#C9A96E] mt-6 mb-3">
           {post.publishedAt

@@ -199,31 +199,12 @@ export default function PropertySearchBar() {
     setMobileSheetOpen(false);
   };
 
-  // Breadcrumb label: reflects the active category/subtype
   const subtype = searchParams.get("subtype") || "";
-  const breadcrumbLabel =
-    subtype === "preselling"
-      ? "Project Selling"
-      : category === "rent"
-        ? "For Rent"
-        : category === "sale"
-          ? "For Sale"
-          : "All Properties";
-
   const pillClass =
     "flex items-center gap-1.5 bg-white border border-[#E2D9C8] text-[#1A1A1A] text-sm px-4 py-2.5 rounded-full hover:border-[#C9A96E] transition whitespace-nowrap";
 
   return (
     <div className="mb-8">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-[#8B7355] mb-4">
-        <Link href="/" className="hover:text-[#1A1A1A] transition">
-          Home
-        </Link>
-        <span>/</span>
-        <span className="text-[#1A1A1A] font-medium">{breadcrumbLabel}</span>
-      </div>
-
       {/* ── Desktop search bar ── */}
       <div className="hidden md:flex items-center gap-3 flex-wrap">
         <div

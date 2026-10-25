@@ -4,6 +4,7 @@ import { getCityByFreeText } from "@/lib/cities";
 import { queryListings } from "@/lib/listings-query";
 import PropertySearchBar from "@/components/listings/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
+import Breadcrumbs from "@/components/listings/Breadcrumbs";
 
 export const revalidate = 0;
 
@@ -109,6 +110,7 @@ export default async function ListingsPage({ searchParams }: Props) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header */}
         <div className="mb-12">
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: meta.h1 }]} />
           <p className="text-xs tracking-[0.3em] uppercase text-[#8B7355] mb-3">
             Available Now
           </p>
