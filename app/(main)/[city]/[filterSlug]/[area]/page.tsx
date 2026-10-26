@@ -22,6 +22,8 @@ import {
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
+import Link from "next/link";
+import { getHub } from "@/lib/property-links";
 
 export const revalidate = 0;
 
@@ -181,6 +183,8 @@ export default async function AreaFilterListingsPage(props: Props) {
     { label: area.name },
   ];
 
+  const hub = getHub(filter.type, filter.category);
+
   const hrefForPage = (targetPage: number) => {
     const p = new URLSearchParams();
     if (query.priceMax) p.set("priceMax", query.priceMax);
@@ -218,6 +222,19 @@ export default async function AreaFilterListingsPage(props: Props) {
           currentPage={currentPage}
           hrefForPage={hrefForPage}
         />
+
+        {hub && (
+          <p className="mt-10 text-sm text-[#8B7355]">
+            Looking beyond {area.name}?{" "}
+            <Link
+              href={hub.path}
+              className="text-[#C9A96E] underline underline-offset-2 hover:text-[#1A1A1A] transition"
+            >
+              {hub.linkText}
+            </Link>
+            .
+          </p>
+        )}
       </div>
     </div>
   );

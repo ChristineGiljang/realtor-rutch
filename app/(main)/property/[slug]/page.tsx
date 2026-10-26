@@ -14,6 +14,8 @@ import { findCurrentSlug } from "@/lib/slug-redirects";
 import Link from "next/link";
 import JsonLd from "@/components/seo/JsonLd";
 import { buildPropertySchema } from "@/lib/property-schema";
+import { getPropertyLinkTargets } from "@/lib/property-links";
+import PropertyExploreLinks from "@/components/listings/PropertyExploreLinks";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -203,6 +205,7 @@ export default async function PropertyDetailPage({ params }: Props) {
     commercial: "Commercial",
   };
   const matchedCity = getCityByFreeText(property.city);
+  const linkTargets = getPropertyLinkTargets(property);
   // Every crumb except the last must have a URL, otherwise the breadcrumb
   // structured data is invalid. Cities that aren't in lib/cities (for example
   // Liloan) fall back to a search link instead of having no href.
@@ -216,18 +219,22 @@ export default async function PropertyDetailPage({ params }: Props) {
     },
     {
       label: TYPE_LABELS[property.type] || property.type,
-      href: `/listings?type=${property.type}&category=${property.listingCategory}`,
+      href:
+        linkTargets.hub?.path ??
+        `/listings?type=${property.type}&category=${property.listingCategory}`,
     },
     {
       label: property.city,
-      href: matchedCity ? `/${matchedCity.slug}` : searchHref(property.city),
+      href:
+        linkTargets.city?.href ??
+        (matchedCity ? `/${matchedCity.slug}` : searchHref(property.city)),
     },
     // Barangay crumb: only shown when the listing has one
     ...(property.barangay
       ? [
           {
             label: property.barangay,
-            href: searchHref(property.barangay),
+            href: linkTargets.area?.href ?? searchHref(property.barangay),
           },
         ]
       : []),
@@ -565,6 +572,8 @@ export default async function PropertyDetailPage({ params }: Props) {
               city={property.city}
               listingCategory={property.listingCategory}
             />
+
+            <PropertyExploreLinks targets={linkTargets} />
           </div>
 
           {/* ── RIGHT COLUMN — sticky contact form, hidden on mobile ────── */}

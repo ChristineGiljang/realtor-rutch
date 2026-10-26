@@ -6,6 +6,7 @@ import sanitizeHtml from "sanitize-html";
 import { optimizedUrl } from "@/lib/cloudinary-url";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
+import BlogBrowseLinks from "@/components/blog/BlogBrowseLinks";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -162,6 +163,8 @@ export default async function BlogPostPage({ params }: Props) {
             __html: sanitizeHtml(post.content, sanitizeOptions),
           }}
         />
+
+        <BlogBrowseLinks />
 
         {/* CTA */}
         <div className="mt-16 pt-10 border-t border-[#E2D9C8] text-center">
