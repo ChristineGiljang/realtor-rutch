@@ -130,7 +130,7 @@ export default function RichTextEditor({
   return (
     <div className="border border-[#E2D9C8] bg-white">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1.5 p-2 border-b border-[#E2D9C8] bg-[#faf9f6]">
+      <div className="sticky top-[120px] z-40 flex flex-wrap items-center gap-1.5 p-2 border-b border-[#E2D9C8] bg-[#faf9f6] shadow-sm">
         <button
           type="button"
           title="Paragraph"
