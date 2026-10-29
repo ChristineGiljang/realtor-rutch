@@ -1,81 +1,71 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
-import { CITIES, cityWhereClause, getCityBySlug } from "@/lib/cities";
-import { FILTERS } from "@/lib/filter-slugs";
-import { AREAS, areaWhereClause, getAreaBySlug } from "@/lib/areas";
+import { CITIES, getCityBySlug, type CityDef } from "@/lib/cities";
+import { FILTERS, type FilterDef } from "@/lib/filter-slugs";
+import { AREAS, getAreaBySlug, type AreaDef } from "@/lib/areas";
 import {
   BUILDINGS,
-  buildingWhereClause,
   getBuildingBySlug,
+  type BuildingDef,
 } from "@/lib/buildings";
 
 // Next.js builds sitemap.ts once at deploy time unless told otherwise, so new
 // and removed listings would not show up until the next deploy. Rebuild hourly.
 export const revalidate = 3600;
 
-interface FilterLike {
-  slug: string;
-  type?: string;
-  subtype?: string;
-  category?: string;
+// The sitemap loads every active listing once and checks the city, area,
+// building and filter rules in memory. Doing one database query per page
+// (hundreds of them) was slow enough to break the Vercel build.
+interface Row {
+  title: string;
+  city: string;
+  barangay: string | null;
+  address: string;
+  building: string | null;
+  type: string;
+  subtype: string | null;
+  listingCategory: string;
+}
+
+const lc = (s: string | null | undefined) => (s ?? "").toLowerCase();
+
+// Same rule as cityWhereClause in lib/cities.ts
+function cityMatches(row: Row, city: CityDef): boolean {
+  const c = lc(row.city);
+  return city.matches.some((m) => c.includes(m.toLowerCase()));
+}
+
+// Same rule as areaWhereClause in lib/areas.ts (title only when matchTitle is on)
+function areaMatches(row: Row, area: AreaDef): boolean {
+  const barangay = lc(row.barangay);
+  const address = lc(row.address);
+  const title = lc(row.title);
+  return area.matches.some((raw) => {
+    const m = raw.toLowerCase();
+    return (
+      barangay.includes(m) ||
+      address.includes(m) ||
+      (area.matchTitle === true && title.includes(m))
+    );
+  });
+}
+
+// Same rule as buildingWhereClause in lib/buildings.ts
+function buildingMatches(row: Row, building: BuildingDef): boolean {
+  const b = lc(row.building);
+  const title = lc(row.title);
+  return building.matches.some((raw) => {
+    const m = raw.toLowerCase();
+    return b.includes(m) || title.includes(m);
+  });
 }
 
 // Same filter fields the /[city]/[filterSlug] pages use in their queries.
-const filterFields = (filter: FilterLike) => ({
-  ...(filter.type ? { type: filter.type } : {}),
-  ...(filter.subtype ? { subtype: filter.subtype } : {}),
-  ...(filter.category ? { listingCategory: filter.category } : {}),
-});
-
-// True if at least one active listing matches. Empty pages are left out of the
-// sitemap because Google treats them as soft 404s.
-async function exists(where: any): Promise<boolean> {
-  if (!where) return false;
-  const row = await db.property.findFirst({ where, select: { id: true } });
-  return row !== null;
-}
-
-// Runs the checks a few at a time so a long list can't exhaust the database
-// connection pool.
-async function mapInChunks<T, R>(
-  items: T[],
-  size: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = [];
-  for (let i = 0; i < items.length; i += size) {
-    const chunk = items.slice(i, i + size);
-    results.push(...(await Promise.all(chunk.map(fn))));
-  }
-  return results;
-}
-
-// Mirrors the where clauses in the area and building pages.
-function areaWhere(area: (typeof AREAS)[number]) {
-  const city = getCityBySlug(area.citySlug);
-  if (!city) return null;
-  return {
-    status: "active",
-    AND: [{ OR: cityWhereClause(city) }, { OR: areaWhereClause(area) }],
-  };
-}
-
-function buildingWhere(building: (typeof BUILDINGS)[number]) {
-  const city = getCityBySlug(building.citySlug);
-  const area = city ? getAreaBySlug(city.slug, building.areaSlug) : undefined;
-  const found =
-    city && area
-      ? getBuildingBySlug(city.slug, area.slug, building.slug)
-      : undefined;
-  if (!city || !area || !found) return null;
-  return {
-    status: "active",
-    AND: [
-      { OR: cityWhereClause(city) },
-      { OR: areaWhereClause(area) },
-      { OR: buildingWhereClause(found) },
-    ],
-  };
+function filterMatches(row: Row, filter: FilterDef): boolean {
+  if (filter.type && row.type !== filter.type) return false;
+  if (filter.subtype && row.subtype !== filter.subtype) return false;
+  if (filter.category && row.listingCategory !== filter.category) return false;
+  return true;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -92,12 +82,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const active = { status: "active" };
-
     const [properties, posts] = await Promise.all([
       db.property.findMany({
-        where: active,
-        select: { slug: true, updatedAt: true },
+        where: { status: "active" },
+        select: {
+          slug: true,
+          updatedAt: true,
+          title: true,
+          city: true,
+          barangay: true,
+          address: true,
+          building: true,
+          type: true,
+          subtype: true,
+          listingCategory: true,
+        },
       }),
       db.blogPost.findMany({
         where: { published: true },
@@ -117,87 +116,67 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...(latestListingUpdate ? { lastModified: latestListingUpdate } : {}),
     });
 
+    // Empty pages are left out of the sitemap because Google treats them as
+    // soft 404s, so every page below needs at least one matching listing.
+
     // City pages: /[city]
-    const cityChecks = await mapInChunks(CITIES, 8, (city) =>
-      exists({ ...active, OR: cityWhereClause(city) }),
+    const activeCities = CITIES.filter((city) =>
+      properties.some((p) => cityMatches(p, city)),
     );
-    const activeCities = CITIES.filter((_, i) => cityChecks[i]);
     const cityPages = activeCities.map((city) =>
       landing(`${baseUrl}/${city.slug}`),
     );
 
     // City + filter pages: /[city]/[filterSlug]
-    const cityFilterPairs = activeCities.flatMap((city) =>
-      FILTERS.map((filter) => ({ city, filter })),
+    const cityFilterPages = activeCities.flatMap((city) =>
+      FILTERS.filter((filter) =>
+        properties.some(
+          (p) => cityMatches(p, city) && filterMatches(p, filter),
+        ),
+      ).map((filter) => landing(`${baseUrl}/${city.slug}/${filter.slug}`)),
     );
-    const cityFilterChecks = await mapInChunks(
-      cityFilterPairs,
-      8,
-      ({ city, filter }) =>
-        exists({
-          ...active,
-          OR: cityWhereClause(city),
-          ...filterFields(filter),
-        }),
-    );
-    const cityFilterPages = cityFilterPairs
-      .filter((_, i) => cityFilterChecks[i])
-      .map(({ city, filter }) =>
-        landing(`${baseUrl}/${city.slug}/${filter.slug}`),
-      );
 
     // Area pages: /[city]/[filterSlug]/[area]
-    const activeCitySlugs = new Set(activeCities.map((city) => city.slug));
-    const areaCandidates = AREAS.filter((area) =>
-      activeCitySlugs.has(area.citySlug),
-    );
-    const areaChecks = await mapInChunks(areaCandidates, 8, (area) =>
-      exists(areaWhere(area)),
-    );
-    const activeAreas = areaCandidates.filter((_, i) => areaChecks[i]);
-
-    const areaFilterPairs = activeAreas.flatMap((area) =>
-      FILTERS.map((filter) => ({ area, filter })),
-    );
-    const areaFilterChecks = await mapInChunks(
-      areaFilterPairs,
-      8,
-      ({ area, filter }) => {
-        const where = areaWhere(area);
-        return exists(where ? { ...where, ...filterFields(filter) } : null);
-      },
-    );
-    const areaFilterPages = areaFilterPairs
-      .filter((_, i) => areaFilterChecks[i])
-      .map(({ area, filter }) =>
+    const areaFilterPages = AREAS.flatMap((area) => {
+      const city = getCityBySlug(area.citySlug);
+      if (!city) return [];
+      const inArea = properties.filter(
+        (p) => cityMatches(p, city) && areaMatches(p, area),
+      );
+      return FILTERS.filter((filter) =>
+        inArea.some((p) => filterMatches(p, filter)),
+      ).map((filter) =>
         landing(`${baseUrl}/${area.citySlug}/${filter.slug}/${area.slug}`),
       );
+    });
 
     // Building pages: /[city]/[filterSlug]/[area]/[building] (condo filters)
     const condoFilters = FILTERS.filter((filter) => filter.type === "condo");
-    const buildingChecks = await mapInChunks(BUILDINGS, 8, (building) =>
-      exists(buildingWhere(building)),
-    );
-    const activeBuildings = BUILDINGS.filter((_, i) => buildingChecks[i]);
+    const buildingFilterPages = BUILDINGS.flatMap((building) => {
+      const city = getCityBySlug(building.citySlug);
+      const area = city
+        ? getAreaBySlug(city.slug, building.areaSlug)
+        : undefined;
+      const found =
+        city && area
+          ? getBuildingBySlug(city.slug, area.slug, building.slug)
+          : undefined;
+      if (!city || !area || !found) return [];
 
-    const buildingFilterPairs = activeBuildings.flatMap((building) =>
-      condoFilters.map((filter) => ({ building, filter })),
-    );
-    const buildingFilterChecks = await mapInChunks(
-      buildingFilterPairs,
-      8,
-      ({ building, filter }) => {
-        const where = buildingWhere(building);
-        return exists(where ? { ...where, ...filterFields(filter) } : null);
-      },
-    );
-    const buildingFilterPages = buildingFilterPairs
-      .filter((_, i) => buildingFilterChecks[i])
-      .map(({ building, filter }) =>
-        landing(
-          `${baseUrl}/${building.citySlug}/${filter.slug}/${building.areaSlug}/${building.slug}`,
-        ),
+      const inBuilding = properties.filter(
+        (p) =>
+          cityMatches(p, city) &&
+          areaMatches(p, area) &&
+          buildingMatches(p, found),
       );
+      return condoFilters
+        .filter((filter) => inBuilding.some((p) => filterMatches(p, filter)))
+        .map((filter) =>
+          landing(
+            `${baseUrl}/${building.citySlug}/${filter.slug}/${building.areaSlug}/${building.slug}`,
+          ),
+        );
+    });
 
     // /listings query-param pages: the broad "<type> for <sale/rent> in Cebu"
     // pages, e.g. /listings?type=house&category=sale.
@@ -213,8 +192,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { type: "house", category: "rent" },
       { type: "condo", category: "rent" },
     ];
-    const comboChecks = await mapInChunks(comboCandidates, 5, (combo) =>
-      exists({ ...active, type: combo.type, listingCategory: combo.category }),
+    const comboChecks = comboCandidates.map((combo) =>
+      properties.some(
+        (p) => p.type === combo.type && p.listingCategory === combo.category,
+      ),
     );
     const listingsComboPages = comboCandidates
       .filter((_, i) => comboChecks[i])
@@ -222,20 +203,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         landing(`${baseUrl}/listings?type=${type}&amp;category=${category}`),
       );
 
-    // Main Cebu landing page. comboCandidates[0] is house + sale, so this is
-    // only listed when there is at least one active house and lot for sale.
+    // Main Cebu landing pages. comboCandidates[0] is house + sale, [1] is
+    // condo + sale, [2] is land + sale. Each is only listed when there is at
+    // least one active listing of that kind.
     const cebuHouseLotPage = comboChecks[0]
       ? [landing(`${baseUrl}/house-and-lot-for-sale-in-cebu`)]
       : [];
-
-    // Condo landing page. comboChecks[1] is condo + sale, so this is only
-    // listed when there is at least one active condo for sale.
     const cebuCondoPage = comboChecks[1]
       ? [landing(`${baseUrl}/condo-for-sale-in-cebu`)]
       : [];
-
-    // Lot landing page. comboChecks[2] is land + sale, so this is only
-    // listed when there is at least one active lot for sale.
     const cebuLotPage = comboChecks[2]
       ? [landing(`${baseUrl}/lot-for-sale-in-cebu`)]
       : [];
