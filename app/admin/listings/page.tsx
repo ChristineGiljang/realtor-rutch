@@ -39,6 +39,16 @@ function listHref(next: { type?: string; category?: string; q?: string }) {
   return qs ? `/admin/listings?${qs}` : "/admin/listings";
 }
 
+// Same filters as the list, so the Excel file matches what is on screen.
+function exportHref(next: { type?: string; category?: string; q?: string }) {
+  const p = new URLSearchParams();
+  if (next.type) p.set("type", next.type);
+  if (next.category) p.set("category", next.category);
+  if (next.q) p.set("q", next.q);
+  const qs = p.toString();
+  return qs ? `/admin/listings/export?${qs}` : "/admin/listings/export";
+}
+
 function Pill({
   href,
   active,
@@ -118,6 +128,20 @@ export default async function AdminListingsPage({ searchParams }: Props) {
             <h1 className="text-4xl font-bold">Listings</h1>
           </div>
           <div className="flex items-center gap-4">
+            {total > 0 && (
+              <a
+                href={exportHref({ type, category, q })}
+                download
+                title={
+                  filtersActive
+                    ? "Exports the listings matching the current filters"
+                    : "Exports all listings"
+                }
+                className="border border-[#1A1A1A] text-[#1A1A1A] text-sm tracking-widest uppercase px-6 py-3 hover:bg-[#1A1A1A]/5 transition"
+              >
+                Export Excel
+              </a>
+            )}
             <Link href="/admin/blog">
               <button className="border border-[#1A1A1A] text-[#1A1A1A] text-sm tracking-widest uppercase px-6 py-3 hover:bg-[#1A1A1A]/5 transition">
                 Blog

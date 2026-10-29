@@ -11,8 +11,6 @@ const propertiesItems: DropdownItem[] = [
   { label: "For Sale", href: "/listings?category=sale" },
   { label: "For Rent", href: "/listings?category=rent" },
   { label: "Project Selling", href: "/listings?subtype=preselling" },
-  { label: "House and Lot in Cebu", href: "/house-and-lot-for-sale-in-cebu" },
-  { label: "Condo in Cebu", href: "/condo-for-sale-in-cebu" },
 ];
 
 function DesktopDropdown({

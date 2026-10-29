@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { db } from "@/lib/db";
 import { getCityBySlug, cityWhereClause } from "@/lib/cities";
-import { getAreaBySlug, areaWhereClause } from "@/lib/areas";
-import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
+import { getAreaBySlug, getAreasForCity, areaWhereClause } from "@/lib/areas";
+import { getFilterBySlug, CATEGORY_LABELS, FILTERS } from "@/lib/filter-slugs";
 import { getAreaListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
 import {
   getMarketStats,
+  getAreaCounts,
   formatPriceShort,
   type MarketStats,
 } from "@/lib/market-stats";
@@ -22,7 +25,9 @@ import {
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
-import Link from "next/link";
+import MarketSnapshot from "@/components/listings/MarketSnapshot";
+import LinkPills from "@/components/listings/LinkPills";
+import AreaHubFaq from "@/components/listings/AreaHubFaq";
 import { getHub } from "@/lib/property-links";
 
 export const revalidate = 0;
@@ -107,6 +112,18 @@ const loadResults = cache(async (key: string) => {
   return { city, filter, area, ...results };
 });
 
+// Market stats for the whole city + area + filter. Cached so the metadata and
+// the page share one query.
+const loadStats = cache(
+  async (citySlug: string, filterSlug: string, areaSlug: string) => {
+    const city = getCityBySlug(citySlug);
+    const filter = getFilterBySlug(filterSlug);
+    const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
+    if (!city || !filter || !area) return null;
+    return getMarketStats(baseWhere(city, area, filter));
+  },
+);
+
 async function getResults(props: Props) {
   const { city: citySlug, filterSlug, area: areaSlug } = await props.params;
   const query = parseListingParams(await props.searchParams);
@@ -128,8 +145,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   // Live count and price range when the area has listings
   let description = meta.description;
-  const stats = await getMarketStats(baseWhere(city, area, filter));
-  if (stats.count > 0) {
+  const stats = await loadStats(city.slug, filter.slug, area.slug);
+  if (stats && stats.count > 0) {
     description = buildDescription(
       `Browse ${stats.count} ${filter.label.toLowerCase()} in ${area.name}, ${city.name}.`,
       stats,
@@ -195,6 +212,65 @@ export default async function AreaFilterListingsPage(props: Props) {
     return `/${city.slug}/${filter.slug}/${area.slug}${qs ? `?${qs}` : ""}`;
   };
 
+  // Hub content only on the clean first page, so paginated and filtered URLs
+  // don't repeat it.
+  const showHub = currentPage === 1 && !query.priceMax && !query.bedsMin;
+
+  let stats: MarketStats | null = null;
+  let otherTypeLinks: { label: string; href: string; count: number }[] = [];
+  let nearbyLinks: { label: string; href: string; count: number }[] = [];
+
+  if (showHub) {
+    const sameFilterBase: any = { status: "active" };
+    if (filter.type) sameFilterBase.type = filter.type;
+    if (filter.subtype) sameFilterBase.subtype = filter.subtype;
+    if (filter.category) sameFilterBase.listingCategory = filter.category;
+
+    const otherAreas = getAreasForCity(city.slug).filter(
+      (a) => a.slug !== area.slug,
+    );
+
+    const [loadedStats, otherTypeCounts, nearbyCounts] = await Promise.all([
+      loadStats(city.slug, filter.slug, area.slug),
+      Promise.all(
+        FILTERS.filter((f) => f.slug !== filter.slug).map(async (f) => ({
+          filter: f,
+          count: await db.property.count({ where: baseWhere(city, area, f) }),
+        })),
+      ),
+      getAreaCounts(otherAreas, sameFilterBase),
+    ]);
+
+    stats = loadedStats;
+    otherTypeLinks = otherTypeCounts
+      .filter((r) => r.count > 0)
+      .map(({ filter: f, count }) => ({
+        label: `${f.label} in ${area.name}`,
+        href: `/${city.slug}/${f.slug}/${area.slug}`,
+        count,
+      }));
+    nearbyLinks = nearbyCounts.map(({ area: a, count }) => ({
+      label: `${filter.label} in ${a.name}`,
+      href: `/${a.citySlug}/${filter.slug}/${a.slug}`,
+      count,
+    }));
+  }
+
+  const isRent = filter.category === "rent";
+  const labelLower = filter.label.toLowerCase();
+
+  let rangeText = "";
+  if (stats && stats.minPrice != null && stats.maxPrice != null) {
+    rangeText = isRent
+      ? ` with rents from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)} per month`
+      : ` with prices from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)}`;
+  }
+
+  const intro =
+    stats && stats.count > 0
+      ? `Browse ${stats.count} ${labelLower} in ${area.name}, ${city.name}${rangeText}. Compare listings, then book a viewing with Realtor Rutch.`
+      : `There are no ${labelLower} listings in ${area.name}, ${city.name} right now. Check the links below for nearby barangays and other property types, or send an inquiry and Realtor Rutch will look for you.`;
+
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -204,6 +280,11 @@ export default async function AreaFilterListingsPage(props: Props) {
             Available Now
           </p>
           <h1 className="text-5xl font-bold text-[#1A1A1A]">{meta.h1}</h1>
+          {showHub && (
+            <p className="mt-4 max-w-3xl text-lg leading-relaxed text-[#8B7355]">
+              {intro}
+            </p>
+          )}
         </div>
 
         <PropertySearchBar
@@ -222,6 +303,49 @@ export default async function AreaFilterListingsPage(props: Props) {
           currentPage={currentPage}
           hrefForPage={hrefForPage}
         />
+
+        {showHub && stats && (
+          <>
+            {stats.count > 0 && (
+              <MarketSnapshot
+                heading={`${area.name} ${labelLower} market snapshot`}
+                stats={stats}
+              />
+            )}
+
+            {otherTypeLinks.length > 0 && (
+              <LinkPills
+                heading={`Other properties in ${area.name}`}
+                links={otherTypeLinks}
+              />
+            )}
+
+            {nearbyLinks.length > 0 && (
+              <LinkPills
+                heading={`Nearby barangays in ${city.name}`}
+                links={nearbyLinks}
+              />
+            )}
+
+            {area.blurb && area.blurb.length > 0 && (
+              <section className="blog-content mt-16 max-w-3xl text-[#8B7355] leading-relaxed">
+                <h2>About {area.name}</h2>
+                {area.blurb.map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </section>
+            )}
+
+            <AreaHubFaq
+              stats={stats}
+              areaName={area.name}
+              cityName={city.name}
+              filterLabel={filter.label}
+              type={filter.type}
+              category={filter.category}
+            />
+          </>
+        )}
 
         {hub && (
           <p className="mt-10 text-sm text-[#8B7355]">

@@ -39,7 +39,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Popular Searches — internal links to the SEO filter pages */}
+          {/* Popular Searches - internal links to the SEO filter pages */}
           <div>
             <h4 className="text-[#faf9f6] text-sm tracking-wider uppercase mb-4">
               Popular Searches
@@ -70,10 +70,16 @@ export default function Footer() {
                 Condo for Sale in Cebu City
               </Link>
               <Link
-                href="/cebu-city/lot-for-sale"
+                href="/lot-for-sale-in-cebu"
                 className="hover:text-[#C9A96E] transition"
               >
                 Lot for Sale in Cebu
+              </Link>
+              <Link
+                href="/cebu-city/lot-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                Lot for Sale in Cebu City
               </Link>
               <Link
                 href="/mandaue-city/house-and-lot-for-sale"
@@ -108,7 +114,8 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-[#E2D9C8]/20 mt-10 pt-6 text-xs text-center">
-          © {new Date().getFullYear()} Rutchilyn Llagoso. All rights reserved.
+          &copy; {new Date().getFullYear()} Rutchilyn Llagoso. All rights
+          reserved.
         </div>
       </div>
     </footer>

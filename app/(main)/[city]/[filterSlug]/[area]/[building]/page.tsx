@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { db } from "@/lib/db";
 import { getCityBySlug, cityWhereClause } from "@/lib/cities";
 import { getAreaBySlug, areaWhereClause } from "@/lib/areas";
-import { getBuildingBySlug, buildingWhereClause } from "@/lib/buildings";
-import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
+import {
+  getBuildingBySlug,
+  getBuildingsForArea,
+  buildingWhereClause,
+} from "@/lib/buildings";
+import { getFilterBySlug, CATEGORY_LABELS, FILTERS } from "@/lib/filter-slugs";
 import { getBuildingListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
 import {
@@ -23,6 +29,9 @@ import {
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
+import MarketSnapshot from "@/components/listings/MarketSnapshot";
+import LinkPills from "@/components/listings/LinkPills";
+import AreaHubFaq from "@/components/listings/AreaHubFaq";
 
 export const revalidate = 0;
 
@@ -126,6 +135,27 @@ const loadResults = cache(async (key: string) => {
   return { city, filter, area, building, ...results };
 });
 
+// Market stats for the whole building + filter. Cached so the metadata and the
+// page share one query.
+const loadStats = cache(
+  async (
+    citySlug: string,
+    filterSlug: string,
+    areaSlug: string,
+    buildingSlug: string,
+  ) => {
+    const city = getCityBySlug(citySlug);
+    const filter = getFilterBySlug(filterSlug);
+    const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
+    const building =
+      city && area
+        ? getBuildingBySlug(city.slug, area.slug, buildingSlug)
+        : undefined;
+    if (!city || !filter || !area || !building) return null;
+    return getMarketStats(baseWhere(city, area, building, filter));
+  },
+);
+
 async function getResults(props: Props) {
   const {
     city: citySlug,
@@ -156,15 +186,20 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   const title = fitTitle([
     meta.title,
-    `${building.name} — ${filter.label} in ${area.name}`,
-    `${building.name} — ${filter.label}`,
+    `${building.name} - ${filter.label} in ${area.name}`,
+    `${building.name} - ${filter.label}`,
     building.name,
   ]);
 
   // Live count and price range when the building has listings
   let description = meta.description;
-  const stats = await getMarketStats(baseWhere(city, area, building, filter));
-  if (stats.count > 0) {
+  const stats = await loadStats(
+    city.slug,
+    filter.slug,
+    area.slug,
+    building.slug,
+  );
+  if (stats && stats.count > 0) {
     description = buildDescription(
       `Browse ${stats.count} available ${stats.count === 1 ? "unit" : "units"} at ${building.name} in ${area.name}, ${city.name}.`,
       stats,
@@ -237,6 +272,71 @@ export default async function BuildingFilterListingsPage(props: Props) {
     return `/${city.slug}/${filter.slug}/${area.slug}/${building.slug}${qs ? `?${qs}` : ""}`;
   };
 
+  // Hub content only on the clean first page, so paginated and filtered URLs
+  // don't repeat it.
+  const showHub = currentPage === 1 && !query.priceMax && !query.bedsMin;
+
+  let stats: MarketStats | null = null;
+  let otherTypeLinks: { label: string; href: string; count: number }[] = [];
+  let otherBuildingLinks: { label: string; href: string; count: number }[] = [];
+
+  if (showHub) {
+    const siblings = getBuildingsForArea(city.slug, area.slug).filter(
+      (b) => b.slug !== building.slug,
+    );
+
+    const [loadedStats, otherTypeCounts, siblingCounts] = await Promise.all([
+      loadStats(city.slug, filter.slug, area.slug, building.slug),
+      Promise.all(
+        FILTERS.filter((f) => f.slug !== filter.slug).map(async (f) => ({
+          filter: f,
+          count: await db.property.count({
+            where: baseWhere(city, area, building, f),
+          }),
+        })),
+      ),
+      Promise.all(
+        siblings.map(async (b) => ({
+          building: b,
+          count: await db.property.count({
+            where: baseWhere(city, area, b, filter),
+          }),
+        })),
+      ),
+    ]);
+
+    stats = loadedStats;
+    otherTypeLinks = otherTypeCounts
+      .filter((r) => r.count > 0)
+      .map(({ filter: f, count }) => ({
+        label: `${f.label} at ${building.name}`,
+        href: `/${city.slug}/${f.slug}/${area.slug}/${building.slug}`,
+        count,
+      }));
+    otherBuildingLinks = siblingCounts
+      .filter((r) => r.count > 0)
+      .map(({ building: b, count }) => ({
+        label: `${filter.label} at ${b.name}`,
+        href: `/${city.slug}/${filter.slug}/${area.slug}/${b.slug}`,
+        count,
+      }));
+  }
+
+  const isRent = filter.category === "rent";
+  const labelLower = filter.label.toLowerCase();
+
+  let rangeText = "";
+  if (stats && stats.minPrice != null && stats.maxPrice != null) {
+    rangeText = isRent
+      ? ` with rents from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)} per month`
+      : ` with prices from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)}`;
+  }
+
+  const intro =
+    stats && stats.count > 0
+      ? `Browse ${stats.count} ${labelLower} listing${stats.count === 1 ? "" : "s"} at ${building.name} in ${area.name}, ${city.name}${rangeText}. Compare units, then book a viewing with Realtor Rutch.`
+      : `There are no ${labelLower} listings at ${building.name} right now. Check the links below for other property types and buildings, or send an inquiry and Realtor Rutch will look for you.`;
+
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -246,6 +346,11 @@ export default async function BuildingFilterListingsPage(props: Props) {
             Available Now
           </p>
           <h1 className="text-5xl font-bold text-[#1A1A1A]">{meta.h1}</h1>
+          {showHub && (
+            <p className="mt-4 max-w-3xl text-lg leading-relaxed text-[#8B7355]">
+              {intro}
+            </p>
+          )}
         </div>
 
         <PropertySearchBar
@@ -264,6 +369,52 @@ export default async function BuildingFilterListingsPage(props: Props) {
           currentPage={currentPage}
           hrefForPage={hrefForPage}
         />
+
+        {showHub && stats && (
+          <>
+            {stats.count > 0 && (
+              <MarketSnapshot
+                heading={`${building.name} ${labelLower} market snapshot`}
+                stats={stats}
+              />
+            )}
+
+            {otherTypeLinks.length > 0 && (
+              <LinkPills
+                heading={`Other listings at ${building.name}`}
+                links={otherTypeLinks}
+              />
+            )}
+
+            {otherBuildingLinks.length > 0 && (
+              <LinkPills
+                heading={`Other buildings in ${area.name}`}
+                links={otherBuildingLinks}
+              />
+            )}
+
+            <AreaHubFaq
+              stats={stats}
+              areaName={building.name}
+              cityName={city.name}
+              filterLabel={filter.label}
+              type={filter.type}
+              category={filter.category}
+              isBuilding
+            />
+
+            <p className="mt-10 text-sm text-[#8B7355]">
+              Looking beyond {building.name}?{" "}
+              <Link
+                href={`/${city.slug}/${filter.slug}/${area.slug}`}
+                className="text-[#C9A96E] underline underline-offset-2 hover:text-[#1A1A1A] transition"
+              >
+                See all {labelLower} in {area.name}
+              </Link>
+              .
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
