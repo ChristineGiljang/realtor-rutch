@@ -75,6 +75,26 @@ export const AREAS: AreaDef[] = [
     // Both spellings, in case an address is typed without the ñ.
     matches: ["punta engaño", "punta engano"],
   },
+  { slug: "luz", name: "Luz", citySlug: "cebu-city", matches: ["luz"] },
+  {
+    slug: "hippodromo",
+    name: "Hippodromo",
+    citySlug: "cebu-city",
+    // Both spellings, since listings use either one.
+    matches: ["hippodromo", "hipodromo"],
+  },
+  {
+    slug: "tipolo",
+    name: "Tipolo",
+    citySlug: "mandaue-city",
+    matches: ["tipolo"],
+  },
+  {
+    slug: "buagsong",
+    name: "Buagsong",
+    citySlug: "cordova",
+    matches: ["buagsong"],
+  },
   // add more barangays as you get listings there
 ];
 

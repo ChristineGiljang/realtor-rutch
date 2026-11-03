@@ -44,6 +44,9 @@ export async function generateMetadata({
   return {
     title: pageNum > 1 ? `${meta.title} | Page ${pageNum}` : meta.title,
     description: meta.description,
+    // Free-text searches (?q=...) are not landing pages. Many of them match
+    // nothing, which Google reports as soft 404s, so keep them out of the index.
+    ...(q ? { robots: { index: false, follow: true } } : {}),
     alternates: {
       canonical: `/listings${qs ? `?${qs}` : ""}`,
     },
@@ -68,6 +71,8 @@ export default async function ListingsPage({ searchParams }: Props) {
   if (q) {
     where.OR = [
       { address: { contains: q, mode: "insensitive" } },
+      { barangay: { contains: q, mode: "insensitive" } },
+      { building: { contains: q, mode: "insensitive" } },
       { city: { contains: q, mode: "insensitive" } },
       { state: { contains: q, mode: "insensitive" } },
       { title: { contains: q, mode: "insensitive" } },
@@ -110,7 +115,9 @@ export default async function ListingsPage({ searchParams }: Props) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header */}
         <div className="mb-12">
-          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: meta.h1 }]} />
+          <Breadcrumbs
+            items={[{ label: "Home", href: "/" }, { label: meta.h1 }]}
+          />
           <p className="text-xs tracking-[0.3em] uppercase text-[#8B7355] mb-3">
             Available Now
           </p>
