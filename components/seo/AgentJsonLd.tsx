@@ -10,7 +10,7 @@ const agent = {
   image:
     "https://res.cloudinary.com/drczxmxfb/image/upload/v1791157777/IMG_1570_ekapmg.jpg",
   description:
-    "Rutchilyn Llagoso is a Cebu-based real estate agent helping clients buy, sell, and rent houses and lots, condos, and lots in Cebu City, Mandaue, Lapu-Lapu, and nearby areas.",
+    "Rutchilyn Llagoso is a Cebu-based real estate agent helping clients buy, sell, and rent house and lot, condo, lot, and commercial properties in Cebu City, Mandaue, Lapu-Lapu, and nearby areas.",
   telephone: "+639817413929",
   email: "rldreamspaces@gmail.com",
   address: {
@@ -21,6 +21,27 @@ const agent = {
   areaServed: ["Cebu City", "Mandaue City", "Lapu-Lapu City", "Cordova"].map(
     (name) => ({ "@type": "City", name }),
   ),
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Properties for sale in Cebu",
+    itemListElement: [
+      {
+        "@type": "OfferCatalog",
+        name: "House and Lot for Sale in Cebu",
+        url: `${SITE_URL}/house-and-lot-for-sale-in-cebu`,
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "Condo for Sale in Cebu",
+        url: `${SITE_URL}/condo-for-sale-in-cebu`,
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "Lot for Sale in Cebu",
+        url: `${SITE_URL}/lot-for-sale-in-cebu`,
+      },
+    ],
+  },
   parentOrganization: {
     "@type": "Organization",
     name: "Dreamers House Next Level Realty and Training Services",

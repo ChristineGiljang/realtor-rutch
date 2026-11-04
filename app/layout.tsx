@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | Realtor Rutch",
   },
   description:
-    "Realtor Rutch — real estate specialist serving Cebu City and surrounding areas. Browse houses, lots, and luxury properties for sale or rent.",
+    "Realtor Rutch is a real estate specialist serving Cebu City and nearby areas. Browse houses, lots, and condos for sale or rent.",
   icons: {
     icon: [
       { url: "/favicon.png" },
