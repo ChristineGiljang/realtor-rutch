@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { uniquePropertySlug } from "@/lib/slug";
+import { submitToIndexNow, propertyIndexPaths } from "@/lib/indexnow";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
@@ -10,9 +11,25 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    // Read the details first - they're gone once the row is deleted.
+    const existing = await db.property.findUnique({
+      where: { id },
+      select: {
+        slug: true,
+        type: true,
+        listingCategory: true,
+        featured: true,
+      },
+    });
+
     await db.property.delete({
       where: { id },
     });
+
+    // Tell Bing the page is gone and the hub/listings pages changed.
+    if (existing) {
+      await submitToIndexNow(propertyIndexPaths(existing));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -96,9 +113,11 @@ export async function PATCH(
 
     // Keep the listing's existing URL when the title changes (links and
     // search rankings stay intact). Only generate a slug if it has none.
+    // type and listingCategory are read too, so if they change we can
+    // also tell Bing about the old category hub.
     const current = await db.property.findUnique({
       where: { id },
-      select: { slug: true },
+      select: { slug: true, type: true, listingCategory: true },
     });
     const slug = current?.slug || (await uniquePropertySlug(title, id));
 
@@ -145,7 +164,7 @@ export async function PATCH(
         const parsed = JSON.parse(existingImageAltsRaw);
         if (parsed && typeof parsed === "object") existingImageAlts = parsed;
       } catch {
-        // Malformed JSON — skip alt updates rather than failing the save.
+        // Malformed JSON - skip alt updates rather than failing the save.
       }
     }
 
@@ -175,7 +194,7 @@ export async function PATCH(
         const parsed = JSON.parse(newImageAltsRaw);
         if (Array.isArray(parsed)) newImageAlts = parsed;
       } catch {
-        // Malformed JSON — fall back to the title below for every image.
+        // Malformed JSON - fall back to the title below for every image.
       }
     }
 
@@ -208,6 +227,13 @@ export async function PATCH(
 
       await Promise.all(imageUploadPromises);
     }
+
+    // Everything is saved, so tell Bing: the listing page, /listings, the
+    // category hub, and the old hub too if the type changed.
+    await submitToIndexNow([
+      ...propertyIndexPaths(property),
+      ...(current ? propertyIndexPaths(current) : []),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

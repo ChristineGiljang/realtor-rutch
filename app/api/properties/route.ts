@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { uniquePropertySlug, isUniqueViolation } from "@/lib/slug";
+import { submitToIndexNow, propertyIndexPaths } from "@/lib/indexnow";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
         const parsed = JSON.parse(imageAltsRaw);
         if (Array.isArray(parsed)) imageAlts = parsed;
       } catch {
-        // Malformed JSON — fall back to titles below rather than failing
+        // Malformed JSON - fall back to titles below rather than failing
         // the whole upload over alt text.
       }
     }
@@ -174,6 +175,11 @@ export async function POST(request: NextRequest) {
         if (isUniqueViolation(err) && attempt < 2) continue;
         throw err;
       }
+    }
+
+    // Tell Bing about the new listing, its category hub, and /listings.
+    if (property) {
+      await submitToIndexNow(propertyIndexPaths(property));
     }
 
     return NextResponse.json(property, { status: 201 });

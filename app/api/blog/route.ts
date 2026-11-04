@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { submitToIndexNow, blogIndexPaths } from "@/lib/indexnow";
 
 function slugify(title: string) {
   return title
@@ -57,6 +58,11 @@ export async function POST(request: NextRequest) {
         publishedAt: published ? new Date() : null,
       },
     });
+
+    // Tell Bing about the new post (drafts are skipped).
+    if (post.published) {
+      await submitToIndexNow(blogIndexPaths(post.slug));
+    }
 
     return NextResponse.json(post, { status: 201 });
   } catch (error) {

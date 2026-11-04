@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { submitToIndexNow, blogIndexPaths } from "@/lib/indexnow";
 import { NextRequest, NextResponse } from "next/server";
 
 function slugify(title: string) {
@@ -23,7 +24,18 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    // Read the slug first - it's gone once the row is deleted.
+    const existing = await db.blogPost.findUnique({
+      where: { id },
+      select: { slug: true, published: true },
+    });
+
     await db.blogPost.delete({ where: { id } });
+
+    // Tell Bing the page is gone so it drops it sooner.
+    if (existing?.published) {
+      await submitToIndexNow(blogIndexPaths(existing.slug));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -90,6 +102,17 @@ export async function PATCH(
         publishedAt,
       },
     });
+
+    // Ping if the post is live now, or was live before this edit
+    // (so unpublishing is reported too).
+    if (post.published || existing.published) {
+      const paths = blogIndexPaths(post.slug);
+      // The slug follows the title, so a rename leaves the old URL dead.
+      if (existing.slug !== post.slug) {
+        paths.push(`/blog/${existing.slug}`);
+      }
+      await submitToIndexNow(paths);
+    }
 
     return NextResponse.json(post);
   } catch (error) {

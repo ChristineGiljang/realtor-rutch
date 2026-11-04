@@ -38,11 +38,15 @@ export async function submitToIndexNow(paths: string[]) {
         keyLocation: `${SITE_URL}/${key}.txt`,
         urlList,
       }),
+      // Never let a slow IndexNow response hold up saving.
+      signal: AbortSignal.timeout(5000),
     });
 
     // 200 = accepted, 202 = accepted (key validation pending)
     const ok = res.status === 200 || res.status === 202;
-    if (!ok) {
+    if (ok) {
+      console.log(`[IndexNow] Submitted ${urlList.length} URL(s)`);
+    } else {
       console.error(`[IndexNow] Failed with status ${res.status}`);
     }
     return { ok, status: res.status };
@@ -50,4 +54,37 @@ export async function submitToIndexNow(paths: string[]) {
     console.error("[IndexNow] Request error:", err);
     return { ok: false, error: true as const };
   }
+}
+
+/** Pages affected when a blog post changes. */
+export function blogIndexPaths(slug: string) {
+  return [`/blog/${slug}`, "/blog"];
+}
+
+const HUB_BY_TYPE: Record<string, string> = {
+  house: "/house-and-lot-for-sale-in-cebu",
+  condo: "/condo-for-sale-in-cebu",
+  land: "/lot-for-sale-in-cebu",
+};
+
+/** Pages affected when a property changes. */
+export function propertyIndexPaths(p: {
+  slug?: string | null;
+  type: string;
+  listingCategory?: string | null;
+  featured?: boolean;
+}) {
+  const paths = ["/listings"];
+
+  if (p.slug) paths.push(`/property/${p.slug}`);
+
+  const hub = HUB_BY_TYPE[p.type];
+  if (hub && (!p.listingCategory || p.listingCategory === "sale")) {
+    paths.push(hub);
+  }
+
+  // Featured listings appear on the homepage.
+  if (p.featured) paths.push("/");
+
+  return paths;
 }
