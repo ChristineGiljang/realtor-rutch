@@ -69,8 +69,8 @@ export async function generateMetadata({
 
   const description =
     count > 0 && minPrice != null && maxPrice != null
-      ? `Browse ${count} ${count === 1 ? "lot" : "lots"} for sale in Cebu. Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}. Cebu City, Mandaue, Cordova, Liloan and more.`
-      : "Browse lots for sale in Cebu City, Mandaue, Cordova, Liloan and more with Realtor Rutch.";
+      ? `Browse ${count} ${count === 1 ? "lot" : "lots"} for sale in Cebu. Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}. Cebu City, Mandaue, Cordova, Liloan and more. Book a viewing.`
+      : "Browse lots for sale in Cebu City, Mandaue, Cordova, Liloan and more. Send an inquiry to Realtor Rutch and get help finding the right lot.";
 
   const title =
     pageNum > 1
@@ -229,8 +229,8 @@ export default async function LotForSaleInCebuPage({ searchParams }: Props) {
 
               <h3>Zoning, access, and utilities</h3>
               <p>
-                Check the lot&apos;s zoning or land classification with the
-                city or municipal planning office, since it decides what you can
+                Check the lot&apos;s zoning or land classification with the city
+                or municipal planning office, since it decides what you can
                 build. Confirm there is legal road access, and ask about water,
                 electricity, and drainage before you commit.
               </p>

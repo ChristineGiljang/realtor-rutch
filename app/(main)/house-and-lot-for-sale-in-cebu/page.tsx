@@ -68,8 +68,8 @@ export async function generateMetadata({
 
   const description =
     count > 0 && minPrice != null && maxPrice != null
-      ? `Browse ${count} house and lot for sale in Cebu. Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}. Cebu City, Mandaue, Lapu-Lapu, Talisay and more.`
-      : "Browse house and lot for sale in Cebu City, Mandaue, Lapu-Lapu, Talisay and more with Realtor Rutch.";
+      ? `Browse ${count} house and lot ${count === 1 ? "property" : "properties"} for sale in Cebu. Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}. Cebu City, Mandaue, Lapu-Lapu, Talisay and more. Book a viewing.`
+      : "Browse house and lot for sale in Cebu City, Mandaue, Lapu-Lapu, Talisay and more. Book a viewing with Realtor Rutch.";
 
   const title =
     pageNum > 1
@@ -168,7 +168,9 @@ export default async function HouseAndLotForSaleInCebuPage({
             House and Lot for Sale in Cebu
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-relaxed text-[#8B7355]">
-            Browse {stats.count} house and lot for sale in Cebu{rangeText}.
+            {stats.count > 0
+              ? `Browse ${stats.count} house and lot ${stats.count === 1 ? "property" : "properties"} for sale in Cebu${rangeText}. `
+              : "Browse house and lot for sale in Cebu. "}
             Compare homes across Cebu City, Mandaue, Lapu-Lapu, Talisay and
             nearby towns, then book a viewing with Realtor Rutch.
           </p>

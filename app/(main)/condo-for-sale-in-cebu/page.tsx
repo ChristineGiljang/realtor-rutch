@@ -93,8 +93,8 @@ export async function generateMetadata({
 
   const description =
     count > 0 && minPrice != null && maxPrice != null
-      ? `Browse ${count} condo for sale in Cebu. Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}. Book a viewing with Realtor Rutch.`
-      : "Browse condo for sale in Cebu with Realtor Rutch. Studios to multi-bedroom units in Cebu City and nearby areas.";
+      ? `Browse ${count} ${count === 1 ? "condo" : "condos"} for sale in Cebu City, Mandaue, and Lapu-Lapu. Prices from ${formatPriceShort(minPrice)} to ${formatPriceShort(maxPrice)}. Book a viewing with Realtor Rutch.`
+      : "Browse condos for sale in Cebu with Realtor Rutch. Studios to multi-bedroom units in Cebu City and nearby areas.";
 
   const title =
     pageNum > 1
@@ -204,8 +204,8 @@ export default async function CondoForSaleInCebuPage({ searchParams }: Props) {
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-relaxed text-[#8B7355]">
             {stats.count > 0
-              ? `Browse ${stats.count} condo for sale in Cebu${rangeText}. `
-              : "Browse condo for sale in Cebu. "}
+              ? `Browse ${stats.count} ${stats.count === 1 ? "condo" : "condos"} for sale in Cebu${rangeText}. `
+              : "Browse condos for sale in Cebu. "}
             Compare studios and larger units across Cebu City and nearby areas,
             then book a viewing with Realtor Rutch.
           </p>

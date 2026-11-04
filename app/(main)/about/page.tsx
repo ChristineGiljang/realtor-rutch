@@ -5,7 +5,7 @@ import AgentJsonLd from "@/components/seo/AgentJsonLd";
 export const metadata: Metadata = {
   title: "About Rutchilyn Llagoso",
   description:
-    "Meet Rutchilyn Llagoso, a Cebu-based real estate agent specializing in residential, commercial, and investment properties. Honest advice, prompt communication, and personalized service.",
+    "Meet Rutchilyn Llagoso, a Cebu-based real estate agent for residential, commercial, and investment properties. Honest advice and personalized service.",
   alternates: {
     canonical: "/about",
   },
@@ -26,7 +26,7 @@ export default function AboutPage() {
     {
       title: "Results",
       description:
-        "I don't just list homes — I sell them. My properties consistently close at the best possible price.",
+        "I don't just list homes. I sell them. My properties consistently close at the best possible price.",
     },
     {
       title: "Service",
@@ -85,7 +85,7 @@ export default function AboutPage() {
               specialize in connecting clients with quality residential,
               commercial, and investment properties that match their goals and
               lifestyle. I believe that real estate is more than just buying and
-              selling — it's about building relationships, earning trust, and
+              selling. It's about building relationships, earning trust, and
               helping people make informed decisions.
             </p>
             <p className="text-[#8B7355] leading-relaxed mb-8">
