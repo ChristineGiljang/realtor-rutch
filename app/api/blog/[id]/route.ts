@@ -66,6 +66,11 @@ export async function PATCH(
 
     const slug = slugify(title);
 
+    // Cover image alt text: keep the saved value if the form didn't send one.
+    const coverImageAlt = formData.has("coverImageAlt")
+      ? String(formData.get("coverImageAlt") ?? "").trim() || null
+      : existing.coverImageAlt;
+
     let coverImage = existing.coverImage;
     const coverFile = formData.get("coverImage") as File | null;
     if (coverFile && coverFile.size > 0) {
@@ -90,6 +95,7 @@ export async function PATCH(
         slug,
         content,
         coverImage,
+        coverImageAlt,
         coverPositionX: parsePosition(
           formData.get("coverPositionX"),
           existing.coverPositionX,

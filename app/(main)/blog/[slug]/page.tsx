@@ -64,7 +64,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "article",
       publishedTime: post.publishedAt?.toISOString(),
       images: post.coverImage
-        ? [{ url: optimizedUrl(post.coverImage, { width: 1200 }) }]
+        ? [
+            {
+              url: optimizedUrl(post.coverImage, { width: 1200 }),
+              alt: post.coverImageAlt || post.title,
+            },
+          ]
         : undefined,
     },
     twitter: {
@@ -84,6 +89,28 @@ export default async function BlogPostPage({ params }: Props) {
   const post = await db.blogPost.findUnique({ where: { slug } });
 
   if (!post || !post.published) notFound();
+
+  // Previous = next-older published post, Next = next-newer published post.
+  const [prevPost, nextPost] = post.publishedAt
+    ? await Promise.all([
+        db.blogPost.findFirst({
+          where: {
+            published: true,
+            publishedAt: { lt: post.publishedAt },
+          },
+          orderBy: { publishedAt: "desc" },
+          select: { slug: true, title: true },
+        }),
+        db.blogPost.findFirst({
+          where: {
+            published: true,
+            publishedAt: { gt: post.publishedAt },
+          },
+          orderBy: { publishedAt: "asc" },
+          select: { slug: true, title: true },
+        }),
+      ])
+    : [null, null];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -125,7 +152,7 @@ export default async function BlogPostPage({ params }: Props) {
               ${optimizedUrl(post.coverImage, { width: 1920 })} 1920w
             `}
             sizes="100vw"
-            alt={post.title}
+            alt={post.coverImageAlt || post.title}
             loading="eager"
             className="w-full h-full object-cover"
             style={{
@@ -163,6 +190,47 @@ export default async function BlogPostPage({ params }: Props) {
             __html: sanitizeHtml(post.content, sanitizeOptions),
           }}
         />
+
+        {/* Previous / Next article */}
+        {(prevPost || nextPost) && (
+          <nav
+            aria-label="More articles"
+            className="mt-12 pt-8 border-t border-[#E2D9C8] grid grid-cols-1 sm:grid-cols-2 gap-8"
+          >
+            <div>
+              {prevPost && (
+                <Link
+                  href={`/blog/${prevPost.slug}`}
+                  rel="prev"
+                  className="group block"
+                >
+                  <p className="text-sm text-[#8B7355] mb-2">
+                    &larr; Previous article
+                  </p>
+                  <p className="text-base font-semibold leading-snug text-[#1A1A1A] group-hover:text-[#C9A96E] transition">
+                    {prevPost.title}
+                  </p>
+                </Link>
+              )}
+            </div>
+            <div className="sm:text-right">
+              {nextPost && (
+                <Link
+                  href={`/blog/${nextPost.slug}`}
+                  rel="next"
+                  className="group block"
+                >
+                  <p className="text-sm text-[#8B7355] mb-2">
+                    Next article &rarr;
+                  </p>
+                  <p className="text-base font-semibold leading-snug text-[#1A1A1A] group-hover:text-[#C9A96E] transition">
+                    {nextPost.title}
+                  </p>
+                </Link>
+              )}
+            </div>
+          </nav>
+        )}
 
         <BlogBrowseLinks />
 

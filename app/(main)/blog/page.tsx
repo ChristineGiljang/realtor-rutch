@@ -37,7 +37,9 @@ export default async function BlogPage() {
 
       {/* Post grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-24">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog" }]} />
+        <Breadcrumbs
+          items={[{ label: "Home", href: "/" }, { label: "Blog" }]}
+        />
         {posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 border border-[#E2D9C8]">
             <p className="text-[#8B7355]">No posts yet — check back soon.</p>
@@ -60,7 +62,7 @@ export default async function BlogPage() {
                         ${optimizedUrl(post.coverImage, { width: 800 })} 800w
                       `}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-                      alt={post.title}
+                      alt={post.coverImageAlt || post.title}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       style={{

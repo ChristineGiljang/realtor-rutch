@@ -4,6 +4,76 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import imageCompression from "browser-image-compression";
 
+// --- parser:start
+const SINGLE_LINE_KEYS = [
+  "TITLE",
+  "REFERENCE",
+  "PRICE",
+  "TYPE",
+  "SUBTYPE",
+  "CATEGORY",
+  "STATUS",
+  "OWNERSHIP",
+  "FLOOR",
+  "ADDRESS",
+  "CITY",
+  "ZIP",
+  "BEDS",
+  "BATHS",
+  "SQM",
+  "LOT",
+  "GARAGE",
+  "YEAR",
+];
+const MULTI_LINE_KEYS = ["DESCRIPTION", "FEATURES", "AMENITIES", "PAYMENT"];
+
+// Placeholder values that should leave the form field untouched.
+const isBlankValue = (v: string) =>
+  /^(not specified|n\/a|na|none|-)?$/i.test(v.trim());
+
+// "14th" / "₱35,000" / "51.10 sqm" -> "14" / "35000" / "51.10"
+const toNumber = (v: string) => v.replace(/[^0-9.]/g, "");
+
+// Strip "- " / "* " / "• " bullets so each item is one clean line.
+const cleanList = (v: string) =>
+  v
+    .split("\n")
+    .map((l) => l.replace(/^\s*[-*\u2022]\s*/, "").trim())
+    .filter(Boolean)
+    .join("\n");
+
+function parseTemplateText(text: string): Record<string, string> {
+  const data: Record<string, string> = {};
+  let currentKey = "";
+  let buffer: string[] = [];
+
+  const flush = () => {
+    if (currentKey) data[currentKey] = buffer.join("\n").trim();
+  };
+
+  const lines = text.replace(/^\uFEFF/, "").split(/\r\n|\r|\n/);
+  for (const line of lines) {
+    const match = line.match(/^\s*([A-Za-z]+)\s*:(.*)$/);
+    const key = match ? match[1].toUpperCase() : "";
+
+    if (
+      match &&
+      (SINGLE_LINE_KEYS.includes(key) || MULTI_LINE_KEYS.includes(key))
+    ) {
+      flush();
+      currentKey = key;
+      // Keep text that sits on the same line as the label, e.g.
+      // "DESCRIPTION: Furnished corner..." or "PAYMENT: Monthly Rent: ..."
+      buffer = [match[2].trim()];
+    } else if (MULTI_LINE_KEYS.includes(currentKey)) {
+      buffer.push(line.trimEnd());
+    }
+  }
+  flush();
+  return data;
+}
+// --- parser:end
+
 export default function PropertyForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -38,90 +108,62 @@ export default function PropertyForm() {
   const paymentRef = useRef<HTMLTextAreaElement>(null);
 
   const parseTemplate = (text: string) => {
-    const lines = text.split("\n");
-    const data: Record<string, string> = {};
-    let currentKey = "";
-    let multilineValue = "";
+    const data = parseTemplateText(text);
 
-    for (const line of lines) {
-      const colonIndex = line.indexOf(":");
-      if (colonIndex === -1) {
-        if (currentKey) multilineValue += (multilineValue ? "\n" : "") + line;
-        continue;
-      }
-
-      const key = line.substring(0, colonIndex).trim().toUpperCase();
-
-      if (
-        [
-          "TITLE",
-          "REFERENCE",
-          "PRICE",
-          "TYPE",
-          "SUBTYPE",
-          "CATEGORY",
-          "STATUS",
-          "OWNERSHIP",
-          "FLOOR",
-          "ADDRESS",
-          "CITY",
-          "ZIP",
-          "BEDS",
-          "BATHS",
-          "SQM",
-          "LOT",
-          "GARAGE",
-          "YEAR",
-        ].includes(key)
-      ) {
-        if (currentKey) data[currentKey] = multilineValue.trim();
-        currentKey = key;
-        multilineValue = line.substring(colonIndex + 1).trim();
-      } else if (
-        ["DESCRIPTION", "FEATURES", "PAYMENT", "AMENITIES"].includes(key)
-      ) {
-        if (currentKey) data[currentKey] = multilineValue.trim();
-        currentKey = key;
-        multilineValue = "";
-      } else if (currentKey) {
-        multilineValue += (multilineValue ? "\n" : "") + line;
-      }
+    if (Object.keys(data).length === 0) {
+      setParsed(false);
+      setError(
+        "No fields were recognized in that file. Make sure each line starts with a label like TITLE: or PRICE:",
+      );
+      return;
     }
-    if (currentKey) data[currentKey] = multilineValue.trim();
+    setError("");
 
-    if (titleRef.current && data.TITLE) titleRef.current.value = data.TITLE;
-    if (referenceNameRef.current && data.REFERENCE)
-      referenceNameRef.current.value = data.REFERENCE;
-    if (priceRef.current && data.PRICE)
-      priceRef.current.value = data.PRICE.replace(/[^0-9.]/g, "");
-    if (typeRef.current && data.TYPE)
-      typeRef.current.value = data.TYPE.toLowerCase();
-    if (categoryRef.current && data.CATEGORY)
-      categoryRef.current.value = data.CATEGORY.toLowerCase();
-    if (statusRef.current && data.STATUS)
-      statusRef.current.value = data.STATUS.toLowerCase();
-    if (addressRef.current && data.ADDRESS)
-      addressRef.current.value = data.ADDRESS;
-    if (cityRef.current && data.CITY) cityRef.current.value = data.CITY;
-    if (zipRef.current && data.ZIP) zipRef.current.value = data.ZIP;
-    if (bedsRef.current && data.BEDS) bedsRef.current.value = data.BEDS;
-    if (bathsRef.current && data.BATHS) bathsRef.current.value = data.BATHS;
-    if (sqmRef.current && data.SQM) sqmRef.current.value = data.SQM;
-    if (lotRef.current && data.LOT) lotRef.current.value = data.LOT;
-    if (garageRef.current && data.GARAGE) garageRef.current.value = data.GARAGE;
-    if (yearRef.current && data.YEAR) yearRef.current.value = data.YEAR;
-    if (descriptionRef.current && data.DESCRIPTION)
-      descriptionRef.current.value = data.DESCRIPTION;
-    if (featuresRef.current && data.FEATURES)
-      featuresRef.current.value = data.FEATURES;
-    if (paymentRef.current && data.PAYMENT)
-      paymentRef.current.value = data.PAYMENT;
-    if (ownershipTypeRef.current && data.OWNERSHIP)
-      ownershipTypeRef.current.value = data.OWNERSHIP.toLowerCase();
-    if (propertyFloorRef.current && data.FLOOR)
-      propertyFloorRef.current.value = data.FLOOR;
-    if (amenitiesRef.current && data.AMENITIES)
-      amenitiesRef.current.value = data.AMENITIES;
+    const fill = (
+      el: HTMLInputElement | HTMLTextAreaElement | null,
+      raw: string | undefined,
+      transform: (v: string) => string = (v) => v,
+    ) => {
+      if (!el || raw === undefined || isBlankValue(raw)) return;
+      const value = transform(raw);
+      if (value) el.value = value;
+    };
+
+    // Only select an option that actually exists in the dropdown.
+    const pick = (el: HTMLSelectElement | null, raw: string | undefined) => {
+      if (!el || raw === undefined || isBlankValue(raw)) return;
+      const wanted = raw.trim().toLowerCase();
+      const match = Array.from(el.options).find(
+        (o) => o.value.toLowerCase() === wanted,
+      );
+      if (match) el.value = match.value;
+    };
+
+    fill(titleRef.current, data.TITLE);
+    fill(referenceNameRef.current, data.REFERENCE);
+    fill(priceRef.current, data.PRICE, toNumber);
+    pick(typeRef.current, data.TYPE);
+    pick(subtypeRef.current, data.SUBTYPE);
+    pick(categoryRef.current, data.CATEGORY);
+    pick(statusRef.current, data.STATUS);
+    pick(ownershipTypeRef.current, data.OWNERSHIP);
+    fill(propertyFloorRef.current, data.FLOOR, toNumber);
+    fill(addressRef.current, data.ADDRESS);
+    fill(cityRef.current, data.CITY);
+    fill(zipRef.current, data.ZIP);
+    fill(bedsRef.current, data.BEDS, toNumber);
+    fill(bathsRef.current, data.BATHS, toNumber);
+    fill(sqmRef.current, data.SQM, toNumber);
+    fill(lotRef.current, data.LOT, toNumber);
+    fill(garageRef.current, data.GARAGE, toNumber);
+    fill(yearRef.current, data.YEAR, (v) => {
+      const n = toNumber(v);
+      return n === "0" ? "" : n; // "YEAR: 0" means unknown
+    });
+    fill(descriptionRef.current, data.DESCRIPTION);
+    fill(featuresRef.current, data.FEATURES, cleanList);
+    fill(amenitiesRef.current, data.AMENITIES, cleanList);
+    fill(paymentRef.current, data.PAYMENT);
 
     setParsed(true);
   };
@@ -167,11 +209,14 @@ export default function PropertyForm() {
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
+    setParsed(false);
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      let text = event.target?.result as string;
+      let text = (event.target?.result as string) || "";
       // Normalize Windows/old-Mac line endings to \n
       text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
@@ -181,7 +226,12 @@ export default function PropertyForm() {
       if (isRtf) text = stripRtf(text);
       parseTemplate(text);
     };
+    reader.onerror = () =>
+      setError("Could not read that file. Please try again.");
     reader.readAsText(file, "utf-8");
+
+    // Reset so choosing the same file again still fires onChange.
+    input.value = "";
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -408,6 +458,7 @@ Reservation: 50000
               ref={priceRef}
               name="price"
               type="number"
+              step="any"
               required
               placeholder="5000000"
               className={inputClass}
@@ -605,6 +656,7 @@ Reservation: 50000
               ref={sqmRef}
               name="sqft"
               type="number"
+              step="any"
               required
               placeholder="120"
               className={inputClass}

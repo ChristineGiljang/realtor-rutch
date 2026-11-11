@@ -11,6 +11,7 @@ interface Props {
     title: string;
     content: string;
     coverImage: string | null;
+    coverImageAlt?: string | null;
     coverPositionX?: number;
     coverPositionY?: number;
     published: boolean;
@@ -159,6 +160,7 @@ export default function BlogForm({ mode, postId, initialValues }: Props) {
   const [content, setContent] = useState(initialValues?.content ?? "");
   const [posX, setPosX] = useState(initialValues?.coverPositionX ?? 50);
   const [posY, setPosY] = useState(initialValues?.coverPositionY ?? 50);
+  const [coverAlt, setCoverAlt] = useState(initialValues?.coverImageAlt ?? "");
 
   const inputClass =
     "w-full bg-white border border-[#E2D9C8] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#C9A96E] placeholder:text-[#8B7355]";
@@ -262,6 +264,28 @@ export default function BlogForm({ mode, postId, initialValues }: Props) {
                 ? "Leave blank to keep the current cover image."
                 : "Optional — recommended for blog and social previews."}
             </p>
+
+            {preview && (
+              <div className="mt-4">
+                <label htmlFor="coverImageAlt" className={labelClass}>
+                  Cover Image Alt Text
+                </label>
+                <input
+                  id="coverImageAlt"
+                  name="coverImageAlt"
+                  value={coverAlt}
+                  onChange={(e) => setCoverAlt(e.target.value)}
+                  maxLength={200}
+                  placeholder="e.g. Aerial view of condo towers along Mactan Newtown beachfront"
+                  className={inputClass}
+                />
+                <p className="text-xs text-[#8B7355] mt-2">
+                  Describe what the image shows, in a short sentence. Helps
+                  Google Images and screen readers. Leave blank to use the post
+                  title.
+                </p>
+              </div>
+            )}
           </div>
 
           <div>

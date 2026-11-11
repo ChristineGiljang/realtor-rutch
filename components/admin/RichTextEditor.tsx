@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
@@ -37,6 +37,9 @@ export default function RichTextEditor({
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Alt text of the currently selected image (null = no image selected).
+  const [imageAlt, setImageAlt] = useState<string | null>(null);
+  const altInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -60,10 +63,30 @@ export default function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "blog-content min-h-[400px] px-4 py-3 focus:outline-none text-sm",
+          "blog-content min-h-[400px] px-4 py-3 focus:outline-none text-sm [&_img[alt='']]:outline [&_img[alt='']]:outline-2 [&_img[alt='']]:outline-red-400",
       },
     },
   });
+
+  // Show the alt text box whenever an image is selected in the editor.
+  useEffect(() => {
+    if (!editor) return;
+    const sync = () => {
+      // Don't fight the user while they're typing in the alt text box.
+      if (document.activeElement === altInputRef.current) return;
+      if (editor.isActive("image")) {
+        setImageAlt((editor.getAttributes("image").alt as string | null) ?? "");
+      } else {
+        setImageAlt(null);
+      }
+    };
+    editor.on("selectionUpdate", sync);
+    editor.on("update", sync);
+    return () => {
+      editor.off("selectionUpdate", sync);
+      editor.off("update", sync);
+    };
+  }, [editor]);
 
   const uploadImage = useCallback(
     async (file: File) => {
@@ -90,7 +113,16 @@ export default function RichTextEditor({
           throw new Error(data.error || `Upload failed (status ${res.status})`);
         }
 
-        editor.chain().focus().setImage({ src: data.url, alt: "" }).run();
+        const alt =
+          window.prompt(
+            "Alt text for this image: describe what it shows (helps Google Images and screen readers). You can also add or change it later by clicking the image.",
+            "",
+          ) ?? "";
+        editor
+          .chain()
+          .focus()
+          .setImage({ src: data.url, alt: alt.trim() })
+          .run();
       } catch (err) {
         alert(err instanceof Error ? err.message : "Image upload failed");
       } finally {
@@ -313,6 +345,23 @@ export default function RichTextEditor({
               {label as string}
             </button>
           ))}
+        </div>
+      )}
+
+      {imageAlt !== null && (
+        <div className="flex flex-wrap items-center gap-2 p-2 border-b border-[#E2D9C8] bg-[#f3efe6] text-xs">
+          <span className="text-[#8B7355]">Image alt text:</span>
+          <input
+            ref={altInputRef}
+            value={imageAlt}
+            onChange={(e) => {
+              const value = e.target.value;
+              setImageAlt(value);
+              editor.chain().updateAttributes("image", { alt: value }).run();
+            }}
+            placeholder="Describe this image, e.g. Living room of a 2-bedroom condo in Mactan Newtown"
+            className="flex-1 min-w-[220px] bg-white border border-[#E2D9C8] px-2 py-1 text-[#1A1A1A] focus:outline-none focus:border-[#C9A96E]"
+          />
         </div>
       )}
 

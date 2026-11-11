@@ -29,6 +29,7 @@ export default async function EditBlogPostPage({ params }: Props) {
             title: post.title,
             content: post.content,
             coverImage: post.coverImage,
+            coverImageAlt: post.coverImageAlt,
             coverPositionX: post.coverPositionX,
             coverPositionY: post.coverPositionY,
             published: post.published,

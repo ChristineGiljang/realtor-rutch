@@ -46,12 +46,18 @@ export async function POST(request: NextRequest) {
       coverImage = result.secure_url;
     }
 
+    // Cover image alt text (optional, only kept when there is a cover image).
+    const coverImageAlt = coverImage
+      ? String(formData.get("coverImageAlt") ?? "").trim() || null
+      : null;
+
     const post = await db.blogPost.create({
       data: {
         title,
         slug,
         content,
         coverImage,
+        coverImageAlt,
         coverPositionX: parsePosition(formData.get("coverPositionX")),
         coverPositionY: parsePosition(formData.get("coverPositionY")),
         published,

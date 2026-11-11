@@ -97,6 +97,7 @@ model BlogPost {
   slug           String    @unique
   content        String
   coverImage     String?
+  coverImageAlt  String?
   coverPositionX Int       @default(50)
   coverPositionY Int       @default(50)
   published      Boolean   @default(false)
