@@ -4,7 +4,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getCityBySlug, cityWhereClause } from "@/lib/cities";
 import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
-import { getCityListingsMeta } from "@/lib/listings-meta";
+import { getCityListingsMeta, getCityDisplayName } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
 import {
   getMarketStats,
@@ -23,6 +23,7 @@ import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs, { type Crumb } from "@/components/listings/Breadcrumbs";
 import CityHouseLotContent from "@/components/listings/CityHouseLotContent";
+import CityCondoContent from "@/components/listings/CityCondoContent";
 
 export const revalidate = 0;
 
@@ -70,6 +71,17 @@ function fitTitle(candidates: string[]): string {
     candidates.find((c) => c.length <= TITLE_BUDGET) ??
     candidates[candidates.length - 1]
   );
+}
+
+// "Condo for Sale" -> "condos for sale" so "Browse 5 condos for sale in ..."
+// reads correctly. A count of 1 keeps the singular.
+function pluralizeLabel(label: string, count: number): string {
+  const lower = label.toLowerCase();
+  if (count === 1) return lower;
+  return lower
+    .replace(/^house and lot\b/, "houses and lots")
+    .replace(/^condo\b/, "condos")
+    .replace(/^lot\b/, "lots");
 }
 
 // Quotes a price range only when the filter is all sale or all rent.
@@ -145,7 +157,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const stats = await getMarketStats(baseWhere(city, filter));
   if (stats.count > 0) {
     description = buildDescription(
-      `Browse ${stats.count} ${filter.label.toLowerCase()} in ${city.name}.`,
+      `Browse ${stats.count} ${pluralizeLabel(filter.label, stats.count)} in ${getCityDisplayName(city.name)}.`,
       stats,
       filter.category,
     );
@@ -251,6 +263,9 @@ export default async function CityFilterListingsPage(props: Props) {
         {/* Page 1 only, so paginated URLs don't repeat the text */}
         {isHouseForSale && currentPage === 1 && (
           <CityHouseLotContent city={city} />
+        )}
+        {isCondoForSale && currentPage === 1 && (
+          <CityCondoContent city={city} />
         )}
 
         {hub && (

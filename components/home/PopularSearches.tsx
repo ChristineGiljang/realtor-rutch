@@ -23,6 +23,10 @@ const SEARCHES = [
     label: "House and Lot for Sale in Lapu-Lapu City",
     href: "/lapu-lapu-city/house-and-lot-for-sale",
   },
+  {
+    label: "Condo for Sale in Lapu-Lapu City (Mactan)",
+    href: "/lapu-lapu-city/condo-for-sale",
+  },
   { label: "Condo for Rent in Cebu City", href: "/cebu-city/condo-for-rent" },
   {
     label: "Preselling House and Lot in Cebu",

@@ -87,6 +87,18 @@ export default function Footer() {
               >
                 House and Lot in Mandaue City
               </Link>
+              <Link
+                href="/lapu-lapu-city/condo-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                Condo for Sale in Lapu-Lapu (Mactan)
+              </Link>
+              <Link
+                href="/lapu-lapu-city/house-and-lot-for-sale"
+                className="hover:text-[#C9A96E] transition"
+              >
+                House and Lot in Lapu-Lapu City
+              </Link>
             </div>
           </div>
 

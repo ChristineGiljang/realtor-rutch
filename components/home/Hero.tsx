@@ -7,7 +7,7 @@ export default function Hero() {
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       <Image
         src="hero_uixvls.jpg"
-        alt="House and lot in Cebu"
+        alt="Condos and house and lot for sale in Cebu"
         fill
         priority
         fetchPriority="high"
@@ -22,11 +22,11 @@ export default function Hero() {
           Real Estate
         </p>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-          Find Your House and Lot in Cebu
+          Find Your Condo or House and Lot in Cebu
         </h1>
         <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-          Browse houses and lots for sale and rent across Cebu City and nearby
-          areas. Let us help you find the perfect property.
+          Browse condos, houses, and lots for sale and rent across Cebu City,
+          Mandaue, and Lapu-Lapu. Let us help you find the perfect property.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

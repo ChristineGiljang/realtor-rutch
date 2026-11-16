@@ -181,16 +181,20 @@ export function localizeListingsMeta(
 // new city is added there, or it falls back to the generic template.
 // filterLabel (from lib/filter-slugs.ts) is optional — pass it on the
 // combined /[city]/[filterSlug] route to get filter-specific copy
-// instead of the generic "Properties for Sale and Rent" text.
+
+export function getCityDisplayName(cityName: string): string {
+  return cityName === "Lapu-Lapu City" ? "Lapu-Lapu City, Mactan" : cityName;
+} // instead of the generic "Properties for Sale and Rent" text.
 export function getCityListingsMeta(
   cityName: string,
   filterLabel?: string,
 ): ListingsMeta {
   if (filterLabel) {
+    const place = getCityDisplayName(cityName);
     return {
-      h1: `${filterLabel} in ${cityName}`,
-      title: `${filterLabel} in ${cityName}`,
-      description: `Browse ${filterLabel.toLowerCase()} listings in ${cityName}. Verified listings. Inquire with Realtor Rutch.`,
+      h1: `${filterLabel} in ${place}`,
+      title: `${filterLabel} in ${place}`,
+      description: `Browse ${filterLabel.toLowerCase()} listings in ${place}. Verified listings. Inquire with Realtor Rutch.`,
     };
   }
 
