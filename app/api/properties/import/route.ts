@@ -74,6 +74,11 @@ export async function POST(req: NextRequest) {
     const floorNum = parseInt(String(b.floor ?? ""), 10);
     const lot = Number(b.lotSize);
     const garage = Number(b.garage);
+    const lat = Number(b.lat);
+    const lng = Number(b.lng);
+    const hasCoords =
+      Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
+
     const images = (Array.isArray(b.images) ? b.images : []).map(
       (img: { url: string; alt?: string; order?: number }, i: number) => ({
         url: img.url,
@@ -102,6 +107,8 @@ export async function POST(req: NextRequest) {
             sqft: Math.round(Number(b.floorArea) || lot || 0),
             lotSize: lot > 0 ? lot : null,
             garage: garage > 0 ? Math.round(garage) : null,
+            lat: hasCoords ? lat : null,
+            lng: hasCoords ? lng : null,
             type: TYPE[b.type],
             subtype: SUBTYPE[b.subtype] ?? null,
             status: IMPORT_STATUS,
