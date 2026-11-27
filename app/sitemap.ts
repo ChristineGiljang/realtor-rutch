@@ -8,6 +8,7 @@ import {
   getBuildingBySlug,
   type BuildingDef,
 } from "@/lib/buildings";
+import { isHubIndexable } from "@/lib/hubs";
 
 // Next.js builds sitemap.ts once at deploy time unless told otherwise, so new
 // and removed listings would not show up until the next deploy. Rebuild hourly.
@@ -118,6 +119,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Empty pages are left out of the sitemap because Google treats them as
     // soft 404s, so every page below needs at least one matching listing.
+    // Area and building hub pages need more: see MIN_LISTINGS_FOR_INDEX in
+    // lib/hubs.ts. Hubs below that minimum still exist for visitors but are
+    // kept out of the sitemap (and are noindex in their page metadata).
 
     // City pages: /[city]
     const activeCities = CITIES.filter((city) =>
@@ -137,6 +141,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
 
     // Area pages: /[city]/[filterSlug]/[area]
+    // Only listed when the page has MIN_LISTINGS_FOR_INDEX or more listings.
     const areaFilterPages = AREAS.flatMap((area) => {
       const city = getCityBySlug(area.citySlug);
       if (!city) return [];
@@ -144,13 +149,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         (p) => cityMatches(p, city) && areaMatches(p, area),
       );
       return FILTERS.filter((filter) =>
-        inArea.some((p) => filterMatches(p, filter)),
+        isHubIndexable(inArea.filter((p) => filterMatches(p, filter)).length),
       ).map((filter) =>
         landing(`${baseUrl}/${area.citySlug}/${filter.slug}/${area.slug}`),
       );
     });
 
     // Building pages: /[city]/[filterSlug]/[area]/[building] (condo filters)
+    // Only listed when the page has MIN_LISTINGS_FOR_INDEX or more listings.
     const condoFilters = FILTERS.filter((filter) => filter.type === "condo");
     const buildingFilterPages = BUILDINGS.flatMap((building) => {
       const city = getCityBySlug(building.citySlug);
@@ -170,7 +176,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           buildingMatches(p, found),
       );
       return condoFilters
-        .filter((filter) => inBuilding.some((p) => filterMatches(p, filter)))
+        .filter((filter) =>
+          isHubIndexable(
+            inBuilding.filter((p) => filterMatches(p, filter)).length,
+          ),
+        )
         .map((filter) =>
           landing(
             `${baseUrl}/${building.citySlug}/${filter.slug}/${building.areaSlug}/${building.slug}`,

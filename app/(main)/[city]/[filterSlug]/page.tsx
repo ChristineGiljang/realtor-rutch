@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { cache } from "react";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { db } from "@/lib/db";
 import { getCityBySlug, cityWhereClause } from "@/lib/cities";
-import { getFilterBySlug, CATEGORY_LABELS } from "@/lib/filter-slugs";
-import { getCityListingsMeta, getCityDisplayName } from "@/lib/listings-meta";
+import { getAreaBySlug, getAreasForCity, areaWhereClause } from "@/lib/areas";
+import { getFilterBySlug, CATEGORY_LABELS, FILTERS } from "@/lib/filter-slugs";
+import { getAreaListingsMeta } from "@/lib/listings-meta";
 import { queryListings } from "@/lib/listings-query";
 import {
   getMarketStats,
+  getAreaCounts,
   formatPriceShort,
   type MarketStats,
 } from "@/lib/market-stats";
@@ -19,45 +22,37 @@ import {
   type ListingParams,
   type RawSearchParams,
 } from "@/lib/listing-params";
+import { hubRobots } from "@/lib/hubs";
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
-import Breadcrumbs, { type Crumb } from "@/components/listings/Breadcrumbs";
-import CityHouseLotContent from "@/components/listings/CityHouseLotContent";
-import CityCondoContent from "@/components/listings/CityCondoContent";
+import Breadcrumbs from "@/components/listings/Breadcrumbs";
+import MarketSnapshot from "@/components/listings/MarketSnapshot";
+import LinkPills from "@/components/listings/LinkPills";
+import AreaHubFaq from "@/components/listings/AreaHubFaq";
+import { getHub } from "@/lib/property-links";
 
 export const revalidate = 0;
-
-// The Cebu-wide pages that city pages link up to
-const HOUSE_HUB = {
-  path: "/house-and-lot-for-sale-in-cebu",
-  label: "House and Lot for Sale in Cebu",
-  linkText: "View all house and lot for sale in Cebu",
-};
-const CONDO_HUB = {
-  path: "/condo-for-sale-in-cebu",
-  label: "Condo for Sale in Cebu",
-  linkText: "View all condo for sale in Cebu",
-};
 
 // 60 characters minus the " | Realtor Rutch" suffix the root layout adds
 const TITLE_BUDGET = 44;
 const DESCRIPTION_BUDGET = 155;
 
 interface Props {
-  params: Promise<{ city: string; filterSlug: string }>;
+  params: Promise<{ city: string; filterSlug: string; area: string }>;
   searchParams: Promise<RawSearchParams>;
 }
 
-// Listings that belong to this city + filter, before any price/beds filters
-// from the URL. Stats for the meta description use this, so ?priceMax=...
+// Listings that belong to this city + area + filter, before any price/beds
+// filters from the URL. The meta description stats use this, so ?priceMax=...
 // URLs don't change the description.
 function baseWhere(
   city: NonNullable<ReturnType<typeof getCityBySlug>>,
+  area: NonNullable<ReturnType<typeof getAreaBySlug>>,
   filter: NonNullable<ReturnType<typeof getFilterBySlug>>,
 ) {
   const where: any = {
     status: "active",
-    OR: cityWhereClause(city),
+    AND: [{ OR: cityWhereClause(city) }, { OR: areaWhereClause(area) }],
   };
   if (filter.type) where.type = filter.type;
   if (filter.subtype) where.subtype = filter.subtype;
@@ -73,27 +68,14 @@ function fitTitle(candidates: string[]): string {
   );
 }
 
-// "Condo for Sale" -> "condos for sale" so "Browse 5 condos for sale in ..."
-// reads correctly. A count of 1 keeps the singular.
-function pluralizeLabel(label: string, count: number): string {
-  const lower = label.toLowerCase();
-  if (count === 1) return lower;
-  return lower
-    .replace(/^house and lot\b/, "houses and lots")
-    .replace(/^condo\b/, "condos")
-    .replace(/^lot\b/, "lots");
-}
-
-// Quotes a price range only when the filter is all sale or all rent.
-// A filter with no category mixes monthly rents with sale prices.
 function buildDescription(
   lead: string,
   stats: MarketStats,
   category?: string,
 ): string {
-  const isRent = category === "rent";
   const { minPrice, maxPrice } = stats;
   let range = "";
+  const isRent = category === "rent";
   if (category && minPrice != null && maxPrice != null) {
     range =
       minPrice === maxPrice
@@ -109,16 +91,18 @@ function buildDescription(
 // generateMetadata and the page both need the results; cache() makes the
 // database query run once per request.
 const loadResults = cache(async (key: string) => {
-  const { citySlug, filterSlug, query } = JSON.parse(key) as {
+  const { citySlug, filterSlug, areaSlug, query } = JSON.parse(key) as {
     citySlug: string;
     filterSlug: string;
+    areaSlug: string;
     query: ListingParams;
   };
   const city = getCityBySlug(citySlug);
   const filter = getFilterBySlug(filterSlug);
-  if (!city || !filter) return null;
+  const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
+  if (!city || !filter || !area) return null;
 
-  const where = { ...baseWhere(city, filter), ...priceBedsWhere(query) };
+  const where = { ...baseWhere(city, area, filter), ...priceBedsWhere(query) };
 
   const results = await queryListings(
     where,
@@ -126,15 +110,27 @@ const loadResults = cache(async (key: string) => {
     listingsOrderBy(query.sort),
   );
 
-  return { city, filter, ...results };
+  return { city, filter, area, ...results };
 });
 
+// Market stats for the whole city + area + filter. Cached so the metadata and
+// the page share one query.
+const loadStats = cache(
+  async (citySlug: string, filterSlug: string, areaSlug: string) => {
+    const city = getCityBySlug(citySlug);
+    const filter = getFilterBySlug(filterSlug);
+    const area = city ? getAreaBySlug(city.slug, areaSlug) : undefined;
+    if (!city || !filter || !area) return null;
+    return getMarketStats(baseWhere(city, area, filter));
+  },
+);
+
 async function getResults(props: Props) {
-  const { city: citySlug, filterSlug } = await props.params;
+  const { city: citySlug, filterSlug, area: areaSlug } = await props.params;
   const query = parseListingParams(await props.searchParams);
 
   const data = await loadResults(
-    JSON.stringify({ citySlug, filterSlug, query }),
+    JSON.stringify({ citySlug, filterSlug, areaSlug, query }),
   );
   if (!data) notFound();
   ensurePageInRange(query.page, data.totalPages);
@@ -143,84 +139,73 @@ async function getResults(props: Props) {
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { city, filter, totalCount } = await getResults(props);
-  const meta = getCityListingsMeta(city.name, filter.label);
+  const { city, filter, area } = await getResults(props);
+  const meta = getAreaListingsMeta(city.name, area.name, filter.label);
 
-  const title = fitTitle([
-    meta.title,
-    `${filter.label} in ${city.name.replace(/ City$/, "")}`,
-    filter.label,
-  ]);
+  const title = fitTitle([meta.title, `${filter.label} in ${area.name}`]);
 
-  // Live count (and price range, when it makes sense) for every filter
+  // Live count and price range when the area has listings
   let description = meta.description;
-  const stats = await getMarketStats(baseWhere(city, filter));
-  if (stats.count > 0) {
+  const stats = await loadStats(city.slug, filter.slug, area.slug);
+  if (stats && stats.count > 0) {
     description = buildDescription(
-      `Browse ${stats.count} ${pluralizeLabel(filter.label, stats.count)} in ${getCityDisplayName(city.name)}.`,
+      `Browse ${stats.count} ${filter.label.toLowerCase()} in ${area.name}, ${city.name}.`,
       stats,
       filter.category,
     );
   }
 
+  // Active listings for the whole area + filter (ignores ?priceMax=... and
+  // similar), so this follows the same rule as the sitemap: hubs below
+  // MIN_LISTINGS_FOR_INDEX are noindex but Google can still follow the links.
+  const listingCount = stats?.count ?? 0;
+
   return {
     title,
     description,
-    alternates: { canonical: `/${city.slug}/${filter.slug}` },
+    alternates: { canonical: `/${city.slug}/${filter.slug}/${area.slug}` },
     openGraph: { title, description },
-    // Keep pages with no listings out of Google's index but let it follow links.
-    ...(totalCount === 0 ? { robots: { index: false, follow: true } } : {}),
+    robots: hubRobots(listingCount),
   };
 }
 
-export default async function CityFilterListingsPage(props: Props) {
-  const { query, city, filter, listings, totalCount, totalPages, currentPage } =
-    await getResults(props);
+export default async function AreaFilterListingsPage(props: Props) {
+  const {
+    query,
+    city,
+    filter,
+    area,
+    listings,
+    totalCount,
+    totalPages,
+    currentPage,
+  } = await getResults(props);
 
-  const meta = getCityListingsMeta(city.name, filter.label);
+  const meta = getAreaListingsMeta(city.name, area.name, filter.label);
 
-  // House and lot / condo for sale pages sit under a Cebu-wide hub page.
-  const isHouseForSale = filter.type === "house" && filter.category === "sale";
-  const isCondoForSale = filter.type === "condo" && filter.category === "sale";
-  const hub = isHouseForSale ? HOUSE_HUB : isCondoForSale ? CONDO_HUB : null;
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    ...(filter.category
+      ? [
+          {
+            label: CATEGORY_LABELS[filter.category],
+            href: `/listings?category=${filter.category}`,
+          },
+        ]
+      : []),
+    { label: city.name, href: `/${city.slug}` },
+    ...(filter.breadcrumbLabel !== "Properties"
+      ? [
+          {
+            label: filter.breadcrumbLabel,
+            href: `/${city.slug}/${filter.slug}`,
+          },
+        ]
+      : []),
+    { label: area.name },
+  ];
 
-  // Every crumb except the last must have a URL, otherwise the breadcrumb
-  // structured data is invalid. Filters without a type (for example ones
-  // defined by subtype or category) used to get no href at all.
-  const filterCrumbHref = filter.type
-    ? `/listings?type=${filter.type}`
-    : filter.subtype
-      ? `/listings?subtype=${filter.subtype}`
-      : filter.category
-        ? `/listings?category=${filter.category}`
-        : "/listings";
-
-  const breadcrumbs: Crumb[] = hub
-    ? [
-        { label: "Home", href: "/" },
-        { label: hub.label, href: hub.path },
-        { label: city.name },
-      ]
-    : [
-        { label: "Home", href: "/" },
-        ...(filter.category
-          ? [
-              {
-                label: CATEGORY_LABELS[filter.category],
-                href: `/listings?category=${filter.category}`,
-              },
-            ]
-          : []),
-        ...(filter.breadcrumbLabel !== "Properties"
-          ? [
-              {
-                label: filter.breadcrumbLabel,
-                href: filterCrumbHref,
-              },
-            ]
-          : []),
-        { label: city.name },
-      ];
+  const hub = getHub(filter.type, filter.category);
 
   const hrefForPage = (targetPage: number) => {
     const p = new URLSearchParams();
@@ -229,8 +214,67 @@ export default async function CityFilterListingsPage(props: Props) {
     if (query.sort) p.set("sort", query.sort);
     if (targetPage > 1) p.set("page", String(targetPage));
     const qs = p.toString();
-    return `/${city.slug}/${filter.slug}${qs ? `?${qs}` : ""}`;
+    return `/${city.slug}/${filter.slug}/${area.slug}${qs ? `?${qs}` : ""}`;
   };
+
+  // Hub content only on the clean first page, so paginated and filtered URLs
+  // don't repeat it.
+  const showHub = currentPage === 1 && !query.priceMax && !query.bedsMin;
+
+  let stats: MarketStats | null = null;
+  let otherTypeLinks: { label: string; href: string; count: number }[] = [];
+  let nearbyLinks: { label: string; href: string; count: number }[] = [];
+
+  if (showHub) {
+    const sameFilterBase: any = { status: "active" };
+    if (filter.type) sameFilterBase.type = filter.type;
+    if (filter.subtype) sameFilterBase.subtype = filter.subtype;
+    if (filter.category) sameFilterBase.listingCategory = filter.category;
+
+    const otherAreas = getAreasForCity(city.slug).filter(
+      (a) => a.slug !== area.slug,
+    );
+
+    const [loadedStats, otherTypeCounts, nearbyCounts] = await Promise.all([
+      loadStats(city.slug, filter.slug, area.slug),
+      Promise.all(
+        FILTERS.filter((f) => f.slug !== filter.slug).map(async (f) => ({
+          filter: f,
+          count: await db.property.count({ where: baseWhere(city, area, f) }),
+        })),
+      ),
+      getAreaCounts(otherAreas, sameFilterBase),
+    ]);
+
+    stats = loadedStats;
+    otherTypeLinks = otherTypeCounts
+      .filter((r) => r.count > 0)
+      .map(({ filter: f, count }) => ({
+        label: `${f.label} in ${area.name}`,
+        href: `/${city.slug}/${f.slug}/${area.slug}`,
+        count,
+      }));
+    nearbyLinks = nearbyCounts.map(({ area: a, count }) => ({
+      label: `${filter.label} in ${a.name}`,
+      href: `/${a.citySlug}/${filter.slug}/${a.slug}`,
+      count,
+    }));
+  }
+
+  const isRent = filter.category === "rent";
+  const labelLower = filter.label.toLowerCase();
+
+  let rangeText = "";
+  if (stats && stats.minPrice != null && stats.maxPrice != null) {
+    rangeText = isRent
+      ? ` with rents from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)} per month`
+      : ` with prices from ${formatPriceShort(stats.minPrice)} to ${formatPriceShort(stats.maxPrice)}`;
+  }
+
+  const intro =
+    stats && stats.count > 0
+      ? `Browse ${stats.count} ${labelLower} in ${area.name}, ${city.name}${rangeText}. Compare listings, then book a viewing with Realtor Rutch.`
+      : `There are no ${labelLower} listings in ${area.name}, ${city.name} right now. Check the links below for nearby barangays and other property types, or send an inquiry and Realtor Rutch will look for you.`;
 
   return (
     <div className="pt-[120px] min-h-screen bg-[#faf9f6] text-[#1A1A1A]">
@@ -241,6 +285,11 @@ export default async function CityFilterListingsPage(props: Props) {
             Available Now
           </p>
           <h1 className="text-5xl font-bold text-[#1A1A1A]">{meta.h1}</h1>
+          {showHub && (
+            <p className="mt-4 max-w-3xl text-lg leading-relaxed text-[#8B7355]">
+              {intro}
+            </p>
+          )}
         </div>
 
         <PropertySearchBar
@@ -260,17 +309,52 @@ export default async function CityFilterListingsPage(props: Props) {
           hrefForPage={hrefForPage}
         />
 
-        {/* Page 1 only, so paginated URLs don't repeat the text */}
-        {isHouseForSale && currentPage === 1 && (
-          <CityHouseLotContent city={city} />
-        )}
-        {isCondoForSale && currentPage === 1 && (
-          <CityCondoContent city={city} />
+        {showHub && stats && (
+          <>
+            {stats.count > 0 && (
+              <MarketSnapshot
+                heading={`${area.name} ${labelLower} market snapshot`}
+                stats={stats}
+              />
+            )}
+
+            {otherTypeLinks.length > 0 && (
+              <LinkPills
+                heading={`Other properties in ${area.name}`}
+                links={otherTypeLinks}
+              />
+            )}
+
+            {nearbyLinks.length > 0 && (
+              <LinkPills
+                heading={`Nearby barangays in ${city.name}`}
+                links={nearbyLinks}
+              />
+            )}
+
+            {area.blurb && area.blurb.length > 0 && (
+              <section className="blog-content mt-16 max-w-3xl text-[#8B7355] leading-relaxed">
+                <h2>About {area.name}</h2>
+                {area.blurb.map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </section>
+            )}
+
+            <AreaHubFaq
+              stats={stats}
+              areaName={area.name}
+              cityName={city.name}
+              filterLabel={filter.label}
+              type={filter.type}
+              category={filter.category}
+            />
+          </>
         )}
 
         {hub && (
           <p className="mt-10 text-sm text-[#8B7355]">
-            Looking beyond {city.name}?{" "}
+            Looking beyond {area.name}?{" "}
             <Link
               href={hub.path}
               className="text-[#C9A96E] underline underline-offset-2 hover:text-[#1A1A1A] transition"

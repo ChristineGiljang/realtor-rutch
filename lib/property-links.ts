@@ -1,13 +1,15 @@
 // -- Internal-link targets for a single listing ---------------
-// Works out which hub, city page and area page a listing belongs to, so
-// the property page can link up to them (breadcrumbs + "Explore more").
-// Area matching uses the same rule as areaWhereClause in lib/areas.ts
-// (barangay or address contains the area name, plus the title when the
-// area has matchTitle on), so a listing only links to an area page that
-// actually lists it.
+// Works out which hub, city page, area page and building page a listing
+// belongs to, so the property page can link up to them (breadcrumbs +
+// "Explore more"). Area matching uses the same rule as areaWhereClause in
+// lib/areas.ts (barangay or address contains the area name, plus the title
+// when the area has matchTitle on), so a listing only links to an area page
+// that actually lists it. Building links work the same way: the listing has
+// to match both the building and the building's own area.
 
 import { getCityByFreeText } from "@/lib/cities";
-import { AREAS } from "@/lib/areas";
+import { AREAS, getAreaBySlug } from "@/lib/areas";
+import { BUILDINGS } from "@/lib/buildings";
 import { FILTERS, findFilterSlug } from "@/lib/filter-slugs";
 
 export interface LinkTarget {
@@ -60,12 +62,15 @@ export interface PropertyLinkInput {
   // Needed for areas with matchTitle on (Mandani Bay, Cebu IT Park,
   // Cebu Business Park). Without it those areas can't be matched.
   title?: string;
+  // The Building field from admin. Used to find the building page.
+  building?: string | null;
 }
 
 export interface PropertyLinkTargets {
   hub: Hub | null;
   city: LinkTarget | null;
   area: LinkTarget | null;
+  building: LinkTarget | null;
 }
 
 export function getPropertyLinkTargets(
@@ -79,7 +84,7 @@ export function getPropertyLinkTargets(
   });
   const filter = FILTERS.find((f) => f.slug === filterSlug);
 
-  if (!city || !filter) return { hub, city: null, area: null };
+  if (!city || !filter) return { hub, city: null, area: null, building: null };
 
   const haystack = `${p.barangay ?? ""} ${p.address}`.toLowerCase();
   const titleText = (p.title ?? "").toLowerCase();
@@ -97,6 +102,39 @@ export function getPropertyLinkTargets(
   // over the broad barangay.
   const area = matching.find((a) => a.matchTitle) ?? matching[0];
 
+  // Building page: condos only, same rule as the building hub pages (the
+  // listing must match the building AND the building's own area).
+  let building: LinkTarget | null = null;
+  if (p.type === "condo" && filter.type === "condo") {
+    const buildingText = (p.building ?? "").toLowerCase();
+    const foundBuilding = BUILDINGS.find(
+      (b) =>
+        b.citySlug === city.slug &&
+        b.matches.some((raw) => {
+          const m = raw.toLowerCase();
+          return buildingText.includes(m) || titleText.includes(m);
+        }),
+    );
+    const buildingArea = foundBuilding
+      ? getAreaBySlug(city.slug, foundBuilding.areaSlug)
+      : undefined;
+    const inBuildingArea = buildingArea
+      ? buildingArea.matches.some(
+          (m) =>
+            haystack.includes(m) ||
+            (buildingArea.matchTitle && titleText.includes(m)),
+        )
+      : false;
+
+    if (foundBuilding && buildingArea && inBuildingArea) {
+      building = {
+        label: `${filter.label} at ${foundBuilding.name}`,
+        href: `/${city.slug}/${filter.slug}/${buildingArea.slug}/${foundBuilding.slug}`,
+        name: foundBuilding.name,
+      };
+    }
+  }
+
   return {
     hub,
     city: {
@@ -111,5 +149,6 @@ export function getPropertyLinkTargets(
           name: area.name,
         }
       : null,
+    building,
   };
 }

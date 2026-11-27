@@ -1,14 +1,15 @@
 import Link from "next/link";
 import type { PropertyLinkTargets } from "@/lib/property-links";
 
-// Crawlable links from a listing up to its area page, city page and the
-// Cebu-wide hub. Server component, so the links are in the HTML.
+// Crawlable links from a listing up to its building page, area page, city page
+// and the Cebu-wide hub. Server component, so the links are in the HTML.
 export default function PropertyExploreLinks({
   targets,
 }: {
   targets: PropertyLinkTargets;
 }) {
   const links = [
+    targets.building,
     targets.area,
     targets.city,
     targets.hub && { label: targets.hub.label, href: targets.hub.path },

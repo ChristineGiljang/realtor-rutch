@@ -229,12 +229,29 @@ export default async function PropertyDetailPage({ params }: Props) {
         linkTargets.city?.href ??
         (matchedCity ? `/${matchedCity.slug}` : searchHref(property.city)),
     },
-    // Barangay crumb: only shown when the listing has one
-    ...(property.barangay
+    // Area crumb: named after the page it links to. Falls back to the
+    // barangay (as a search link) when the listing has no area page.
+    ...(linkTargets.area
       ? [
           {
-            label: property.barangay,
-            href: linkTargets.area?.href ?? searchHref(property.barangay),
+            label: linkTargets.area.name ?? property.barangay ?? "Area",
+            href: linkTargets.area.href,
+          },
+        ]
+      : property.barangay
+        ? [
+            {
+              label: property.barangay,
+              href: searchHref(property.barangay),
+            },
+          ]
+        : []),
+    // Building crumb: condos in a building that has its own page
+    ...(linkTargets.building
+      ? [
+          {
+            label: linkTargets.building.name ?? "Building",
+            href: linkTargets.building.href,
           },
         ]
       : []),
@@ -527,7 +544,6 @@ export default async function PropertyDetailPage({ params }: Props) {
               </div>
             )}
 
-            {/* Location & What's Nearby */}
             {/* Location & What's Nearby */}
             {property.lat && property.lng && (
               <div>

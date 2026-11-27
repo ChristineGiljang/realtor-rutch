@@ -1,6 +1,18 @@
 import Link from "next/link";
+import { getHubDirectory, type HubDirectory } from "@/lib/hubs";
 
-export default function Footer() {
+export default async function Footer() {
+  // Hubs with enough listings to be indexed. A failure here should never
+  // break every page, so fall back to an empty list.
+  let hubs: HubDirectory = { buildings: [], areas: [] };
+  try {
+    hubs = await getHubDirectory();
+  } catch (error) {
+    console.error("footer: failed to load hub directory", error);
+  }
+  const popularBuildings = hubs.buildings.slice(0, 8);
+  const popularAreas = hubs.areas.slice(0, 8);
+
   return (
     <footer className="bg-[#1A1A1A] border-t border-[#E2D9C8]/20 text-[#faf9f6]/70 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -124,6 +136,50 @@ export default function Footer() {
             </div>
           </div>
         </div>
+
+        {/* Popular Buildings and Areas - links to the hub pages that have
+            enough listings to be indexed (see lib/hubs.ts) */}
+        {(popularBuildings.length > 0 || popularAreas.length > 0) && (
+          <div className="mt-10 pt-8 border-t border-[#E2D9C8]/20 grid grid-cols-1 md:grid-cols-2 gap-10">
+            {popularBuildings.length > 0 && (
+              <div>
+                <h4 className="text-[#faf9f6] text-sm tracking-wider uppercase mb-4">
+                  Popular Buildings
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  {popularBuildings.map((b) => (
+                    <Link
+                      key={b.href}
+                      href={b.href}
+                      className="hover:text-[#C9A96E] transition"
+                    >
+                      {b.filterLabel} at {b.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {popularAreas.length > 0 && (
+              <div>
+                <h4 className="text-[#faf9f6] text-sm tracking-wider uppercase mb-4">
+                  Popular Areas
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  {popularAreas.map((a) => (
+                    <Link
+                      key={a.href}
+                      href={a.href}
+                      className="hover:text-[#C9A96E] transition"
+                    >
+                      {a.filterLabel} in {a.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="border-t border-[#E2D9C8]/20 mt-10 pt-6 text-xs text-center">
           &copy; {new Date().getFullYear()} Rutchilyn Llagoso. All rights

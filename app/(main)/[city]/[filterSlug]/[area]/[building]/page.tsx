@@ -26,6 +26,7 @@ import {
   type ListingParams,
   type RawSearchParams,
 } from "@/lib/listing-params";
+import { hubRobots } from "@/lib/hubs";
 import PropertySearchBar from "@/components/search/PropertySearchBar";
 import ListingsResults from "@/components/listings/ListingsResults";
 import Breadcrumbs from "@/components/listings/Breadcrumbs";
@@ -175,7 +176,7 @@ async function getResults(props: Props) {
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { city, filter, area, building, totalCount } = await getResults(props);
+  const { city, filter, area, building } = await getResults(props);
 
   const meta = getBuildingListingsMeta(
     building.name,
@@ -207,6 +208,11 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     );
   }
 
+  // Active listings for the whole building + filter (ignores ?priceMax=... and
+  // similar), so this follows the same rule as the sitemap: hubs below
+  // MIN_LISTINGS_FOR_INDEX are noindex but Google can still follow the links.
+  const listingCount = stats?.count ?? 0;
+
   return {
     title,
     description,
@@ -214,8 +220,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       canonical: `/${city.slug}/${filter.slug}/${area.slug}/${building.slug}`,
     },
     openGraph: { title, description },
-    // Keep pages with no listings out of Google's index but let it follow links.
-    ...(totalCount === 0 ? { robots: { index: false, follow: true } } : {}),
+    robots: hubRobots(listingCount),
   };
 }
 
